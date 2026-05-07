@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Студенты</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f3f4f6;
+    margin:0;
+}
+
+.header{
+    background:white;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    padding:25px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-bottom:15px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    box-sizing:border-box;
+}
+
+button{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 18px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td{
+    padding:14px;
+    border-top:1px solid #eee;
+}
+
+.delete-btn{
+    background:#ef4444;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+<div>
+Управление студентами
+</div>
+
+<div>
+
+<a href="/chairman">
+<button>
+Назад
+</button>
+</a>
+
+</div>
+
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Добавить студента</h2>
+
+<form method="POST" action="/add_student">
+
+<input
+type="text"
+name="student_id"
+placeholder="ID"
+required
+>
+
+<input
+type="text"
+name="name"
+placeholder="ФИО"
+required
+>
+
+<button>
+Добавить
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h2>Список студентов</h2>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>ФИО</th>
+<th></th>
+</tr>
+
+{% for s in students %}
+
+<tr>
+
+<td>{{ s[0] }}</td>
+<td>{{ s[1] }}</td>
+
+<td>
+
+<a href="/delete_student/{{ s[0] }}">
+<button class="delete-btn">
+Удалить
+</button>
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+</body>
+</html>
+
+
+
+

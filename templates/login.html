@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Профком</title>
+
+<link rel="icon" href="/static/favicon.ico">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#f3f4f6;
+    font-family:Arial;
+}
+
+.card{
+    width:360px;
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.logo{
+    text-align:center;
+    font-size:36px;
+    font-weight:bold;
+    margin-bottom:30px;
+}
+
+.subtitle{
+    text-align:center;
+    color:#666;
+    margin-bottom:25px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    margin-bottom:15px;
+    font-size:15px;
+}
+
+input:focus{
+    outline:none;
+    border-color:#2563eb;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:#2563eb;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+.error{
+    color:#dc2626;
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.footer{
+    text-align:center;
+    margin-top:20px;
+    color:#888;
+    font-size:13px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="logo">
+Профком
+</div>
+
+<div class="subtitle">
+Для тигров
+</div>
+
+{% if error %}
+
+<div class="error">
+{{ error }}
+</div>
+
+{% endif %}
+
+<form method="POST">
+
+<input
+type="text"
+name="name"
+placeholder="Логин"
+required
+>
+
+<input
+type="password"
+name="password"
+placeholder="Пароль"
+required
+>
+
+<button type="submit">
+Войти
+</button>
+
+</form>
+
+<div class="footer">
+Для профкома студентов
+</div>
+
+</div>
+
+</body>
+</html>
+
+
+
+

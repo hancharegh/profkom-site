@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Профком</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial;
+    background:#f3f4f6;
+}
+
+.header{
+    background:white;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+.logo{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.user{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.logout{
+    background:#ef4444;
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
+    padding:25px;
+    display:grid;
+    grid-template-columns:400px 1fr;
+    gap:25px;
+}
+
+.card{
+    background:white;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.05);
+}
+
+.card h2{
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    margin-bottom:15px;
+}
+
+.item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid #eee;
+}
+
+.item input{
+    width:80px;
+    margin:0;
+}
+
+.remaining{
+    font-size:13px;
+    color:#666;
+}
+
+.add-btn{
+    width:100%;
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px;
+    border-radius:12px;
+    margin-top:20px;
+    cursor:pointer;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.table th{
+    text-align:left;
+    padding:14px;
+    background:#f9fafb;
+}
+
+.table td{
+    padding:14px;
+    border-top:1px solid #eee;
+}
+
+.delete-btn{
+    background:#ef4444;
+    color:white;
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.badge{
+    background:#dbeafe;
+    color:#1e40af;
+    padding:4px 8px;
+    border-radius:8px;
+    font-size:12px;
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content{
+    background:white;
+    padding:25px;
+    width:400px;
+    border-radius:18px;
+}
+
+.modal-buttons{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:20px;
+}
+
+.cancel-btn{
+    background:#eee;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+}
+
+.confirm-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+}
+
+@media(max-width:1000px){
+
+.container{
+    grid-template-columns:1fr;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+<div class="logo">
+Профком
+</div>
+
+<div class="user">
+
+<div>
+{{ session.user }}
+</div>
+
+<a href="/logout">
+<button class="logout">
+Выход
+</button>
+</a>
+
+</div>
+
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Выдача канцелярии</h2>
+
+<form method="POST" id="issueForm">
+
+<input
+type="text"
+name="barcode"
+id="barcode"
+placeholder="Введите ID"
+oninput="checkStudent()"
+required
+>
+
+<div id="student"></div>
+
+{% for item in limits %}
+
+<div class="item">
+
+<div>
+<div>{{ item }}</div>
+
+<div class="remaining">
+Осталось:
+<span id="rem_{{ item }}">-</span>
+</div>
+
+</div>
+
+<input
+type="number"
+name="{{ item }}"
+value="0"
+min="0"
+>
+
+</div>
+
+{% endfor %}
+
+<button class="add-btn">
+Добавить запись
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h2>История</h2>
+
+<table class="table">
+
+<tr>
+<th>Студент</th>
+<th>Выдано</th>
+<th>Секретарь</th>
+<th>Дата</th>
+<th></th>
+</tr>
+
+{% for e in entries %}
+
+<tr>
+
+<td>
+<b>{{ e[1] }}</b><br>
+<span class="badge">
+ID: {{ e[2] }}
+</span>
+</td>
+
+<td>{{ e[5] }}</td>
+
+<td>{{ e[3] }}</td>
+
+<td>{{ e[4] }}</td>
+
+<td>
+
+<button
+class="delete-btn"
+onclick="confirmDelete({{ e[0] }})"
+>
+Отменить
+</button>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+<!-- MODAL -->
+
+<div id="modal" class="modal">
+
+<div class="modal-content">
+
+<h3 id="modal-title"></h3>
+
+<p id="modal-text"></p>
+
+<div class="modal-buttons">
+
+<button class="cancel-btn" onclick="closeModal()">
+Отмена
+</button>
+
+<button class="confirm-btn" id="confirmAction">
+Подтвердить
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+async function checkStudent(){
+
+    let id = document.getElementById("barcode").value;
+
+    if(id.length === 0){
+        return;
+    }
+
+    let response = await fetch("/check_student",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            id:id
+        })
+    });
+
+    let data = await response.json();
+
+    let student = document.getElementById("student");
+
+    if(data.error){
+
+        student.innerHTML = "❌ Студент не найден";
+        student.style.color = "red";
+
+        return;
+    }
+
+    student.innerHTML = "✅ " + data.name;
+    student.style.color = "green";
+
+    for(let item in data.remaining){
+
+        let el = document.getElementById("rem_" + item);
+
+        if(el){
+            el.innerText = data.remaining[item];
+        }
+
+    }
+}
+
+function openModal(title, text, callback){
+
+    document.getElementById("modal-title").innerText = title;
+
+    document.getElementById("modal-text").innerText = text;
+
+    document.getElementById("modal").style.display = "flex";
+
+    document.getElementById("confirmAction").onclick = function(){
+
+        callback();
+
+        closeModal();
+    };
+}
+
+function closeModal(){
+
+    document.getElementById("modal").style.display = "none";
+}
+
+function confirmDelete(id){
+
+    openModal(
+        "Отмена записи",
+        "Вы действительно хотите отменить запись?",
+        function(){
+            window.location.href = "/delete_entry/" + id;
+        }
+    );
+}
+
+document.getElementById("issueForm").addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    openModal(
+        "Подтверждение",
+        "Выдать канцелярию?",
+        () => {
+            this.submit();
+        }
+    );
+
+});
+
+</script>
+
+</body>
+</html>
