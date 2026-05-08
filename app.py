@@ -27,18 +27,14 @@ app.secret_key = "super_secret_key_2026"
 # DATABASE
 # =====================================================
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
-
-import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+
 def get_db():
+
     return psycopg2.connect(
         DATABASE_URL,
+        sslmode="require",
         cursor_factory=RealDictCursor
     )
 
@@ -148,7 +144,9 @@ def role_required(role):
 
 @app.route("/", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         name = request.form.get("name")
         password = request.form.get("password")
 
@@ -156,8 +154,8 @@ def login():
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT * FROM users WHERE name=%s AND password=%s",
-            (name, password)
+            "SELECT * FROM users WHERE name=%s",
+            (name,)
         )
 
         user = cur.fetchone()
@@ -165,8 +163,14 @@ def login():
         cur.close()
         conn.close()
 
-        if user:
-            session["user"] = name
+        if user and check_password_hash(user["password"], password):
+
+            session["user"] = user["name"]
+            session["role"] = user["role"]
+
+            if user["role"] == "chairman":
+                return redirect("/chairman")
+
             return redirect("/dashboard")
 
         return "Неверный логин или пароль", 400
@@ -226,7 +230,6 @@ def dashboard():
         eraser_sharpener_count = int(request.form.get("eraser_sharpener_count", 0))
         millimeter_count = int(request.form.get("millimeter_count", 0))
 
-        # LIMITS
         if print_count > 30:
             flash("Максимум 30 печати")
             return redirect("/dashboard")
@@ -272,7 +275,6 @@ def dashboard():
 
         return redirect("/dashboard")
 
-    # HISTORY
     cur.execute("""
     SELECT *
     FROM entries
@@ -302,7 +304,6 @@ def chairman():
     conn = get_db()
     cur = conn.cursor()
 
-    # SECRETARIES
     cur.execute("""
     SELECT *
     FROM users
@@ -312,15 +313,12 @@ def chairman():
 
     secretaries = cur.fetchall()
 
-    # STUDENTS COUNT
     cur.execute("SELECT COUNT(*) FROM students")
     students_count = cur.fetchone()["count"]
 
-    # ENTRIES COUNT
     cur.execute("SELECT COUNT(*) FROM entries")
     entries_count = cur.fetchone()["count"]
 
-    # LAST ENTRIES
     cur.execute("""
     SELECT *
     FROM entries
@@ -358,12 +356,14 @@ def add_secretary():
 
     try:
 
+        hashed_password = generate_password_hash(password)
+
         cur.execute("""
         INSERT INTO users (name, password, role)
         VALUES (%s, %s, %s)
         """, (
             name,
-            generate_password_hash(password),
+            hashed_password,
             "secretary"
         ))
 
@@ -371,7 +371,10 @@ def add_secretary():
 
         flash("Секретарь добавлен")
 
-    except:
+    except Exception as e:
+
+        print(e)
+
         flash("Ошибка добавления")
 
     cur.close()
@@ -434,7 +437,10 @@ def add_student():
 
         flash("Студент добавлен")
 
-    except:
+    except Exception as e:
+
+        print(e)
+
         flash("Ошибка добавления")
 
     cur.close()
