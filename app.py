@@ -879,7 +879,7 @@ def export_excel():
 # =====================================================
 # START
 # =====================================================
-
+init_db()
 if __name__ == "__main__":
 
     os.makedirs(
@@ -887,6 +887,6 @@ if __name__ == "__main__":
         exist_ok=True
     )
 
-    init_db()
+    
 
     app.run(debug=True)
