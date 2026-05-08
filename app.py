@@ -1,5 +1,4 @@
 import os
-from urllib.parse import urlparse
 
 from flask import (
     Flask,
@@ -13,6 +12,7 @@ from flask import (
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
 
 # =====================================================
@@ -31,14 +31,9 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 def get_db():
-    result = urlparse(DATABASE_URL)
 
     conn = psycopg2.connect(
-        host=result.hostname,
-        port=result.port,
-        user=result.username,
-        password=result.password,
-        dbname=result.path[1:],
+        DATABASE_URL,
         sslmode="require",
         cursor_factory=RealDictCursor
     )
@@ -51,11 +46,11 @@ def get_db():
 # =====================================================
 
 def init_db():
+
     conn = get_db()
     cur = conn.cursor()
 
-    # ================= USERS =================
-
+    # USERS
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -65,8 +60,7 @@ def init_db():
     )
     """)
 
-    # ================= STUDENTS =================
-
+    # STUDENTS
     cur.execute("""
     CREATE TABLE IF NOT EXISTS students (
         id SERIAL PRIMARY KEY,
@@ -75,11 +69,11 @@ def init_db():
     )
     """)
 
-    # ================= ENTRIES =================
-
+    # ENTRIES
     cur.execute("""
     CREATE TABLE IF NOT EXISTS entries (
         id SERIAL PRIMARY KEY,
+
         student_barcode TEXT NOT NULL,
         student_name TEXT NOT NULL,
         secretary TEXT NOT NULL,
@@ -97,10 +91,7 @@ def init_db():
     )
     """)
 
-    # =====================================================
     # CREATE CHAIRMAN
-    # =====================================================
-
     cur.execute(
         "SELECT * FROM users WHERE username=%s",
         ("chairman",)
@@ -109,9 +100,10 @@ def init_db():
     chairman = cur.fetchone()
 
     if not chairman:
+
         cur.execute("""
-            INSERT INTO users (username, password, role)
-            VALUES (%s, %s, %s)
+        INSERT INTO users (username, password, role)
+        VALUES (%s, %s, %s)
         """, (
             "chairman",
             generate_password_hash("1234"),
@@ -119,6 +111,7 @@ def init_db():
         ))
 
     conn.commit()
+
     cur.close()
     conn.close()
 
@@ -127,11 +120,10 @@ def init_db():
 # ROLE DECORATOR
 # =====================================================
 
-from functools import wraps
-
-
 def role_required(role):
+
     def decorator(func):
+
         @wraps(func)
         def wrapper(*args, **kwargs):
 
@@ -144,6 +136,7 @@ def role_required(role):
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -193,12 +186,14 @@ def login():
 
 @app.route("/logout")
 def logout():
+
     session.clear()
+
     return redirect("/")
 
 
 # =====================================================
-# DASHBOARD
+# SECRETARY DASHBOARD
 # =====================================================
 
 @app.route("/dashboard", methods=["GET", "POST"])
@@ -220,7 +215,12 @@ def dashboard():
         student = cur.fetchone()
 
         if not student:
+
             flash("Студент не найден")
+
+            cur.close()
+            conn.close()
+
             return redirect("/dashboard")
 
         print_count = int(request.form.get("print_count", 0))
@@ -232,32 +232,31 @@ def dashboard():
         eraser_sharpener_count = int(request.form.get("eraser_sharpener_count", 0))
         millimeter_count = int(request.form.get("millimeter_count", 0))
 
-        # ================= LIMITS =================
-
+        # LIMITS
         if print_count > 30:
-            flash("Печать максимум 30")
+            flash("Максимум 30 печати")
             return redirect("/dashboard")
 
         if copy_count > 30:
-            flash("Копии максимум 30")
+            flash("Максимум 30 копий")
             return redirect("/dashboard")
 
         cur.execute("""
-            INSERT INTO entries (
-                student_barcode,
-                student_name,
-                secretary,
+        INSERT INTO entries (
+            student_barcode,
+            student_name,
+            secretary,
 
-                print_count,
-                copy_count,
-                ruler_count,
-                notebook_count,
-                corrector_count,
-                pencil_count,
-                eraser_sharpener_count,
-                millimeter_count
-            )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            print_count,
+            copy_count,
+            ruler_count,
+            notebook_count,
+            corrector_count,
+            pencil_count,
+            eraser_sharpener_count,
+            millimeter_count
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             barcode,
             student["full_name"],
@@ -275,19 +274,16 @@ def dashboard():
 
         conn.commit()
 
-        flash("Запись добавлена")
+        flash("Запись успешно добавлена")
 
         return redirect("/dashboard")
 
-    # =====================================================
     # HISTORY
-    # =====================================================
-
     cur.execute("""
-        SELECT *
-        FROM entries
-        ORDER BY created_at DESC
-        LIMIT 30
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    LIMIT 50
     """)
 
     entries = cur.fetchall()
@@ -312,34 +308,30 @@ def chairman():
     conn = get_db()
     cur = conn.cursor()
 
-    # ================= SECRETARIES =================
-
+    # SECRETARIES
     cur.execute("""
-        SELECT username
-        FROM users
-        WHERE role='secretary'
-        ORDER BY username
+    SELECT *
+    FROM users
+    WHERE role='secretary'
+    ORDER BY username
     """)
 
     secretaries = cur.fetchall()
 
-    # ================= STUDENTS COUNT =================
-
+    # STUDENTS COUNT
     cur.execute("SELECT COUNT(*) FROM students")
     students_count = cur.fetchone()["count"]
 
-    # ================= ENTRIES COUNT =================
-
+    # ENTRIES COUNT
     cur.execute("SELECT COUNT(*) FROM entries")
     entries_count = cur.fetchone()["count"]
 
-    # ================= LAST ENTRIES =================
-
+    # LAST ENTRIES
     cur.execute("""
-        SELECT *
-        FROM entries
-        ORDER BY created_at DESC
-        LIMIT 20
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    LIMIT 30
     """)
 
     entries = cur.fetchall()
@@ -373,8 +365,8 @@ def add_secretary():
     try:
 
         cur.execute("""
-            INSERT INTO users (username, password, role)
-            VALUES (%s, %s, %s)
+        INSERT INTO users (username, password, role)
+        VALUES (%s, %s, %s)
         """, (
             username,
             generate_password_hash(password),
@@ -405,10 +397,10 @@ def delete_secretary(user_id):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("""
-        DELETE FROM users
-        WHERE id=%s
-    """, (user_id,))
+    cur.execute(
+        "DELETE FROM users WHERE id=%s",
+        (user_id,)
+    )
 
     conn.commit()
 
@@ -437,8 +429,8 @@ def add_student():
     try:
 
         cur.execute("""
-            INSERT INTO students (barcode, full_name)
-            VALUES (%s, %s)
+        INSERT INTO students (barcode, full_name)
+        VALUES (%s, %s)
         """, (
             barcode,
             full_name
