@@ -56,7 +56,7 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
+        name TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role TEXT NOT NULL
     )
@@ -95,7 +95,7 @@ def init_db():
 
     # CREATE CHAIRMAN
     cur.execute(
-        "SELECT * FROM users WHERE username=%s",
+        "SELECT * FROM users WHERE name=%s",
         ("chairman",)
     )
 
@@ -104,7 +104,7 @@ def init_db():
     if not chairman:
 
         cur.execute("""
-        INSERT INTO users (username, password, role)
+        INSERT INTO users (name, password, role)
         VALUES (%s, %s, %s)
         """, (
             "chairman",
@@ -149,15 +149,15 @@ def role_required(role):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
+        name = request.form.get("name")
         password = request.form.get("password")
 
         conn = get_db()
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT * FROM users WHERE username=%s AND password=%s",
-            (username, password)
+            "SELECT * FROM users WHERE name=%s AND password=%s",
+            (name, password)
         )
 
         user = cur.fetchone()
@@ -166,7 +166,7 @@ def login():
         conn.close()
 
         if user:
-            session["user"] = username
+            session["user"] = name
             return redirect("/dashboard")
 
         return "Неверный логин или пароль", 400
@@ -307,7 +307,7 @@ def chairman():
     SELECT *
     FROM users
     WHERE role='secretary'
-    ORDER BY username
+    ORDER BY name
     """)
 
     secretaries = cur.fetchall()
@@ -350,7 +350,7 @@ def chairman():
 @role_required("chairman")
 def add_secretary():
 
-    username = request.form["username"]
+    name = request.form["name"]
     password = request.form["password"]
 
     conn = get_db()
@@ -359,10 +359,10 @@ def add_secretary():
     try:
 
         cur.execute("""
-        INSERT INTO users (username, password, role)
+        INSERT INTO users (name, password, role)
         VALUES (%s, %s, %s)
         """, (
-            username,
+            name,
             generate_password_hash(password),
             "secretary"
         ))
