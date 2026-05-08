@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
+from urllib.parse import urlparse
 import csv
 import os
 from io import BytesIO
@@ -53,9 +53,15 @@ limits = {
 # =====================================================
 
 def get_db():
+    result = urlparse(DATABASE_URL)
 
     conn = psycopg2.connect(
-        DATABASE_URL,
+        host=result.hostname,
+        port=result.port,
+        user=result.username,
+        password=result.password,
+        dbname=result.path[1:],
+        sslmode="require",
         cursor_factory=RealDictCursor
     )
 
