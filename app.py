@@ -24,7 +24,11 @@ UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
-
+conn = psycopg2.connect(
+    DATABASE_URL,
+    sslmode="require",
+    cursor_factory=RealDictCursor
+)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 print(DATABASE_URL)
