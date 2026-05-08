@@ -149,18 +149,16 @@ def role_required(role):
 
 @app.route("/", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
-
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username")
+        password = request.form.get("password")
 
         conn = get_db()
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT * FROM users WHERE username=%s",
-            (username,)
+            "SELECT * FROM users WHERE username=%s AND password=%s",
+            (username, password)
         )
 
         user = cur.fetchone()
@@ -168,17 +166,11 @@ def login():
         cur.close()
         conn.close()
 
-        if user and check_password_hash(user["password"], password):
-
-            session["user"] = user["username"]
-            session["role"] = user["role"]
-
-            if user["role"] == "chairman":
-                return redirect("/chairman")
-
+        if user:
+            session["user"] = username
             return redirect("/dashboard")
 
-        flash("Неверный логин или пароль")
+        return "Неверный логин или пароль", 400
 
     return render_template("login.html")
 
