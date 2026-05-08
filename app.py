@@ -1,74 +1,79 @@
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    session,
-    jsonify,
-    send_file
-)
+from flask import Flask, render_template, request, redirect, session, jsonify, send_file
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from functools import wraps
-from werkzeug.security import (
-    generate_password_hash,
-    check_password_hash
-)
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+import csv
+import os
+from io import BytesIO
 
 from openpyxl import Workbook
 
-import sqlite3
-import csv
-import io
-import os
-
-
-# =====================================
-# APP
-# =====================================
+# =====================================================
+# FLASK
+# =====================================================
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get(
-    "SECRET_KEY",
-    "fallback-secret"
-)
+app.secret_key = "super_secret_key"
+
 UPLOAD_FOLDER = "uploads"
+
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# =====================================
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# =====================================================
+# LIMITS
+# =====================================================
+
+limits = {
+    "Печать": 30,
+    "Копия": 30,
+    "Миллиметровка": 50,
+    "Карандаш": 1,
+    "Точилка / Ластик": 1,
+    "Линейка": 1,
+    "Корректор": 1,
+    "Тетрадь 48 листов": 1
+}
+
+# =====================================================
 # DATABASE
-# =====================================
+# =====================================================
 
 def get_db():
 
-    conn = sqlite3.connect("database.db")
-
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(
+        DATABASE_URL,
+        cursor_factory=RealDictCursor
+    )
 
     return conn
 
-
-# =====================================
+# =====================================================
 # INIT DB
-# =====================================
+# =====================================================
 
 def init_db():
 
     conn = get_db()
-
     cur = conn.cursor()
 
     # USERS
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
 
-        name TEXT UNIQUE,
+        name TEXT UNIQUE NOT NULL,
 
-        password TEXT,
+        password TEXT NOT NULL,
 
-        role TEXT
+        role TEXT NOT NULL
+
     )
     """)
 
@@ -78,7 +83,8 @@ def init_db():
 
         id TEXT PRIMARY KEY,
 
-        name TEXT
+        name TEXT NOT NULL
+
     )
     """)
 
@@ -86,7 +92,7 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS entries (
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
 
         student_id TEXT,
 
@@ -95,6 +101,7 @@ def init_db():
         secretary TEXT,
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
     )
     """)
 
@@ -102,217 +109,99 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS entry_items (
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
 
         entry_id INTEGER,
 
-        item TEXT,
+        item_name TEXT,
 
         quantity INTEGER
+
+    )
+    """)
+
+    # HISTORY
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS history (
+
+        id SERIAL PRIMARY KEY,
+
+        action TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+    # DUTY
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS duty_schedule (
+
+        day TEXT PRIMARY KEY,
+
+        secretary TEXT
+
     )
     """)
 
     conn.commit()
 
-    conn.close()
+    # ADMIN
+    cur.execute("""
+    SELECT * FROM users
+    WHERE role='chairman'
+    """)
 
+    chairman = cur.fetchone()
 
-# =====================================
-# LOAD USERS CSV
-# =====================================
+    if not chairman:
 
-def load_users_from_csv():
+        cur.execute("""
+        INSERT INTO users (
 
-    conn = get_db()
+            name,
+            password,
+            role
 
-    cur = conn.cursor()
+        )
+        VALUES (%s, %s, %s)
+        """, (
 
-    try:
+            "Председатель",
 
-        with open(
-            "users.csv",
-            encoding="utf-8"
-        ) as f:
+            generate_password_hash("admin123"),
 
-            reader = csv.DictReader(f)
+            "chairman"
 
-            for row in reader:
+        ))
 
-                # Проверяем существование
-                cur.execute("""
-                SELECT * FROM users
-                WHERE name=?
-                """, (row["name"],))
-
-                existing = cur.fetchone()
-
-                if not existing:
-
-                    hashed_password = generate_password_hash(
-                        row["password"]
-                    )
-
-                    cur.execute("""
-                    INSERT INTO users (
-                        name,
-                        password,
-                        role
-                    )
-                    VALUES (?, ?, ?)
-                    """, (
-                        row["name"],
-                        hashed_password,
-                        row["role"]
-                    ))
-
-    except:
-        pass
-
-    conn.commit()
+        conn.commit()
 
     conn.close()
 
-
-# =====================================
-# LOAD STUDENTS CSV
-# =====================================
-
-def load_students_from_csv():
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    try:
-
-        with open(
-            "students.csv",
-            encoding="utf-8"
-        ) as f:
-
-            reader = csv.DictReader(f)
-
-            for row in reader:
-
-                cur.execute("""
-                INSERT OR IGNORE INTO students (
-                    id,
-                    name
-                )
-                VALUES (?, ?)
-                """, (
-                    row["id"],
-                    row["name"]
-                ))
-
-    except:
-        pass
-
-    conn.commit()
-
-    conn.close()
-
-
-# =====================================
-# LIMITS
-# =====================================
-
-limits = {
-
-    "Печать": 30,
-
-    "Копия": 30,
-
-    "Миллиметровка": 50,
-
-    "Карандаш": 1,
-
-    "Ластик/Точилка": 1,
-
-    "Линейка": 1,
-
-    "Корректор": 1,
-
-    "Тетрадь 48 листов": 1
-}
-
-
-# =====================================
+# =====================================================
 # DECORATORS
-# =====================================
+# =====================================================
 
-def login_required(f):
+def chairman_required(func):
 
-    @wraps(f)
     def wrapper(*args, **kwargs):
 
         if "user" not in session:
             return redirect("/")
 
-        return f(*args, **kwargs)
-
-    return wrapper
-
-
-def chairman_required(f):
-
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-
-        if "user" not in session:
-            return redirect("/")
-
-        if session.get("role") != "chairman":
+        if session["role"] != "chairman":
             return redirect("/dashboard")
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    wrapper.__name__ = func.__name__
 
     return wrapper
 
-
-# =====================================
-# CALCULATE USAGE
-# =====================================
-
-def calculate_usage(student_id):
-
-    usage = {
-        item: 0 for item in limits
-    }
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT
-        item,
-        SUM(quantity)
-
-    FROM entry_items
-
-    JOIN entries
-    ON entries.id = entry_items.entry_id
-
-    WHERE entries.student_id = ?
-
-    GROUP BY item
-    """, (student_id,))
-
-    rows = cur.fetchall()
-
-    conn.close()
-
-    for row in rows:
-
-        usage[row[0]] = row[1]
-
-    return usage
-
-
-# =====================================
+# =====================================================
 # LOGIN
-# =====================================
+# =====================================================
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -320,44 +209,49 @@ def login():
     if request.method == "POST":
 
         name = request.form["name"]
-
         password = request.form["password"]
 
         conn = get_db()
-
         cur = conn.cursor()
 
         cur.execute("""
-        SELECT * FROM users
-        WHERE name=?
+        SELECT *
+        FROM users
+        WHERE name=%s
         """, (name,))
 
         user = cur.fetchone()
 
         conn.close()
 
-        if user and check_password_hash(
+        if not user:
+            return render_template(
+                "login.html",
+                error="Неверный логин"
+            )
+
+        if not check_password_hash(
             user["password"],
             password
         ):
+            return render_template(
+                "login.html",
+                error="Неверный пароль"
+            )
 
-            session["user"] = user["name"]
+        session["user"] = user["name"]
+        session["role"] = user["role"]
 
-            session["role"] = user["role"]
+        if user["role"] == "chairman":
+            return redirect("/chairman")
 
-            return redirect("/dashboard")
-
-        return render_template(
-            "login.html",
-            error="Неверный логин или пароль"
-        )
+        return redirect("/dashboard")
 
     return render_template("login.html")
 
-
-# =====================================
+# =====================================================
 # LOGOUT
-# =====================================
+# =====================================================
 
 @app.route("/logout")
 def logout():
@@ -366,93 +260,35 @@ def logout():
 
     return redirect("/")
 
-
-# =====================================
-# CHECK STUDENT AJAX
-# =====================================
-
-@app.route("/check_student", methods=["POST"])
-@login_required
-def check_student():
-
-    data = request.get_json()
-
-    student_id = data["id"]
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT * FROM students
-    WHERE id=?
-    """, (student_id,))
-
-    student = cur.fetchone()
-
-    conn.close()
-
-    if not student:
-
-        return jsonify({
-            "error": "Студент не найден"
-        })
-
-    usage = calculate_usage(student_id)
-
-    remaining = {}
-
-    for item in limits:
-
-        remaining[item] = (
-            limits[item] - usage.get(item, 0)
-        )
-
-    return jsonify({
-
-        "name": student["name"],
-
-        "remaining": remaining
-    })
-
-
-# =====================================
+# =====================================================
 # DASHBOARD
-# =====================================
+# =====================================================
 
-@app.route(
-    "/dashboard",
-    methods=["GET", "POST"]
-)
-@login_required
+@app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
 
-    if session.get("role") == "chairman":
-        return redirect("/chairman")
+    if "user" not in session:
+        return redirect("/")
 
     conn = get_db()
-
     cur = conn.cursor()
 
-    # ADD ENTRY
+    message = ""
+
     if request.method == "POST":
 
         student_id = request.form["barcode"]
 
         cur.execute("""
-        SELECT * FROM students
-        WHERE id=?
+        SELECT *
+        FROM students
+        WHERE id=%s
         """, (student_id,))
 
         student = cur.fetchone()
 
         if not student:
-
-            conn.close()
-
             return "Студент не найден"
-
-        usage = calculate_usage(student_id)
 
         quantities = {}
 
@@ -463,94 +299,104 @@ def dashboard():
             )
 
             if qty > 0:
-
-                if (
-                    usage[item] + qty
-                    > limits[item]
-                ):
-
-                    conn.close()
-
-                    return f"Превышен лимит: {item}"
-
                 quantities[item] = qty
 
-        # CREATE ENTRY
+        # LIMITS
+        for item, qty in quantities.items():
+
+            cur.execute("""
+            SELECT COALESCE(
+                SUM(entry_items.quantity),
+                0
+            ) AS total
+
+            FROM entry_items
+
+            JOIN entries
+            ON entries.id = entry_items.entry_id
+
+            WHERE entries.student_id=%s
+            AND entry_items.item_name=%s
+            """, (
+
+                student_id,
+                item
+
+            ))
+
+            used = cur.fetchone()["total"]
+
+            if used + qty > limits[item]:
+
+                conn.close()
+
+                return f"""
+                Превышен лимит:
+                {item}
+                """
+
+        # ENTRY
         cur.execute("""
         INSERT INTO entries (
 
             student_id,
-
             student_name,
-
             secretary
 
         )
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
+
+        RETURNING id
         """, (
 
-            student_id,
-
+            student["id"],
             student["name"],
-
             session["user"]
+
         ))
 
-        entry_id = cur.lastrowid
+        entry_id = cur.fetchone()["id"]
 
-        # ITEMS
         for item, qty in quantities.items():
 
             cur.execute("""
             INSERT INTO entry_items (
 
                 entry_id,
-
-                item,
-
+                item_name,
                 quantity
 
             )
-            VALUES (?, ?, ?)
+            VALUES (%s, %s, %s)
             """, (
 
                 entry_id,
-
                 item,
-
                 qty
+
             ))
+
+        cur.execute("""
+        INSERT INTO history (
+            action
+        )
+        VALUES (%s)
+        """, (
+
+            f"{session['user']} выдал канцелярию студенту {student['name']}",
+
+        ))
 
         conn.commit()
 
-        return redirect("/dashboard")
+        message = "Запись добавлена"
 
-    # HISTORY
+    # ENTRIES
     cur.execute("""
-    SELECT
-
-        e.id,
-
-        e.student_name,
-
-        e.student_id,
-
-        e.secretary,
-
-        e.created_at,
-
-        GROUP_CONCAT(
-            i.item || ' x' || i.quantity
-        )
-
-    FROM entries e
-
-    LEFT JOIN entry_items i
-    ON e.id = i.entry_id
-
-    GROUP BY e.id
-
-    ORDER BY e.id DESC
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    LIMIT 30
     """)
 
     entries = cur.fetchall()
@@ -561,87 +407,97 @@ def dashboard():
 
         "dashboard.html",
 
+        limits=limits,
+
         entries=entries,
 
-        limits=limits
+        message=message
+
     )
 
+# =====================================================
+# AJAX STUDENT
+# =====================================================
 
-# =====================================
-# DELETE ENTRY
-# =====================================
+@app.route("/check_student")
+def check_student():
 
-@app.route("/delete_entry/<int:id>")
-@login_required
-def delete_entry(id):
+    barcode = request.args.get("barcode")
 
     conn = get_db()
-
     cur = conn.cursor()
 
     cur.execute("""
-    DELETE FROM entry_items
-    WHERE entry_id=?
-    """, (id,))
+    SELECT *
+    FROM students
+    WHERE id=%s
+    """, (barcode,))
 
-    cur.execute("""
-    DELETE FROM entries
-    WHERE id=?
-    """, (id,))
-
-    conn.commit()
+    student = cur.fetchone()
 
     conn.close()
 
-    return redirect("/dashboard")
+    if not student:
+        return jsonify({
+            "found": False
+        })
 
+    return jsonify({
 
-# =====================================
+        "found": True,
+
+        "name": student["name"]
+
+    })
+
+# =====================================================
 # CHAIRMAN
-# =====================================
+# =====================================================
 
 @app.route("/chairman")
 @chairman_required
 def chairman():
 
     conn = get_db()
-
     cur = conn.cursor()
 
-    # KPI
+    # TOTAL ENTRIES
     cur.execute("""
-    SELECT COUNT(*)
+    SELECT COUNT(*) AS total
     FROM entries
     """)
 
-    total_entries = cur.fetchone()[0]
+    total_entries = cur.fetchone()["total"]
 
+    # TOTAL STUDENTS
     cur.execute("""
-    SELECT COUNT(DISTINCT student_id)
-    FROM entries
+    SELECT COUNT(*) AS total
+    FROM students
     """)
 
-    total_students = cur.fetchone()[0]
+    total_students = cur.fetchone()["total"]
 
-    cur.execute("""
-    SELECT SUM(quantity)
-    FROM entry_items
-    """)
-
-    total_items = cur.fetchone()[0] or 0
-
-    # ITEMS STATS
+    # ITEMS
     cur.execute("""
     SELECT
-        item,
-        SUM(quantity)
+
+        item_name,
+
+        SUM(quantity) AS total
 
     FROM entry_items
 
-    GROUP BY item
+    GROUP BY item_name
+
+    ORDER BY total DESC
     """)
 
     items = cur.fetchall()
+
+    total_items = sum(
+        item["total"]
+        for item in items
+    )
 
     conn.close()
 
@@ -656,182 +512,12 @@ def chairman():
         total_items=total_items,
 
         items=items
-    )
-
-
-# =====================================
-# STUDENTS PAGE
-# =====================================
-
-@app.route("/students")
-@chairman_required
-def students_page():
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT * FROM students
-    ORDER BY name
-    """)
-
-    students = cur.fetchall()
-
-    conn.close()
-
-    return render_template(
-        "students.html",
-        students=students
-    )
-
-
-# =====================================
-# ADD STUDENT
-# =====================================
-
-@app.route(
-    "/add_student",
-    methods=["POST"]
-)
-@chairman_required
-def add_student():
-
-    student_id = request.form["student_id"]
-
-    name = request.form["name"]
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    INSERT OR REPLACE INTO students (
-
-        id,
-
-        name
 
     )
-    VALUES (?, ?)
-    """, (
 
-        student_id,
-
-        name
-    ))
-
-    conn.commit()
-
-    conn.close()
-
-    return redirect("/students")
-
-
-# =====================================
-# DELETE STUDENT
-# =====================================
-
-@app.route("/delete_student/<student_id>")
-@chairman_required
-def delete_student(student_id):
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    DELETE FROM students
-    WHERE id=?
-    """, (student_id,))
-
-    conn.commit()
-
-    conn.close()
-
-    return redirect("/students")
-
-
-# =====================================
-# EXPORT EXCEL
-# =====================================
-
-@app.route("/export_excel")
-@chairman_required
-def export_excel():
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT
-
-        e.student_name,
-
-        e.student_id,
-
-        e.secretary,
-
-        e.created_at,
-
-        GROUP_CONCAT(
-            i.item || ' x' || i.quantity
-        )
-
-    FROM entries e
-
-    LEFT JOIN entry_items i
-    ON e.id = i.entry_id
-
-    GROUP BY e.id
-    """)
-
-    data = cur.fetchall()
-
-    conn.close()
-
-    wb = Workbook()
-
-    ws = wb.active
-
-    ws.title = "Отчёт"
-
-    ws.append([
-
-        "Студент",
-
-        "ID",
-
-        "Секретарь",
-
-        "Дата",
-
-        "Выдано"
-    ])
-
-    for row in data:
-
-        ws.append(row)
-
-    stream = io.BytesIO()
-
-    wb.save(stream)
-
-    stream.seek(0)
-
-    return send_file(
-
-        stream,
-
-        download_name="report.xlsx",
-
-        as_attachment=True
-    )
-
-# =====================================
-# СЕКРЕТАРИ (CRUD)
-# =====================================
+# =====================================================
+# SECRETARIES
+# =====================================================
 
 @app.route("/secretaries")
 @chairman_required
@@ -841,7 +527,7 @@ def secretaries():
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT id, name
+    SELECT *
     FROM users
     WHERE role='secretary'
     ORDER BY name
@@ -849,14 +535,39 @@ def secretaries():
 
     users = cur.fetchall()
 
+    cur.execute("""
+    SELECT *
+    FROM duty_schedule
+    """)
+
+    schedule = cur.fetchall()
+
     conn.close()
 
+    days = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница"
+    ]
+
     return render_template(
+
         "secretaries.html",
-        users=users
+
+        users=users,
+
+        schedule=schedule,
+
+        days=days
+
     )
 
-# ДОБАВИТЬ
+# =====================================================
+# ADD SECRETARY
+# =====================================================
+
 @app.route("/add_secretary", methods=["POST"])
 @chairman_required
 def add_secretary():
@@ -864,16 +575,29 @@ def add_secretary():
     name = request.form["name"]
     password = request.form["password"]
 
-    hashed = generate_password_hash(password)
-
     conn = get_db()
     cur = conn.cursor()
 
     try:
+
         cur.execute("""
-        INSERT INTO users (name, password, role)
-        VALUES (?, ?, 'secretary')
-        """, (name, hashed))
+        INSERT INTO users (
+
+            name,
+            password,
+            role
+
+        )
+        VALUES (%s, %s, %s)
+        """, (
+
+            name,
+
+            generate_password_hash(password),
+
+            "secretary"
+
+        ))
 
         conn.commit()
 
@@ -885,7 +609,10 @@ def add_secretary():
 
     return redirect("/secretaries")
 
-# УДАЛИТЬ
+# =====================================================
+# DELETE SECRETARY
+# =====================================================
+
 @app.route("/delete_secretary/<int:user_id>")
 @chairman_required
 def delete_secretary(user_id):
@@ -895,172 +622,271 @@ def delete_secretary(user_id):
 
     cur.execute("""
     DELETE FROM users
-    WHERE id=? AND role='secretary'
+    WHERE id=%s
     """, (user_id,))
 
     conn.commit()
+
     conn.close()
 
     return redirect("/secretaries")
 
-# СМЕНА ПАРОЛЯ
+# =====================================================
+# CHANGE PASSWORD
+# =====================================================
+
 @app.route("/change_password/<int:user_id>", methods=["POST"])
 @chairman_required
 def change_password(user_id):
 
-    new_password = request.form["password"]
-
-    hashed = generate_password_hash(new_password)
+    password = request.form["password"]
 
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
     UPDATE users
-    SET password=?
-    WHERE id=? AND role='secretary'
-    """, (hashed, user_id))
+    SET password=%s
+    WHERE id=%s
+    """, (
+
+        generate_password_hash(password),
+
+        user_id
+
+    ))
 
     conn.commit()
+
     conn.close()
 
     return redirect("/secretaries")
-# =====================================
-# START
-# =====================================
 
-# =====================================
-# IMPORT STUDENTS CSV
-# =====================================
+# =====================================================
+# UPDATE DUTY
+# =====================================================
+
+@app.route("/update_duty", methods=["POST"])
+@chairman_required
+def update_duty():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    days = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница"
+    ]
+
+    for day in days:
+
+        secretary = request.form.get(day)
+
+        cur.execute("""
+        INSERT INTO duty_schedule (
+
+            day,
+            secretary
+
+        )
+        VALUES (%s, %s)
+
+        ON CONFLICT (day)
+
+        DO UPDATE SET
+        secretary = EXCLUDED.secretary
+        """, (
+
+            day,
+            secretary
+
+        ))
+
+    conn.commit()
+
+    conn.close()
+
+    return redirect("/secretaries")
+
+# =====================================================
+# IMPORT CSV
+# =====================================================
 
 @app.route("/import_students", methods=["POST"])
 @chairman_required
 def import_students():
 
-    try:
+    file = request.files["file"]
 
-        if "file" not in request.files:
-            return "Файл не найден"
+    content = file.read().decode("utf-8-sig")
 
-        file = request.files["file"]
+    lines = content.splitlines()
 
-        if file.filename == "":
-            return "Файл не выбран"
+    delimiter = ","
 
-        conn = get_db()
-        cur = conn.cursor()
+    if ";" in lines[0]:
+        delimiter = ";"
 
-        # ОЧИЩАЕМ СТАРЫХ СТУДЕНТОВ
+    reader = csv.DictReader(
+        lines,
+        delimiter=delimiter
+    )
+
+    columns = reader.fieldnames
+
+    id_column = None
+    name_column = None
+
+    for col in columns:
+
+        low = col.lower()
+
+        if (
+            "id" in low
+            or "barcode" in low
+            or "баркод" in low
+        ):
+            id_column = col
+
+        if (
+            "фио" in low
+            or "name" in low
+            or "фам" in low
+        ):
+            name_column = col
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    DELETE FROM students
+    """)
+
+    imported = 0
+
+    for row in reader:
+
+        student_id = row[id_column].strip()
+
+        name = row[name_column].strip()
+
+        if not student_id or not name:
+            continue
+
         cur.execute("""
-        DELETE FROM students
-        """)
+        INSERT INTO students (
 
-        imported = 0
+            id,
+            name
 
-        # UTF-8 + BOM FIX
-        content = file.read().decode(
-            "utf-8-sig"
         )
+        VALUES (%s, %s)
+        """, (
 
-        lines = content.splitlines()
+            student_id,
+            name
 
-        # АВТООПРЕДЕЛЕНИЕ РАЗДЕЛИТЕЛЯ
-        delimiter = ","
+        ))
 
-        if ";" in lines[0]:
-            delimiter = ";"
+        imported += 1
 
-        reader = csv.DictReader(
-            lines,
-            delimiter=delimiter
-        )
+    conn.commit()
 
-        # ИЩЕМ КОЛОНКИ
-        columns = reader.fieldnames
+    conn.close()
 
-        id_column = None
-        name_column = None
+    return f"""
+    Импортировано:
+    {imported}
 
-        for col in columns:
+    <br><br>
 
-            low = col.lower()
+    <a href='/chairman'>
+        Назад
+    </a>
+    """
 
-            if (
-                "id" in low
-                or "barcode" in low
-                or "баркод" in low
-            ):
-                id_column = col
+# =====================================================
+# EXPORT EXCEL
+# =====================================================
 
-            if (
-                "name" in low
-                or "фио" in low
-                or "фам" in low
-            ):
-                name_column = col
+@app.route("/export_excel")
+@chairman_required
+def export_excel():
 
-        if not id_column or not name_column:
+    conn = get_db()
+    cur = conn.cursor()
 
-            return f"""
-            Не найдены колонки.
+    cur.execute("""
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    """)
 
-            Найдены:
-            {columns}
-            """
+    entries = cur.fetchall()
 
-        for row in reader:
+    wb = Workbook()
 
-            student_id = row[id_column].strip()
+    ws = wb.active
 
-            name = row[name_column].strip()
+    ws.title = "Отчет"
 
-            if not student_id or not name:
-                continue
+    ws.append([
+        "Студент",
+        "ID",
+        "Секретарь",
+        "Дата"
+    ])
 
-            cur.execute("""
-            INSERT INTO students (
-                id,
-                name
-            )
-            VALUES (?, ?)
-            """, (
-                student_id,
-                name
-            ))
+    for entry in entries:
 
-            imported += 1
+        ws.append([
 
-        conn.commit()
-        conn.close()
+            entry["student_name"],
 
-        return f"""
-        Импортировано студентов: {imported}
+            entry["student_id"],
 
-        
+            entry["secretary"],
 
-        <a href="/chairman">
-            Назад
-        </a>
+            str(entry["created_at"])
+
+        ])
+
+    file = BytesIO()
+
+    wb.save(file)
+
+    file.seek(0)
+
+    conn.close()
+
+    return send_file(
+
+        file,
+
+        as_attachment=True,
+
+        download_name="report.xlsx",
+
+        mimetype="""
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
         """
 
-    except Exception as e:
+    )
 
-        return f"""
-        Ошибка импорта:
-
-        
-
-        {str(e)}
-        """
-
-
+# =====================================================
+# START
+# =====================================================
 
 if __name__ == "__main__":
 
+    os.makedirs(
+        "uploads",
+        exist_ok=True
+    )
+
     init_db()
 
-    load_users_from_csv()
-
-    load_students_from_csv()
-
-    app.run()
+    app.run(debug=True)
