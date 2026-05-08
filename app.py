@@ -25,13 +25,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 conn = psycopg2.connect(
-    DATABASE_URL,
+    aws-0-eu-west-1.pooler.supabase.com,
     sslmode="require",
     cursor_factory=RealDictCursor
 )
-DATABASE_URL = os.environ.get("DATABASE_URL")
+aws-0-eu-west-1.pooler.supabase.com = os.environ.get("aws-0-eu-west-1.pooler.supabase.com")
 
-print(DATABASE_URL)
+print(aws-0-eu-west-1.pooler.supabase.com)
 
 # =====================================================
 # LIMITS
@@ -53,7 +53,7 @@ limits = {
 # =====================================================
 
 def get_db():
-    result = urlparse(DATABASE_URL)
+    result = urlparse(aws-0-eu-west-1.pooler.supabase.com)
 
     conn = psycopg2.connect(
         host=result.hostname,
