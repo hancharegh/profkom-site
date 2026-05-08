@@ -1,150 +1,120 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
 
-<meta charset="UTF-8">
+    <style>
 
-<title>Профком</title>
+        body{
+            margin:0;
+            padding:0;
+            font-family: Arial, sans-serif;
+            background:#f4f4f4;
 
-<link rel="icon" href="/static/favicon.ico">
+            display:flex;
+            justify-content:center;
+            align-items:center;
 
-<style>
+            height:100vh;
+        }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+        .card{
+            background:white;
+            padding:40px;
+            border-radius:15px;
+            width:350px;
 
-body{
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:#f3f4f6;
-    font-family:Arial;
-}
+            box-shadow:0 0 15px rgba(0,0,0,0.1);
+        }
 
-.card{
-    width:360px;
-    background:white;
-    padding:40px;
-    border-radius:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
-}
+        h1{
+            text-align:center;
+            margin-bottom:25px;
+        }
 
-.logo{
-    text-align:center;
-    font-size:36px;
-    font-weight:bold;
-    margin-bottom:30px;
-}
+        input{
+            width:100%;
+            padding:12px;
+            margin-bottom:15px;
 
-.subtitle{
-    text-align:center;
-    color:#666;
-    margin-bottom:25px;
-}
+            border:1px solid #ccc;
+            border-radius:8px;
 
-input{
-    width:100%;
-    padding:14px;
-    border:1px solid #ddd;
-    border-radius:12px;
-    margin-bottom:15px;
-    font-size:15px;
-}
+            box-sizing:border-box;
+        }
 
-input:focus{
-    outline:none;
-    border-color:#2563eb;
-}
+        button{
+            width:100%;
+            padding:12px;
 
-button{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    background:#2563eb;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
-    transition:0.2s;
-}
+            border:none;
+            border-radius:8px;
 
-button:hover{
-    background:#1d4ed8;
-}
+            background:#2563eb;
+            color:white;
 
-.error{
-    color:#dc2626;
-    text-align:center;
-    margin-bottom:15px;
-}
+            font-size:16px;
+            cursor:pointer;
+        }
 
-.footer{
-    text-align:center;
-    margin-top:20px;
-    color:#888;
-    font-size:13px;
-}
+        button:hover{
+            background:#1d4ed8;
+        }
 
-</style>
+        .flash{
+            background:#fee2e2;
+            color:#991b1b;
 
+            padding:10px;
+            border-radius:8px;
+
+            margin-bottom:15px;
+            text-align:center;
+        }
+
+    </style>
 </head>
-
 <body>
 
 <div class="card">
 
-<div class="logo">
-Профком
-</div>
+    <h1>Вход</h1>
 
-<div class="subtitle">
-Для тигров
-</div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="flash">
+                    {{ msg }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-{% if error %}
+    <form method="POST">
 
-<div class="error">
-{{ error }}
-</div>
+        <input
+            type="text"
+            name="name"
+            placeholder="Логин"
+            required
+        >
 
-{% endif %}
+        <input
+            type="password"
+            name="password"
+            placeholder="Пароль"
+            required
+        >
 
-<form method="POST">
+        <button type="submit">
+            Войти
+        </button>
 
-<input
-type="text"
-name="name"
-placeholder="Логин"
-required
->
-
-<input
-type="password"
-name="password"
-placeholder="Пароль"
-required
->
-
-<button type="submit">
-Войти
-</button>
-
-</form>
-
-<div class="footer">
-Для профкома студентов
-</div>
+    </form>
 
 </div>
 
 </body>
 </html>
-
-
-
-
