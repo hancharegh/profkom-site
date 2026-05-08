@@ -30,15 +30,18 @@ app.secret_key = "super_secret_key_2026"
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
-def get_db():
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-    conn = psycopg2.connect(
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+def get_db():
+    return psycopg2.connect(
         DATABASE_URL,
-        sslmode="require",
         cursor_factory=RealDictCursor
     )
-
-    return conn
 
 
 # =====================================================
