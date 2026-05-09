@@ -187,46 +187,69 @@ th{
 <div class="card">
     <h2>Расписание секретарей</h2>
 
-    <form method="POST" action="/save_schedule">
+    <form action="/save_schedule" method="POST">
 
-        {% set days = [
-            "Понедельник",
-            "Вторник",
-            "Среда",
-            "Четверг",
-            "Пятница"
-        ] %}
+    <label>Понедельник</label>
+    <select name="monday">
+        <option value="">---</option>
 
-        {% for day in days %}
-
-        <label>{{ day }}</label>
-
-        <select name="{{ day }}" required>
-
-            <option value="">Выберите секретаря</option>
-
-            {% for secretary in secretaries %}
-
-            <option
-                value="{{ secretary.name }}"
-                {% if schedule.get(day) == secretary.name %}
-                selected
-                {% endif %}
-            >
-                {{ secretary.name }}
-            </option>
-
-            {% endfor %}
-
-        </select>
-
+        {% for sec in secretaries %}
+        <option value="{{ sec.name }}">
+            {{ sec.name }}
+        </option>
         {% endfor %}
+    </select>
 
-        <button type="submit">
-            Сохранить расписание
-        </button>
+    <label>Вторник</label>
+    <select name="tuesday">
+        <option value="">---</option>
 
-    </form>
+        {% for sec in secretaries %}
+        <option value="{{ sec.name }}">
+            {{ sec.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label>Среда</label>
+    <select name="wednesday">
+        <option value="">---</option>
+
+        {% for sec in secretaries %}
+        <option value="{{ sec.name }}">
+            {{ sec.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label>Четверг</label>
+    <select name="thursday">
+        <option value="">---</option>
+
+        {% for sec in secretaries %}
+        <option value="{{ sec.name }}">
+            {{ sec.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label>Пятница</label>
+    <select name="friday">
+        <option value="">---</option>
+
+        {% for sec in secretaries %}
+        <option value="{{ sec.name }}">
+            {{ sec.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">
+        Сохранить расписание
+    </button>
+
+</form>
+    
 </div>
 <h2>Текущее расписание</h2>
 
