@@ -1,382 +1,359 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Панель председателя</title>
+<meta charset="UTF-8">
+<title>Председатель</title>
 
-    <style>
+<style>
 
-        body{
-            font-family:Arial;
-            background:#f3f4f6;
-            margin:0;
-            padding:30px;
-        }
+body{
+    font-family:Arial;
+    background:#f3f4f6;
+    padding:30px;
+}
 
-        h1{
-            color:#2563eb;
-        }
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
 
-        .top{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
+.card{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.08);
+}
 
-        .logout{
-            background:#ef4444;
-            color:white;
-            padding:10px 15px;
-            text-decoration:none;
-            border-radius:10px;
-        }
+input,select{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
 
-        .grid{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:20px;
-            margin-top:20px;
-        }
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    margin-top:10px;
+    cursor:pointer;
+}
 
-        .card{
-            background:white;
-            padding:20px;
-            border-radius:20px;
-            box-shadow:0 0 10px rgba(0,0,0,0.08);
-        }
+table{
+    width:100%;
+    border-collapse:collapse;
+}
 
-        input{
-            width:100%;
-            padding:10px;
-            margin-top:10px;
-            border-radius:10px;
-            border:1px solid #ccc;
-            box-sizing:border-box;
-        }
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+}
 
-        button{
-            margin-top:10px;
-            width:100%;
-            padding:12px;
-            border:none;
-            border-radius:10px;
-            background:#2563eb;
-            color:white;
-            cursor:pointer;
-            font-size:15px;
-        }
+th{
+    background:#2563eb;
+    color:white;
+}
 
-        table{
-            width:100%;
-            border-collapse:collapse;
-            margin-top:15px;
-        }
+.danger{
+    background:#ef4444;
+    color:white;
+    padding:8px 12px;
+    border-radius:10px;
+    text-decoration:none;
+}
 
-        th, td{
-            border:1px solid #ddd;
-            padding:10px;
-            text-align:left;
-        }
+.stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-bottom:20px;
+}
 
-        th{
-            background:#2563eb;
-            color:white;
-        }
+.stat{
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+}
 
-        .danger{
-            background:#ef4444;
-            padding:8px 12px;
-            border-radius:8px;
-            color:white;
-            text-decoration:none;
-        }
+.flash{
+    background:#dcfce7;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
 
-        .stats{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:20px;
-            margin-top:20px;
-        }
-
-        .stat{
-            background:white;
-            border-radius:20px;
-            padding:25px;
-            text-align:center;
-            font-size:22px;
-            font-weight:bold;
-            box-shadow:0 0 10px rgba(0,0,0,0.08);
-        }
-
-        .flash{
-            background:#dcfce7;
-            padding:15px;
-            border-radius:10px;
-            margin-top:20px;
-            color:#166534;
-        }
-
-    </style>
+</style>
 
 </head>
 <body>
 
-<div class="top">
+<h1>Панель председателя</h1>
 
-    <h1>Панель председателя</h1>
-
-    <a class="logout" href="/logout">
-        Выйти
-    </a>
-
-</div>
+<a href="/logout">Выйти</a>
 
 {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            <div class="flash">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
+{% if messages %}
+{% for message in messages %}
+<div class="flash">
+{{ message }}
+</div>
+{% endfor %}
+{% endif %}
 {% endwith %}
 
 <div class="stats">
 
-    <div class="stat">
-        Студентов<br>
-        {{ students_count }}
-    </div>
+<div class="stat">
+Студентов<br>
+{{ students_count }}
+</div>
 
-    <div class="stat">
-        Записей<br>
-        {{ entries_count }}
-    </div>
+<div class="stat">
+Записей<br>
+{{ entries_count }}
+</div>
 
 </div>
 
 <div class="grid">
 
-    <div class="card">
+<div class="card">
 
-        <h2>Добавить секретаря</h2>
+<h2>Добавить секретаря</h2>
 
-        <form method="POST" action="/add_secretary">
+<form method="POST" action="/add_secretary">
 
-            <input
-                type="text"
-                name="name"
-                placeholder="Имя"
-                required
-            >
+<input type="text" name="name" placeholder="Имя" required>
 
-            <input
-                type="password"
-                name="password"
-                placeholder="Пароль"
-                required
-            >
+<input type="password" name="password" placeholder="Пароль" required>
 
-            <button type="submit">
-                Добавить
-            </button>
+<button type="submit">
+Добавить
+</button>
 
-        </form>
-
-    </div>
-
-    <div class="card">
-
-        <h2>Добавить студента</h2>
-
-        <form method="POST" action="/add_student">
-
-            <input
-                type="text"
-                name="barcode"
-                placeholder="Баркод"
-                required
-            >
-
-            <input
-                type="text"
-                name="full_name"
-                placeholder="ФИО"
-                required
-            >
-
-            <button type="submit">
-                Добавить
-            </button>
-
-        </form>
-
-    </div>
+</form>
 
 </div>
 
-<div class="grid">
+<div class="card">
 
-    <div class="card">
+<h2>Добавить студента</h2>
 
-        <h2>Загрузка студентов файлом</h2>
+<form method="POST" action="/add_student">
 
-        <form
-            method="POST"
-            action="/upload_students"
-            enctype="multipart/form-data"
-        >
+<input type="text" name="barcode" placeholder="Баркод" required>
 
-            <input
-                type="file"
-                name="file"
-                required
-            >
+<input type="text" name="full_name" placeholder="ФИО" required>
 
-            <button type="submit">
-                Загрузить Excel / CSV
-            </button>
+<button type="submit">
+Добавить
+</button>
 
-        </form>
-
-    </div>
-
-    <div class="card">
-
-        <h2>Выгрузка отчёта</h2>
-
-        <a href="/export_excel">
-            <button>
-                Скачать Excel
-            </button>
-        </a>
-
-    </div>
+</form>
 
 </div>
 
-<div class="card" style="margin-top:20px;">
+</div>
 
-    <h2>Расписание секретарей</h2>
+<div class="card">
 
-    <form method="POST" action="/add_schedule">
+<h2>Расписание</h2>
 
-        <input
-            type="text"
-            name="secretary_name"
-            placeholder="Имя секретаря"
-            required
-        >
+<form method="POST" action="/save_schedule">
 
-        <input
-            type="date"
-            name="work_date"
-            required
-        >
+<label>Понедельник</label>
+<select name="monday">
 
-        <input
-            type="time"
-            name="start_time"
-            required
-        >
+{% for secretary in secretaries %}
+<option
+value="{{ secretary.name }}"
+{% if schedule.monday == secretary.name %}selected{% endif %}
+>
+{{ secretary.name }}
+</option>
+{% endfor %}
 
-        <input
-            type="time"
-            name="end_time"
-            required
-        >
+</select>
 
-        <button type="submit">
-            Добавить расписание
-        </button>
+<label>Вторник</label>
+<select name="tuesday">
 
-    </form>
+{% for secretary in secretaries %}
+<option
+value="{{ secretary.name }}"
+{% if schedule.tuesday == secretary.name %}selected{% endif %}
+>
+{{ secretary.name }}
+</option>
+{% endfor %}
 
-    <table>
+</select>
 
-        <tr>
-            <th>Секретарь</th>
-            <th>Дата</th>
-            <th>Начало</th>
-            <th>Конец</th>
-        </tr>
+<label>Среда</label>
+<select name="wednesday">
 
-        {% for s in schedules %}
-        <tr>
-            <td>{{ s.secretary_name }}</td>
-            <td>{{ s.work_date }}</td>
-            <td>{{ s.start_time }}</td>
-            <td>{{ s.end_time }}</td>
-        </tr>
-        {% endfor %}
+{% for secretary in secretaries %}
+<option
+value="{{ secretary.name }}"
+{% if schedule.wednesday == secretary.name %}selected{% endif %}
+>
+{{ secretary.name }}
+</option>
+{% endfor %}
 
-    </table>
+</select>
+
+<label>Четверг</label>
+<select name="thursday">
+
+{% for secretary in secretaries %}
+<option
+value="{{ secretary.name }}"
+{% if schedule.thursday == secretary.name %}selected{% endif %}
+>
+{{ secretary.name }}
+</option>
+{% endfor %}
+
+</select>
+
+<label>Пятница</label>
+<select name="friday">
+
+{% for secretary in secretaries %}
+<option
+value="{{ secretary.name }}"
+{% if schedule.friday == secretary.name %}selected{% endif %}
+>
+{{ secretary.name }}
+</option>
+{% endfor %}
+
+</select>
+
+<button type="submit">
+Сохранить расписание
+</button>
+
+</form>
 
 </div>
 
-<div class="card" style="margin-top:20px;">
+<div class="card">
 
-    <h2>Секретари</h2>
+<h2>Секретари</h2>
 
-    <table>
+<table>
 
-        <tr>
-            <th>Имя</th>
-            <th>Удаление</th>
-        </tr>
+<tr>
+<th>Имя</th>
+<th>Удалить</th>
+</tr>
 
-        {% for secretary in secretaries %}
-        <tr>
+{% for secretary in secretaries %}
+<tr>
 
-            <td>
-                {{ secretary.name }}
-            </td>
+<td>{{ secretary.name }}</td>
 
-            <td>
+<td>
+<a
+class="danger"
+href="/delete_secretary/{{ secretary.id }}"
+>
+Удалить
+</a>
+</td>
 
-                <a
-                    class="danger"
-                    href="/delete_secretary/{{ secretary.id }}"
-                >
-                    Удалить
-                </a>
+</tr>
+{% endfor %}
 
-            </td>
-
-        </tr>
-        {% endfor %}
-
-    </table>
+</table>
 
 </div>
 
-<div class="card" style="margin-top:20px;">
+<div class="card">
 
-    <h2>Последние записи</h2>
+<h2>Студенты</h2>
 
-    <table>
+<table>
 
-        <tr>
-            <th>Студент</th>
-            <th>Секретарь</th>
-            <th>Печать</th>
-            <th>Копии</th>
-            <th>Дата</th>
-        </tr>
+<tr>
+<th>ФИО</th>
+<th>Баркод</th>
+<th>Удалить</th>
+</tr>
 
-        {% for entry in entries %}
-        <tr>
+{% for student in students %}
+<tr>
 
-            <td>{{ entry.student_name }}</td>
-            <td>{{ entry.secretary }}</td>
-            <td>{{ entry.print_count }}</td>
-            <td>{{ entry.copy_count }}</td>
-            <td>{{ entry.created_at }}</td>
+<td>{{ student.full_name }}</td>
+<td>{{ student.barcode }}</td>
 
-        </tr>
-        {% endfor %}
+<td>
+<a
+class="danger"
+href="/delete_student/{{ student.id }}"
+>
+Удалить
+</a>
+</td>
 
-    </table>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h2>Excel отчёт</h2>
+
+<a href="/export_excel">
+<button>
+Скачать Excel
+</button>
+</a>
+
+</div>
+
+<div class="card">
+
+<h2>Последние записи</h2>
+
+<table>
+
+<tr>
+<th>Студент</th>
+<th>Секретарь</th>
+<th>Печать</th>
+<th>Копии</th>
+<th>Дата</th>
+</tr>
+
+{% for entry in entries %}
+<tr>
+
+<td>{{ entry.student_name }}</td>
+<td>{{ entry.secretary }}</td>
+<td>{{ entry.print_count }}</td>
+<td>{{ entry.copy_count }}</td>
+<td>{{ entry.created_at }}</td>
+
+</tr>
+{% endfor %}
+
+</table>
 
 </div>
 
