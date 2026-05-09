@@ -1,193 +1,194 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель секретаря</title>
+<meta charset="UTF-8">
+<title>Панель секретаря</title>
 
-    <style>
+<style>
 
-        body{
-            margin:0;
-            padding:20px;
-            font-family:Arial,sans-serif;
-            background:#f4f4f4;
-        }
+body{
+    font-family:Arial;
+    background:#f3f4f6;
+    padding:30px;
+}
 
-        .container{
-            max-width:1200px;
-            margin:auto;
-        }
+.card{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.08);
+}
 
-        .top{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
+input{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
 
-            margin-bottom:20px;
-        }
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    margin-top:10px;
+    cursor:pointer;
+}
 
-        .card{
-            background:white;
-            padding:20px;
-            border-radius:15px;
-            box-shadow:0 0 10px rgba(0,0,0,0.08);
+table{
+    width:100%;
+    border-collapse:collapse;
+}
 
-            margin-bottom:20px;
-        }
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+}
 
-        input{
-            width:100%;
-            padding:10px;
-            margin-bottom:12px;
+th{
+    background:#2563eb;
+    color:white;
+}
 
-            border:1px solid #ccc;
-            border-radius:8px;
+.flash{
+    background:#dcfce7;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
 
-            box-sizing:border-box;
-        }
+</style>
 
-        button{
-            padding:12px 18px;
-
-            border:none;
-            border-radius:8px;
-
-            background:#2563eb;
-            color:white;
-
-            cursor:pointer;
-        }
-
-        button:hover{
-            background:#1d4ed8;
-        }
-
-        table{
-            width:100%;
-            border-collapse:collapse;
-            background:white;
-        }
-
-        th, td{
-            padding:12px;
-            border-bottom:1px solid #ddd;
-            text-align:left;
-        }
-
-        th{
-            background:#2563eb;
-            color:white;
-        }
-
-        .flash{
-            background:#dcfce7;
-            color:#166534;
-
-            padding:12px;
-            border-radius:8px;
-
-            margin-bottom:15px;
-        }
-
-        .logout{
-            text-decoration:none;
-            color:white;
-            background:#dc2626;
-
-            padding:10px 16px;
-            border-radius:8px;
-        }
-
-        .logout:hover{
-            background:#b91c1c;
-        }
-
-    </style>
 </head>
 <body>
 
-<div class="container">
+<h1>Панель секретаря</h1>
 
-    <div class="top">
+<a href="/logout">Выйти</a>
 
-        <h1>Панель секретаря</h1>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+<div class="flash">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
-        <a href="/logout" class="logout">
-            Выйти
-        </a>
+<div class="card">
 
-    </div>
+<h2>Проверка лимитов</h2>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for msg in messages %}
-                <div class="flash">
-                    {{ msg }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+<form method="GET">
 
-    <div class="card">
+<input
+type="text"
+name="barcode"
+placeholder="Введите баркод"
+required
+>
 
-        <form method="POST">
+<button type="submit">
+Проверить
+</button>
 
-            <input
-                type="text"
-                name="barcode"
-                placeholder="Баркод студента"
-                required
-            >
+</form>
 
-            <input type="number" name="print_count" placeholder="Печать">
-            <input type="number" name="copy_count" placeholder="Копии">
-            <input type="number" name="ruler_count" placeholder="Линейки">
-            <input type="number" name="notebook_count" placeholder="Тетради">
-            <input type="number" name="corrector_count" placeholder="Корректоры">
-            <input type="number" name="pencil_count" placeholder="Карандаши">
-            <input type="number" name="eraser_sharpener_count" placeholder="Ластики/точилки">
-            <input type="number" name="millimeter_count" placeholder="Миллиметровка">
+{% if student_info %}
 
-            <button type="submit">
-                Добавить запись
-            </button>
+<hr>
 
-        </form>
+<h3>{{ student_info.name }}</h3>
 
-    </div>
+<p>
+Печать использовано:
+<b>{{ student_info.prints_used }}</b>
+</p>
 
-    <div class="card">
+<p>
+Печать осталось:
+<b>{{ student_info.prints_left }}</b>
+</p>
 
-        <h2>Последние записи</h2>
+<p>
+Копий использовано:
+<b>{{ student_info.copies_used }}</b>
+</p>
 
-        <table>
+<p>
+Копий осталось:
+<b>{{ student_info.copies_left }}</b>
+</p>
 
-            <tr>
-                <th>Студент</th>
-                <th>Секретарь</th>
-                <th>Печать</th>
-                <th>Копии</th>
-                <th>Дата</th>
-            </tr>
+{% endif %}
 
-            {% for entry in entries %}
+</div>
 
-            <tr>
+<div class="card">
 
-                <td>{{ entry.student_name }}</td>
-                <td>{{ entry.secretary }}</td>
-                <td>{{ entry.print_count }}</td>
-                <td>{{ entry.copy_count }}</td>
-                <td>{{ entry.created_at }}</td>
+<h2>Добавить запись</h2>
 
-            </tr>
+<form method="POST">
 
-            {% endfor %}
+<input type="text" name="barcode" placeholder="Баркод" required>
 
-        </table>
+<input type="number" name="print_count" placeholder="Печать">
 
-    </div>
+<input type="number" name="copy_count" placeholder="Копии">
+
+<input type="number" name="ruler_count" placeholder="Линейки">
+
+<input type="number" name="notebook_count" placeholder="Тетради">
+
+<input type="number" name="corrector_count" placeholder="Корректоры">
+
+<input type="number" name="pencil_count" placeholder="Карандаши">
+
+<input type="number" name="eraser_sharpener_count" placeholder="Ластики/точилки">
+
+<input type="number" name="millimeter_count" placeholder="Миллиметровка">
+
+<button type="submit">
+Сохранить
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h2>Последние записи</h2>
+
+<table>
+
+<tr>
+<th>Студент</th>
+<th>Секретарь</th>
+<th>Печать</th>
+<th>Копии</th>
+<th>Дата</th>
+</tr>
+
+{% for entry in entries %}
+<tr>
+
+<td>{{ entry.student_name }}</td>
+<td>{{ entry.secretary }}</td>
+<td>{{ entry.print_count }}</td>
+<td>{{ entry.copy_count }}</td>
+<td>{{ entry.created_at }}</td>
+
+</tr>
+{% endfor %}
+
+</table>
 
 </div>
 
