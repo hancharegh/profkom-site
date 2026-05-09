@@ -107,12 +107,12 @@ CREATE TABLE IF NOT EXISTS schedule (
 )
 """)
 
-    cur.execute("SELECT * FROM schedules")
+    cur.execute("SELECT * FROM schedule")
 
     if not cur.fetchone():
 
         cur.execute("""
-        INSERT INTO schedules (
+        INSERT INTO schedule (
             monday,
             tuesday,
             wednesday,
