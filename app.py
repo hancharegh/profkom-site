@@ -590,7 +590,7 @@ def add_secretary():
             ),
             "secretary"
 
-        ))
+        )
 
         conn.commit()
 
