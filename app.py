@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS schedule (
             "chairman",
             "Курмаева Юлия Игоревна"
         ))    
-        conn.commit()
+    conn.commit()
 
     cur.close()
     conn.close()
