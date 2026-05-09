@@ -435,8 +435,7 @@ def chairman():
 
     entries = cur.fetchall()
 
-    cur.close()
-    conn.close()
+    
     # SCHEDULE
     cur.execute("""
 SELECT *
@@ -449,6 +448,8 @@ FROM schedule
 
     for row in schedule_rows:
         schedule[row["day_name"]] = row["secretary_name"]
+    cur.close()
+    conn.close()
     
     return render_template(
     "chairman.html",
