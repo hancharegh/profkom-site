@@ -496,7 +496,7 @@ def chairman():
     cur.close()
     conn.close()
     # SCHEDULE
-cur.execute("""
+    cur.execute("""
 SELECT *
 FROM schedule
 """)
