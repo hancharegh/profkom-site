@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS schedule (
         VALUES (%s,%s,%s)
         """, (
             "Курмаева Юлия Игоревна",
-            generate_password_hash("proflomTI"),
+            generate_password_hash("ProfkomTI"),
             "chairman"
         ))
 
