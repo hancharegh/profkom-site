@@ -558,29 +558,38 @@ def upload_students():
 @role_required("chairman")
 def add_secretary():
 
+    name = request.form["name"]
+    password = request.form["password"]
+
     conn = get_db()
     cur = conn.cursor()
 
     try:
 
         cur.execute("""
-        INSERT INTO users (name, password, role)
-        VALUES (%s,%s,%s)
-        """, (
-
-            request.form["name"],
-            password
-            ),
-            "secretary"
-
+        INSERT INTO users (
+            name,
+            password,
+            role
         )
+        VALUES (%s, %s, %s)
+        """, (
+            name,
+            password,
+            "secretary"
+        ))
 
         conn.commit()
 
-        flash("Секретарь добавлен")
+        flash("Секретарь успешно добавлен")
 
-    except:
-        flash("Ошибка")
+    except Exception as e:
+
+        conn.rollback()
+
+        print(e)
+
+        flash("Ошибка добавления секретаря")
 
     cur.close()
     conn.close()
