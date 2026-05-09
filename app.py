@@ -204,7 +204,7 @@ def login():
         cur.close()
         conn.close()
 
-        if user and user["password"] == password:
+        if user and check_password_hash(user["password"], password):
 
             session["user"] = user["name"]
             session["role"] = user["role"]
