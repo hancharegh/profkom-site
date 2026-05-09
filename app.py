@@ -621,6 +621,147 @@ def export_excel():
 
 
 # =====================================================
+# FIX FOR INTEGER FIELDS
+# =====================================================
+
+def safe_int(value):
+    try:
+        if value is None or value == "":
+            return 0
+        return int(value)
+    except:
+        return 0
+
+
+# =====================================================
+# UPDATED DASHBOARD SAVE
+# =====================================================
+
+@app.route("/dashboard", methods=["GET", "POST"])
+@role_required("secretary")
+def dashboard():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == "POST":
+
+        barcode = request.form.get("barcode")
+
+        cur.execute(
+            "SELECT * FROM students WHERE barcode=%s",
+            (barcode,)
+        )
+
+        student = cur.fetchone()
+
+        if not student:
+            flash("Студент не найден")
+            return redirect("/dashboard")
+
+        print_count = safe_int(request.form.get("print_count"))
+        copy_count = safe_int(request.form.get("copy_count"))
+        ruler_count = safe_int(request.form.get("ruler_count"))
+        notebook_count = safe_int(request.form.get("notebook_count"))
+        corrector_count = safe_int(request.form.get("corrector_count"))
+        pencil_count = safe_int(request.form.get("pencil_count"))
+        eraser_sharpener_count = safe_int(request.form.get("eraser_sharpener_count"))
+        millimeter_count = safe_int(request.form.get("millimeter_count"))
+
+        cur.execute("""
+        INSERT INTO entries (
+            student_barcode,
+            student_name,
+            secretary,
+            print_count,
+            copy_count,
+            ruler_count,
+            notebook_count,
+            corrector_count,
+            pencil_count,
+            eraser_sharpener_count,
+            millimeter_count
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            barcode,
+            student["full_name"],
+            session["user"],
+            print_count,
+            copy_count,
+            ruler_count,
+            notebook_count,
+            corrector_count,
+            pencil_count,
+            eraser_sharpener_count,
+            millimeter_count
+        ))
+
+        conn.commit()
+
+        flash("Запись успешно сохранена")
+
+        return redirect("/dashboard")
+
+    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
+    entries = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("dashboard.html", entries=entries)
+
+
+# =====================================================
+# UPDATED CHAIRMAN PANEL
+# =====================================================
+
+@app.route("/chairman")
+@role_required("chairman")
+def chairman():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users WHERE role='secretary' ORDER BY name")
+    secretaries = cur.fetchall()
+
+    cur.execute("SELECT COUNT(*) FROM students")
+    students_count = cur.fetchone()["count"]
+
+    cur.execute("SELECT COUNT(*) FROM entries")
+    entries_count = cur.fetchone()["count"]
+
+    cur.execute("""
+    SELECT secretary, COUNT(*) as total
+    FROM entries
+    GROUP BY secretary
+    ORDER BY total DESC
+    """)
+    secretary_stats = cur.fetchall()
+
+    cur.execute("""
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    LIMIT 100
+    """)
+    entries = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "chairman.html",
+        secretaries=secretaries,
+        students_count=students_count,
+        entries_count=entries_count,
+        secretary_stats=secretary_stats,
+        entries=entries
+    )
+
+
+# =====================================================
 # START
 # =====================================================
 
