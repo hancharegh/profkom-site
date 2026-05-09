@@ -701,28 +701,76 @@ def delete_student(student_id):
 @role_required("chairman")
 def export_excel():
 
+    from openpyxl import Workbook
+    from flask import send_file
+    import tempfile
+
     conn = get_db()
+    cur = conn.cursor()
 
-    df = pd.read_sql(
-        "SELECT * FROM entries ORDER BY created_at DESC",
-        conn
-    )
+    cur.execute("""
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    """)
 
+    entries = cur.fetchall()
+
+    cur.close()
     conn.close()
 
-    output = io.BytesIO()
+    wb = Workbook()
+    ws = wb.active
 
-    with pd.ExcelWriter(output) as writer:
-        df.to_excel(writer, index=False)
+    ws.title = "Отчёт"
 
-    output.seek(0)
+    # Заголовки
+    headers = [
+        "ID",
+        "Баркод",
+        "Студент",
+        "Секретарь",
+        "Печать",
+        "Копии",
+        "Линейки",
+        "Тетради",
+        "Корректоры",
+        "Карандаши",
+        "Ластики/точилки",
+        "Миллиметровка",
+        "Дата"
+    ]
+
+    ws.append(headers)
+
+    # Данные
+    for row in entries:
+
+        ws.append([
+            row["id"],
+            row["student_barcode"],
+            row["student_name"],
+            row["secretary"],
+            row["print_count"],
+            row["copy_count"],
+            row["ruler_count"],
+            row["notebook_count"],
+            row["corrector_count"],
+            row["pencil_count"],
+            row["eraser_sharpener_count"],
+            row["millimeter_count"],
+            str(row["created_at"])
+        ])
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+
+    wb.save(tmp.name)
 
     return send_file(
-        output,
+        tmp.name,
         as_attachment=True,
         download_name="report.xlsx"
     )
-
 
 # =====================================================
 # START
