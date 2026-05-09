@@ -149,21 +149,40 @@ th{
 
 <h2>Добавить студента</h2>
 
-<form method="POST" action="/add_student">
+<form action="/add_student" method="POST">
 
-<input type="text" name="barcode" placeholder="Баркод" required>
+    <input type="text"
+           name="barcode"
+           placeholder="Баркод"
+           required>
 
-<input type="text" name="full_name" placeholder="ФИО" required>
+    <input type="text"
+           name="full_name"
+           placeholder="ФИО"
+           required>
 
-<button type="submit">
-Добавить
-</button>
+    <button type="submit">
+        Добавить
+    </button>
 
 </form>
 
-</div>
 
-</div>
+<h2>Загрузка студентов из файла</h2>
+
+<form action="/upload_students"
+      method="POST"
+      enctype="multipart/form-data">
+
+    <input type="file"
+           name="file"
+           required>
+
+    <button type="submit">
+        Загрузить файл
+    </button>
+
+</form>
 
 <div class="card">
     <h2>Расписание секретарей</h2>
