@@ -1,8 +1,8 @@
+# app.py
+
 import os
 import io
 import pandas as pd
-
-from functools import wraps
 
 from flask import (
     Flask,
@@ -16,6 +16,8 @@ from flask import (
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+from functools import wraps
 
 from werkzeug.security import (
     generate_password_hash,
@@ -39,9 +41,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_db():
+
     return psycopg2.connect(
         DATABASE_URL,
-        sslmode="require",
         cursor_factory=RealDictCursor
     )
 
@@ -49,7 +51,6 @@ def get_db():
 # =====================================================
 # INIT DATABASE
 # =====================================================
-
 
 def init_db():
 
@@ -71,9 +72,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS students (
         id SERIAL PRIMARY KEY,
         barcode TEXT UNIQUE NOT NULL,
-        full_name TEXT NOT NULL,
-        print_limit INTEGER DEFAULT 30,
-        copy_limit INTEGER DEFAULT 30
+        full_name TEXT NOT NULL
     )
     """)
 
@@ -103,12 +102,35 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS schedules (
         id SERIAL PRIMARY KEY,
-        secretary_name TEXT NOT NULL,
-        work_date DATE NOT NULL,
-        start_time TEXT NOT NULL,
-        end_time TEXT NOT NULL
+
+        monday TEXT,
+        tuesday TEXT,
+        wednesday TEXT,
+        thursday TEXT,
+        friday TEXT
     )
     """)
+
+    cur.execute("SELECT * FROM schedules")
+
+    if not cur.fetchone():
+
+        cur.execute("""
+        INSERT INTO schedules (
+            monday,
+            tuesday,
+            wednesday,
+            thursday,
+            friday
+        )
+        VALUES (%s,%s,%s,%s,%s)
+        """, (
+            "",
+            "",
+            "",
+            "",
+            ""
+        ))
 
     # CHAIRMAN
     cur.execute(
@@ -120,17 +142,14 @@ def init_db():
 
     if not chairman:
 
-        cur.execute(
-            """
-            INSERT INTO users (name, password, role)
-            VALUES (%s, %s, %s)
-            """,
-            (
-                "chairman",
-                generate_password_hash("1234"),
-                "chairman"
-            )
-        )
+        cur.execute("""
+        INSERT INTO users (name, password, role)
+        VALUES (%s,%s,%s)
+        """, (
+            "chairman",
+            generate_password_hash("1234"),
+            "chairman"
+        ))
 
     conn.commit()
 
@@ -141,7 +160,6 @@ def init_db():
 # =====================================================
 # ROLE DECORATOR
 # =====================================================
-
 
 def role_required(role):
 
@@ -154,7 +172,7 @@ def role_required(role):
                 return redirect("/")
 
             if session.get("role") != role:
-                return "Нет доступа", 403
+                return "Нет доступа"
 
             return func(*args, **kwargs)
 
@@ -166,7 +184,6 @@ def role_required(role):
 # =====================================================
 # LOGIN
 # =====================================================
-
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -189,19 +206,20 @@ def login():
         cur.close()
         conn.close()
 
-        if not user:
-            return "Неверный логин или пароль", 400
+        if user and check_password_hash(
+            user["password"],
+            password
+        ):
 
-        if not check_password_hash(user["password"], password):
-            return "Неверный логин или пароль", 400
+            session["user"] = user["name"]
+            session["role"] = user["role"]
 
-        session["user"] = user["name"]
-        session["role"] = user["role"]
+            if user["role"] == "chairman":
+                return redirect("/chairman")
 
-        if user["role"] == "chairman":
-            return redirect("/chairman")
+            return redirect("/dashboard")
 
-        return redirect("/dashboard")
+        flash("Неверный логин или пароль")
 
     return render_template("login.html")
 
@@ -209,7 +227,6 @@ def login():
 # =====================================================
 # LOGOUT
 # =====================================================
-
 
 @app.route("/logout")
 def logout():
@@ -219,46 +236,299 @@ def logout():
     return redirect("/")
 
 
+# =====================================================
+# DASHBOARD
+# =====================================================
+
+@app.route("/dashboard", methods=["GET", "POST"])
+@role_required("secretary")
+def dashboard():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    student_info = None
+
+    # ПОИСК СТУДЕНТА
+    barcode_search = request.args.get("barcode")
+
+    if barcode_search:
+
+        cur.execute("""
+        SELECT *
+        FROM students
+        WHERE barcode=%s
+        """, (barcode_search,))
+
+        student = cur.fetchone()
+
+        if student:
+
+            cur.execute("""
+            SELECT
+                COALESCE(SUM(print_count),0) AS prints,
+                COALESCE(SUM(copy_count),0) AS copies
+            FROM entries
+            WHERE student_barcode=%s
+            """, (barcode_search,))
+
+            stats = cur.fetchone()
+
+            student_info = {
+                "name": student["full_name"],
+                "prints_used": stats["prints"],
+                "copies_used": stats["copies"],
+                "prints_left": 30 - stats["prints"],
+                "copies_left": 30 - stats["copies"]
+            }
+
+    # СОХРАНЕНИЕ
+    if request.method == "POST":
+
+        try:
+
+            barcode = request.form.get("barcode")
+
+            cur.execute("""
+            SELECT *
+            FROM students
+            WHERE barcode=%s
+            """, (barcode,))
+
+            student = cur.fetchone()
+
+            if not student:
+                flash("Студент не найден")
+                return redirect("/dashboard")
+
+            print_count = int(request.form.get("print_count") or 0)
+            copy_count = int(request.form.get("copy_count") or 0)
+
+            cur.execute("""
+            SELECT
+                COALESCE(SUM(print_count),0) AS prints,
+                COALESCE(SUM(copy_count),0) AS copies
+            FROM entries
+            WHERE student_barcode=%s
+            """, (barcode,))
+
+            limits = cur.fetchone()
+
+            if limits["prints"] + print_count > 30:
+                flash("Превышен лимит печати")
+                return redirect("/dashboard")
+
+            if limits["copies"] + copy_count > 30:
+                flash("Превышен лимит копий")
+                return redirect("/dashboard")
+
+            cur.execute("""
+            INSERT INTO entries (
+                student_barcode,
+                student_name,
+                secretary,
+
+                print_count,
+                copy_count,
+
+                ruler_count,
+                notebook_count,
+                corrector_count,
+                pencil_count,
+                eraser_sharpener_count,
+                millimeter_count
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (
+
+                barcode,
+                student["full_name"],
+                session["user"],
+
+                print_count,
+                copy_count,
+
+                int(request.form.get("ruler_count") or 0),
+                int(request.form.get("notebook_count") or 0),
+                int(request.form.get("corrector_count") or 0),
+                int(request.form.get("pencil_count") or 0),
+                int(request.form.get("eraser_sharpener_count") or 0),
+                int(request.form.get("millimeter_count") or 0)
+
+            ))
+
+            conn.commit()
+
+            flash("Успешно сохранено")
+
+            return redirect("/dashboard")
+
+        except Exception as e:
+
+            conn.rollback()
+
+            flash(f"Ошибка: {str(e)}")
+
+    # HISTORY
+    cur.execute("""
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    LIMIT 50
+    """)
+
+    entries = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "dashboard.html",
+        entries=entries,
+        student_info=student_info
+    )
 
 
+# =====================================================
+# CHAIRMAN
+# =====================================================
 
+@app.route("/chairman")
+@role_required("chairman")
+def chairman():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT *
+    FROM users
+    WHERE role='secretary'
+    ORDER BY name
+    """)
+
+    secretaries = cur.fetchall()
+
+    cur.execute("""
+    SELECT *
+    FROM students
+    ORDER BY full_name
+    """)
+
+    students = cur.fetchall()
+
+    cur.execute("""
+    SELECT *
+    FROM schedules
+    LIMIT 1
+    """)
+
+    schedule = cur.fetchone()
+
+    cur.execute("SELECT COUNT(*) FROM students")
+    students_count = cur.fetchone()["count"]
+
+    cur.execute("SELECT COUNT(*) FROM entries")
+    entries_count = cur.fetchone()["count"]
+
+    cur.execute("""
+    SELECT *
+    FROM entries
+    ORDER BY created_at DESC
+    LIMIT 30
+    """)
+
+    entries = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "chairman.html",
+
+        secretaries=secretaries,
+        students=students,
+        schedule=schedule,
+
+        students_count=students_count,
+        entries_count=entries_count,
+
+        entries=entries
+    )
+
+
+# =====================================================
+# SAVE SCHEDULE
+# =====================================================
+
+@app.route("/save_schedule", methods=["POST"])
+@role_required("chairman")
+def save_schedule():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    UPDATE schedules
+    SET
+        monday=%s,
+        tuesday=%s,
+        wednesday=%s,
+        thursday=%s,
+        friday=%s
+    WHERE id=1
+    """, (
+
+        request.form.get("monday"),
+        request.form.get("tuesday"),
+        request.form.get("wednesday"),
+        request.form.get("thursday"),
+        request.form.get("friday")
+
+    ))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    flash("Расписание сохранено")
+
+    return redirect("/chairman")
 
 
 # =====================================================
 # ADD SECRETARY
 # =====================================================
 
-
 @app.route("/add_secretary", methods=["POST"])
 @role_required("chairman")
 def add_secretary():
-
-    name = request.form.get("name")
-    password = request.form.get("password")
 
     conn = get_db()
     cur = conn.cursor()
 
     try:
 
-        cur.execute(
-            """
-            INSERT INTO users (name, password, role)
-            VALUES (%s, %s, %s)
-            """,
-            (
-                name,
-                generate_password_hash(password),
-                "secretary"
-            )
-        )
+        cur.execute("""
+        INSERT INTO users (name, password, role)
+        VALUES (%s,%s,%s)
+        """, (
+
+            request.form["name"],
+            generate_password_hash(
+                request.form["password"]
+            ),
+            "secretary"
+
+        ))
 
         conn.commit()
 
         flash("Секретарь добавлен")
 
-    except Exception as e:
-        flash(f"Ошибка: {e}")
+    except:
+        flash("Ошибка")
 
     cur.close()
     conn.close()
@@ -269,7 +539,6 @@ def add_secretary():
 # =====================================================
 # DELETE SECRETARY
 # =====================================================
-
 
 @app.route("/delete_secretary/<int:user_id>")
 @role_required("chairman")
@@ -297,33 +566,34 @@ def delete_secretary(user_id):
 # ADD STUDENT
 # =====================================================
 
-
 @app.route("/add_student", methods=["POST"])
 @role_required("chairman")
 def add_student():
-
-    barcode = request.form.get("barcode")
-    full_name = request.form.get("full_name")
 
     conn = get_db()
     cur = conn.cursor()
 
     try:
 
-        cur.execute(
-            """
-            INSERT INTO students (barcode, full_name)
-            VALUES (%s, %s)
-            """,
-            (barcode, full_name)
+        cur.execute("""
+        INSERT INTO students (
+            barcode,
+            full_name
         )
+        VALUES (%s,%s)
+        """, (
+
+            request.form["barcode"],
+            request.form["full_name"]
+
+        ))
 
         conn.commit()
 
         flash("Студент добавлен")
 
-    except Exception as e:
-        flash(f"Ошибка: {e}")
+    except:
+        flash("Ошибка")
 
     cur.close()
     conn.close()
@@ -332,90 +602,19 @@ def add_student():
 
 
 # =====================================================
-# UPLOAD STUDENTS
+# DELETE STUDENT
 # =====================================================
 
-
-@app.route("/upload_students", methods=["POST"])
+@app.route("/delete_student/<int:student_id>")
 @role_required("chairman")
-def upload_students():
-
-    file = request.files.get("file")
-
-    if not file:
-        flash("Файл не выбран")
-        return redirect("/chairman")
-
-    try:
-
-        if file.filename.endswith(".xlsx"):
-            df = pd.read_excel(file)
-        else:
-            df = pd.read_csv(file)
-
-        conn = get_db()
-        cur = conn.cursor()
-
-        for _, row in df.iterrows():
-
-            cur.execute(
-                """
-                INSERT INTO students (barcode, full_name)
-                VALUES (%s, %s)
-                ON CONFLICT (barcode) DO NOTHING
-                """,
-                (
-                    str(row["barcode"]),
-                    str(row["full_name"])
-                )
-            )
-
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        flash("Студенты загружены")
-
-    except Exception as e:
-        flash(f"Ошибка: {e}")
-
-    return redirect("/chairman")
-
-
-# =====================================================
-# SCHEDULE
-# =====================================================
-
-
-@app.route("/add_schedule", methods=["POST"])
-@role_required("chairman")
-def add_schedule():
-
-    secretary_name = request.form.get("secretary_name")
-    work_date = request.form.get("work_date")
-    start_time = request.form.get("start_time")
-    end_time = request.form.get("end_time")
+def delete_student(student_id):
 
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute(
-        """
-        INSERT INTO schedules (
-            secretary_name,
-            work_date,
-            start_time,
-            end_time
-        )
-        VALUES (%s,%s,%s,%s)
-        """,
-        (
-            secretary_name,
-            work_date,
-            start_time,
-            end_time
-        )
+        "DELETE FROM students WHERE id=%s",
+        (student_id,)
     )
 
     conn.commit()
@@ -423,7 +622,7 @@ def add_schedule():
     cur.close()
     conn.close()
 
-    flash("Расписание добавлено")
+    flash("Студент удалён")
 
     return redirect("/chairman")
 
@@ -432,167 +631,30 @@ def add_schedule():
 # EXPORT EXCEL
 # =====================================================
 
-
 @app.route("/export_excel")
 @role_required("chairman")
 def export_excel():
 
     conn = get_db()
 
-    df = pd.read_sql("SELECT * FROM entries", conn)
+    df = pd.read_sql(
+        "SELECT * FROM entries ORDER BY created_at DESC",
+        conn
+    )
+
+    conn.close()
 
     output = io.BytesIO()
 
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+    with pd.ExcelWriter(output) as writer:
         df.to_excel(writer, index=False)
 
     output.seek(0)
 
     return send_file(
         output,
-        download_name="report.xlsx",
-        as_attachment=True
-    )
-
-
-# =====================================================
-# FIX FOR INTEGER FIELDS
-# =====================================================
-
-def safe_int(value):
-    try:
-        if value is None or value == "":
-            return 0
-        return int(value)
-    except:
-        return 0
-
-
-# =====================================================
-# UPDATED DASHBOARD SAVE
-# =====================================================
-
-@app.route("/dashboard", methods=["GET", "POST"])
-@role_required("secretary")
-def dashboard():
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-
-        barcode = request.form.get("barcode")
-
-        cur.execute(
-            "SELECT * FROM students WHERE barcode=%s",
-            (barcode,)
-        )
-
-        student = cur.fetchone()
-
-        if not student:
-            flash("Студент не найден")
-            return redirect("/dashboard")
-
-        print_count = safe_int(request.form.get("print_count"))
-        copy_count = safe_int(request.form.get("copy_count"))
-        ruler_count = safe_int(request.form.get("ruler_count"))
-        notebook_count = safe_int(request.form.get("notebook_count"))
-        corrector_count = safe_int(request.form.get("corrector_count"))
-        pencil_count = safe_int(request.form.get("pencil_count"))
-        eraser_sharpener_count = safe_int(request.form.get("eraser_sharpener_count"))
-        millimeter_count = safe_int(request.form.get("millimeter_count"))
-
-        cur.execute("""
-        INSERT INTO entries (
-            student_barcode,
-            student_name,
-            secretary,
-            print_count,
-            copy_count,
-            ruler_count,
-            notebook_count,
-            corrector_count,
-            pencil_count,
-            eraser_sharpener_count,
-            millimeter_count
-        )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            barcode,
-            student["full_name"],
-            session["user"],
-            print_count,
-            copy_count,
-            ruler_count,
-            notebook_count,
-            corrector_count,
-            pencil_count,
-            eraser_sharpener_count,
-            millimeter_count
-        ))
-
-        conn.commit()
-
-        flash("Запись успешно сохранена")
-
-        return redirect("/dashboard")
-
-    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
-    entries = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("dashboard.html", entries=entries)
-
-
-# =====================================================
-# UPDATED CHAIRMAN PANEL
-# =====================================================
-
-@app.route("/chairman")
-@role_required("chairman")
-def chairman():
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM users WHERE role='secretary' ORDER BY name")
-    secretaries = cur.fetchall()
-
-    cur.execute("SELECT COUNT(*) FROM students")
-    students_count = cur.fetchone()["count"]
-
-    cur.execute("SELECT COUNT(*) FROM entries")
-    entries_count = cur.fetchone()["count"]
-
-    cur.execute("""
-    SELECT secretary, COUNT(*) as total
-    FROM entries
-    GROUP BY secretary
-    ORDER BY total DESC
-    """)
-    secretary_stats = cur.fetchall()
-
-    cur.execute("""
-    SELECT *
-    FROM entries
-    ORDER BY created_at DESC
-    LIMIT 100
-    """)
-    entries = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template(
-        "chairman.html",
-        secretaries=secretaries,
-        students_count=students_count,
-        entries_count=entries_count,
-        secretary_stats=secretary_stats,
-        entries=entries
+        as_attachment=True,
+        download_name="report.xlsx"
     )
 
 
@@ -600,9 +662,7 @@ def chairman():
 # START
 # =====================================================
 
-
 init_db()
-
 
 if __name__ == "__main__":
     app.run(debug=True)
