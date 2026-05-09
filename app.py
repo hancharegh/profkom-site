@@ -153,62 +153,7 @@ CREATE TABLE IF NOT EXISTS schedule (
     conn.close()
 
 
-@app.route("/upload_students", methods=["POST"])
-@role_required("chairman")
-def upload_students():
 
-    file = request.files.get("file")
-
-    if not file:
-        flash("Файл не выбран")
-        return redirect("/chairman")
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    try:
-
-        stream = io.StringIO(
-            file.stream.read().decode("UTF8"),
-            newline=None
-        )
-
-        csv_input = csv.reader(stream)
-
-        for row in csv_input:
-
-            if len(row) < 2:
-                continue
-
-            barcode = row[0].strip()
-            full_name = row[1].strip()
-
-            cur.execute("""
-            INSERT INTO students (
-                barcode,
-                full_name
-            )
-            VALUES (%s, %s)
-            ON CONFLICT (barcode)
-            DO NOTHING
-            """, (
-                barcode,
-                full_name
-            ))
-
-        conn.commit()
-
-        flash("Студенты загружены")
-
-    except Exception as e:
-
-        conn.rollback()
-        flash(f"Ошибка загрузки: {e}")
-
-    cur.close()
-    conn.close()
-
-    return redirect("/chairman")
 
 # =====================================================
 # ROLE DECORATOR
@@ -568,6 +513,63 @@ def save_schedule():
     return redirect("/chairman")
 
 
+
+@app.route("/upload_students", methods=["POST"])
+@role_required("chairman")
+def upload_students():
+
+    file = request.files.get("file")
+
+    if not file:
+        flash("Файл не выбран")
+        return redirect("/chairman")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    try:
+
+        stream = io.StringIO(
+            file.stream.read().decode("UTF8"),
+            newline=None
+        )
+
+        csv_input = csv.reader(stream)
+
+        for row in csv_input:
+
+            if len(row) < 2:
+                continue
+
+            barcode = row[0].strip()
+            full_name = row[1].strip()
+
+            cur.execute("""
+            INSERT INTO students (
+                barcode,
+                full_name
+            )
+            VALUES (%s, %s)
+            ON CONFLICT (barcode)
+            DO NOTHING
+            """, (
+                barcode,
+                full_name
+            ))
+
+        conn.commit()
+
+        flash("Студенты загружены")
+
+    except Exception as e:
+
+        conn.rollback()
+        flash(f"Ошибка загрузки: {e}")
+
+    cur.close()
+    conn.close()
+
+    return redirect("/chairman")
 # =====================================================
 # ADD SECRETARY
 # =====================================================
