@@ -395,70 +395,52 @@ def chairman():
     conn = get_db()
     cur = conn.cursor()
 
+    # Секретари
     cur.execute("""
     SELECT *
     FROM users
     WHERE role='secretary'
     ORDER BY name
     """)
-
     secretaries = cur.fetchall()
 
-    cur.execute("""
-    SELECT *
-    FROM students
-    ORDER BY full_name
-    """)
-
-    students = cur.fetchall()
-
-    cur.execute("""
-    SELECT *
-    FROM schedules
-    LIMIT 1
-    """)
-
-    schedule = cur.fetchone()
-
+    # Количество студентов
     cur.execute("SELECT COUNT(*) FROM students")
     students_count = cur.fetchone()["count"]
 
+    # Количество записей
     cur.execute("SELECT COUNT(*) FROM entries")
     entries_count = cur.fetchone()["count"]
 
+    # Последние записи
     cur.execute("""
     SELECT *
     FROM entries
     ORDER BY created_at DESC
     LIMIT 30
     """)
-
     entries = cur.fetchall()
 
-    
-    # SCHEDULE
+    # Расписание
     cur.execute("""
-SELECT *
-FROM schedule
-""")
+    SELECT *
+    FROM schedule
+    LIMIT 1
+    """)
+    schedule = cur.fetchone()
 
-    schedule_rows = cur.fetchall()
-
-    schedule = {}
-
-    for row in schedule_rows:
-        schedule[row["day_name"]] = row["secretary_name"]
+    # Закрываем только здесь
     cur.close()
     conn.close()
-    
+
     return render_template(
-    "chairman.html",
-    secretaries=secretaries,
-    students_count=students_count,
-    entries_count=entries_count,
-    entries=entries,
-    schedule=schedule
-)
+        "chairman.html",
+        secretaries=secretaries,
+        students_count=students_count,
+        entries_count=entries_count,
+        entries=entries,
+        schedule=schedule
+    )
 
 
 @app.route("/save_schedule", methods=["POST"])
