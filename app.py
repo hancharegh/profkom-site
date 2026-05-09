@@ -99,7 +99,7 @@ def init_db():
     """)
 
    # SCHEDULE
-cur.execute("""
+    cur.execute("""
 CREATE TABLE IF NOT EXISTS schedule (
     id SERIAL PRIMARY KEY,
     day_name TEXT UNIQUE NOT NULL,
