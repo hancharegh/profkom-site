@@ -130,35 +130,35 @@ CREATE TABLE IF NOT EXISTS schedule (
 
    # CREATE CHAIRMAN
 
-cur.execute(
-    "SELECT * FROM users WHERE role=%s",
-    ("chairman",)
-)
-
-chairman = cur.fetchone()
-
-if not chairman:
-
-    cur.execute("""
-    INSERT INTO users (name, password, role)
-    VALUES (%s, %s, %s)
-    """, (
-        "Курмаева Юлия Игоревна",
-        generate_password_hash("1234"),
-        "chairman"
-    ))
-
-else:
-
-    cur.execute("""
-    UPDATE users
-    SET role=%s
-    WHERE name=%s
-    """, (
-        "chairman",
-        "Курмаева Юлия Игоревна"
-    ))    
-    conn.commit()
+    cur.execute(
+        "SELECT * FROM users WHERE role=%s",
+        ("chairman",)
+    )
+    
+    chairman = cur.fetchone()
+    
+    if not chairman:
+    
+        cur.execute("""
+        INSERT INTO users (name, password, role)
+        VALUES (%s, %s, %s)
+        """, (
+            "Курмаева Юлия Игоревна",
+            generate_password_hash("1234"),
+            "chairman"
+        ))
+    
+    else:
+    
+        cur.execute("""
+        UPDATE users
+        SET role=%s
+        WHERE name=%s
+        """, (
+            "chairman",
+            "Курмаева Юлия Игоревна"
+        ))    
+        conn.commit()
 
     cur.close()
     conn.close()
