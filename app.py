@@ -128,8 +128,9 @@ CREATE TABLE IF NOT EXISTS schedule (
             ""
         ))
 
-    # CHAIRMAN
-   cur.execute(
+   # CREATE CHAIRMAN
+
+cur.execute(
     "SELECT * FROM users WHERE role=%s",
     ("chairman",)
 )
@@ -156,7 +157,7 @@ else:
     """, (
         "chairman",
         "Курмаева Юлия Игоревна"
-    ))
+    ))    
     conn.commit()
 
     cur.close()
