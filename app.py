@@ -447,36 +447,37 @@ def chairman():
 @role_required("chairman")
 def save_schedule():
 
+    monday = request.form.get("monday")
+    tuesday = request.form.get("tuesday")
+    wednesday = request.form.get("wednesday")
+    thursday = request.form.get("thursday")
+    friday = request.form.get("friday")
+
     conn = get_db()
     cur = conn.cursor()
 
-    days = [
-        "Понедельник",
-        "Вторник",
-        "Среда",
-        "Четверг",
-        "Пятница"
-    ]
-
     try:
 
-        for day in days:
+        # очищаем старое расписание
+        cur.execute("DELETE FROM schedule")
 
-            secretary = request.form.get(day)
-
-            if not secretary:
-                continue
-
-            cur.execute("""
-            INSERT INTO schedule (day_name, secretary_name)
-            VALUES (%s, %s)
-            ON CONFLICT (day_name)
-            DO UPDATE SET
-            secretary_name = EXCLUDED.secretary_name
-            """, (
-                day,
-                secretary
-            ))
+        # сохраняем новое
+        cur.execute("""
+        INSERT INTO schedule (
+            monday,
+            tuesday,
+            wednesday,
+            thursday,
+            friday
+        )
+        VALUES (%s, %s, %s, %s, %s)
+        """, (
+            monday,
+            tuesday,
+            wednesday,
+            thursday,
+            friday
+        ))
 
         conn.commit()
 
@@ -485,13 +486,13 @@ def save_schedule():
     except Exception as e:
 
         conn.rollback()
+
         flash(f"Ошибка: {e}")
 
     cur.close()
     conn.close()
 
     return redirect("/chairman")
-
 
 
 @app.route("/upload_students", methods=["POST"])
@@ -509,42 +510,46 @@ def upload_students():
 
     try:
 
-        stream = io.StringIO(
-            file.stream.read().decode("UTF8"),
-            newline=None
-        )
+        content = file.read().decode("utf-8")
+        lines = content.splitlines()
 
-        csv_input = csv.reader(stream)
+        added = 0
 
-        for row in csv_input:
+        for line in lines:
 
-            if len(row) < 2:
+            parts = line.split(";")
+
+            if len(parts) != 2:
                 continue
 
-            barcode = row[0].strip()
-            full_name = row[1].strip()
+            barcode = parts[0].strip()
+            full_name = parts[1].strip()
 
-            cur.execute("""
-            INSERT INTO students (
-                barcode,
-                full_name
-            )
-            VALUES (%s, %s)
-            ON CONFLICT (barcode)
-            DO NOTHING
-            """, (
-                barcode,
-                full_name
-            ))
+            try:
+
+                cur.execute("""
+                INSERT INTO students (
+                    barcode,
+                    full_name
+                )
+                VALUES (%s, %s)
+                """, (
+                    barcode,
+                    full_name
+                ))
+
+                added += 1
+
+            except:
+                conn.rollback()
 
         conn.commit()
 
-        flash("Студенты загружены")
+        flash(f"Добавлено студентов: {added}")
 
     except Exception as e:
 
-        conn.rollback()
-        flash(f"Ошибка загрузки: {e}")
+        flash(f"Ошибка файла: {e}")
 
     cur.close()
     conn.close()
