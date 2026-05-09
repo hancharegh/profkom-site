@@ -243,39 +243,6 @@ href="/delete_secretary/{{ secretary.id }}"
 
 <div class="card">
 
-<h2>Студенты</h2>
-
-<table>
-
-<tr>
-<th>ФИО</th>
-<th>Баркод</th>
-<th>Удалить</th>
-</tr>
-
-{% for student in students %}
-<tr>
-
-<td>{{ student.full_name }}</td>
-<td>{{ student.barcode }}</td>
-
-<td>
-<a
-class="danger"
-href="/delete_student/{{ student.id }}"
->
-Удалить
-</a>
-</td>
-
-</tr>
-{% endfor %}
-
-</table>
-
-</div>
-
-<div class="card">
 
 <h2>Excel отчёт</h2>
 
