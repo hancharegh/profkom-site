@@ -204,10 +204,7 @@ def login():
         cur.close()
         conn.close()
 
-        if user and check_password_hash(
-            user["password"],
-            password
-        ):
+        if user and user["password"] == password:
 
             session["user"] = user["name"]
             session["role"] = user["role"]
@@ -589,8 +586,7 @@ def add_secretary():
         """, (
 
             request.form["name"],
-            generate_password_hash(
-                request.form["password"]
+            password
             ),
             "secretary"
 
