@@ -98,18 +98,14 @@ def init_db():
     )
     """)
 
-    # SCHEDULES
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS schedules (
-        id SERIAL PRIMARY KEY,
-
-        monday TEXT,
-        tuesday TEXT,
-        wednesday TEXT,
-        thursday TEXT,
-        friday TEXT
-    )
-    """)
+   # SCHEDULE
+cur.execute("""
+CREATE TABLE IF NOT EXISTS schedule (
+    id SERIAL PRIMARY KEY,
+    day_name TEXT UNIQUE NOT NULL,
+    secretary_name TEXT NOT NULL
+)
+""")
 
     cur.execute("SELECT * FROM schedules")
 
@@ -442,24 +438,28 @@ def chairman():
 
     cur.close()
     conn.close()
+    # SCHEDULE
+cur.execute("""
+SELECT *
+FROM schedule
+""")
 
+    schedule_rows = cur.fetchall()
+
+    schedule = {}
+
+    for row in schedule_rows:
+        schedule[row["day_name"]] = row["secretary_name"]
+    
     return render_template(
-        "chairman.html",
+    "chairman.html",
+    secretaries=secretaries,
+    students_count=students_count,
+    entries_count=entries_count,
+    entries=entries,
+    schedule=schedule
+)
 
-        secretaries=secretaries,
-        students=students,
-        schedule=schedule,
-
-        students_count=students_count,
-        entries_count=entries_count,
-
-        entries=entries
-    )
-
-
-# =====================================================
-# SAVE SCHEDULE
-# =====================================================
 
 @app.route("/save_schedule", methods=["POST"])
 @role_required("chairman")
@@ -468,31 +468,45 @@ def save_schedule():
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("""
-    UPDATE schedules
-    SET
-        monday=%s,
-        tuesday=%s,
-        wednesday=%s,
-        thursday=%s,
-        friday=%s
-    WHERE id=1
-    """, (
+    days = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница"
+    ]
 
-        request.form.get("monday"),
-        request.form.get("tuesday"),
-        request.form.get("wednesday"),
-        request.form.get("thursday"),
-        request.form.get("friday")
+    try:
 
-    ))
+        for day in days:
 
-    conn.commit()
+            secretary = request.form.get(day)
+
+            if not secretary:
+                continue
+
+            cur.execute("""
+            INSERT INTO schedule (day_name, secretary_name)
+            VALUES (%s, %s)
+            ON CONFLICT (day_name)
+            DO UPDATE SET
+            secretary_name = EXCLUDED.secretary_name
+            """, (
+                day,
+                secretary
+            ))
+
+        conn.commit()
+
+        flash("Расписание сохранено")
+
+    except Exception as e:
+
+        conn.rollback()
+        flash(f"Ошибка: {e}")
 
     cur.close()
     conn.close()
-
-    flash("Расписание сохранено")
 
     return redirect("/chairman")
 
