@@ -2,95 +2,72 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
+    <title>ПРОФКОМ</title>
 
     <style>
 
         body{
-            margin:0;
-            padding:0;
-            font-family: Arial, sans-serif;
-            background:#f4f4f4;
-
+            font-family:Arial;
+            background:#f3f4f6;
             display:flex;
             justify-content:center;
             align-items:center;
-
             height:100vh;
         }
 
         .card{
             background:white;
             padding:40px;
-            border-radius:15px;
+            border-radius:20px;
             width:350px;
-
-            box-shadow:0 0 15px rgba(0,0,0,0.1);
+            box-shadow:0 0 20px rgba(0,0,0,0.1);
         }
 
-        h1{
+        .logo{
             text-align:center;
-            margin-bottom:25px;
+            color:#2563eb;
+            font-size:42px;
+            font-weight:bold;
+            margin-bottom:30px;
         }
 
         input{
             width:100%;
             padding:12px;
             margin-bottom:15px;
-
+            border-radius:10px;
             border:1px solid #ccc;
-            border-radius:8px;
-
-            box-sizing:border-box;
         }
 
         button{
             width:100%;
             padding:12px;
-
             border:none;
-            border-radius:8px;
-
+            border-radius:10px;
             background:#2563eb;
             color:white;
-
-            font-size:16px;
             cursor:pointer;
+            font-size:16px;
         }
 
-        button:hover{
-            background:#1d4ed8;
-        }
-
-        .flash{
-            background:#fee2e2;
-            color:#991b1b;
-
-            padding:10px;
-            border-radius:8px;
-
-            margin-bottom:15px;
+        .tigers{
             text-align:center;
+            color:#777;
+            font-style:italic;
+            margin-top:-5px;
+            margin-bottom:20px;
         }
 
     </style>
+
 </head>
 <body>
 
 <div class="card">
 
-    <h1>Вход</h1>
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for msg in messages %}
-                <div class="flash">
-                    {{ msg }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div class="logo">
+        ПРОФКОМ
+    </div>
 
     <form method="POST">
 
@@ -108,6 +85,10 @@
             required
         >
 
+        <div class="tigers">
+            для тигров и тигриц
+        </div>
+
         <button type="submit">
             Войти
         </button>
@@ -118,3 +99,7 @@
 
 </body>
 </html>
+
+
+
+
