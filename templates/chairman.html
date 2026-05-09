@@ -166,89 +166,49 @@ th{
 </div>
 
 <div class="card">
+    <h2>Расписание секретарей</h2>
 
-<h2>Расписание</h2>
+    <form method="POST" action="/save_schedule">
 
-<form method="POST" action="/save_schedule">
+        {% set days = [
+            "Понедельник",
+            "Вторник",
+            "Среда",
+            "Четверг",
+            "Пятница"
+        ] %}
 
-<label>Понедельник</label>
-<select name="monday">
+        {% for day in days %}
 
-{% for secretary in secretaries %}
-<option
-value="{{ secretary.name }}"
-{% if schedule.monday == secretary.name %}selected{% endif %}
->
-{{ secretary.name }}
-</option>
-{% endfor %}
+        <label>{{ day }}</label>
 
-</select>
+        <select name="{{ day }}" required>
 
-<label>Вторник</label>
-<select name="tuesday">
+            <option value="">Выберите секретаря</option>
 
-{% for secretary in secretaries %}
-<option
-value="{{ secretary.name }}"
-{% if schedule.tuesday == secretary.name %}selected{% endif %}
->
-{{ secretary.name }}
-</option>
-{% endfor %}
+            {% for secretary in secretaries %}
 
-</select>
+            <option
+                value="{{ secretary.name }}"
+                {% if schedule.get(day) == secretary.name %}
+                selected
+                {% endif %}
+            >
+                {{ secretary.name }}
+            </option>
 
-<label>Среда</label>
-<select name="wednesday">
+            {% endfor %}
 
-{% for secretary in secretaries %}
-<option
-value="{{ secretary.name }}"
-{% if schedule.wednesday == secretary.name %}selected{% endif %}
->
-{{ secretary.name }}
-</option>
-{% endfor %}
+        </select>
 
-</select>
+        {% endfor %}
 
-<label>Четверг</label>
-<select name="thursday">
+        <button type="submit">
+            Сохранить расписание
+        </button>
 
-{% for secretary in secretaries %}
-<option
-value="{{ secretary.name }}"
-{% if schedule.thursday == secretary.name %}selected{% endif %}
->
-{{ secretary.name }}
-</option>
-{% endfor %}
-
-</select>
-
-<label>Пятница</label>
-<select name="friday">
-
-{% for secretary in secretaries %}
-<option
-value="{{ secretary.name }}"
-{% if schedule.friday == secretary.name %}selected{% endif %}
->
-{{ secretary.name }}
-</option>
-{% endfor %}
-
-</select>
-
-<button type="submit">
-Сохранить расписание
-</button>
-
-</form>
-
+    </form>
 </div>
-
 <div class="card">
 
 <h2>Секретари</h2>
