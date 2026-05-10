@@ -296,7 +296,35 @@ href="/delete_secretary/{{ secretary.id }}"
 
 
 <h2>Excel отчёт</h2>
+<h2>Выгрузка отчёта</h2>
 
+<form action="/export_excel" method="GET">
+
+    <label>Дата от:</label>
+    <input type="date" name="date_from">
+
+    <label>Дата до:</label>
+    <input type="date" name="date_to">
+
+    <label>Секретарь:</label>
+    <select name="secretary">
+
+        <option value="">Все</option>
+
+        {% for sec in secretaries %}
+            <option value="{{ sec.name }}">
+                {{ sec.name }}
+            </option>
+        {% endfor %}
+
+    </select>
+
+    <button type="submit">
+        Скачать Excel
+    </button>
+
+</form>
+    
 <a href="/export_excel">
 <button>
 Скачать Excel
