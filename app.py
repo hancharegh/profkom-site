@@ -539,15 +539,14 @@ def upload_students():
             try:
 
                 cur.execute("""
-                INSERT INTO students (
-                    barcode,
-                    full_name
-                )
-                VALUES (%s, %s)
-                """, (
-                    barcode,
-                    full_name
-                ))
+INSERT INTO students (barcode, full_name)
+VALUES (%s, %s)
+ON CONFLICT (barcode)
+DO NOTHING
+""", (
+    barcode,
+    full_name
+))
 
                 added += 1
 
