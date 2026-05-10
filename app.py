@@ -18,7 +18,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from functools import wraps
-
+from openpyxl import Workbook
 from werkzeug.security import (
     generate_password_hash,
     check_password_hash
@@ -713,7 +713,19 @@ def export_excel():
     secretary = request.args.get("secretary")
 
     query = """
-    SELECT *
+    SELECT
+        student_barcode,
+        student_name,
+        secretary,
+        print_count,
+        copy_count,
+        ruler_count,
+        notebook_count,
+        corrector_count,
+        pencil_count,
+        eraser_sharpener_count,
+        millimeter_count,
+        created_at
     FROM entries
     WHERE 1=1
     """
@@ -738,16 +750,12 @@ def export_excel():
 
     rows = cur.fetchall()
 
-    cur.close()
-    conn.close()
-
     wb = Workbook()
     ws = wb.active
 
     ws.title = "Отчет"
 
     headers = [
-        "ID",
         "Баркод",
         "Студент",
         "Секретарь",
@@ -757,7 +765,7 @@ def export_excel():
         "Тетради",
         "Корректоры",
         "Карандаши",
-        "Ластики",
+        "Ластик+точилка",
         "Миллиметровка",
         "Дата"
     ]
@@ -765,9 +773,7 @@ def export_excel():
     ws.append(headers)
 
     for row in rows:
-
         ws.append([
-            row["id"],
             row["student_barcode"],
             row["student_name"],
             row["secretary"],
@@ -782,14 +788,23 @@ def export_excel():
             str(row["created_at"])
         ])
 
-    file_path = "report.xlsx"
+    file_stream = BytesIO()
 
-    wb.save(file_path)
+    wb.save(file_stream)
+
+    file_stream.seek(0)
+
+    cur.close()
+    conn.close()
 
     return send_file(
-        file_path,
-        as_attachment=True
+        file_stream,
+        as_attachment=True,
+        download_name="report.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+
     
 
 # =====================================================
