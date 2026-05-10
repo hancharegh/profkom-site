@@ -582,36 +582,30 @@ def add_secretary():
 
     try:
 
+        hashed_password = generate_password_hash(password)
+
         cur.execute("""
-        INSERT INTO users (
-            name,
-            password,
-            role
-        )
+        INSERT INTO users (name, password, role)
         VALUES (%s, %s, %s)
         """, (
             name,
-            password,
+            hashed_password,
             "secretary"
         ))
 
         conn.commit()
 
-        flash("Секретарь успешно добавлен")
+        flash("Секретарь добавлен")
 
     except Exception as e:
 
         conn.rollback()
-
-        print(e)
-
-        flash("Ошибка добавления секретаря")
+        flash(f"Ошибка: {e}")
 
     cur.close()
     conn.close()
 
     return redirect("/chairman")
-
 
 # =====================================================
 # DELETE SECRETARY
