@@ -289,7 +289,7 @@ def dashboard():
                 )
 
         action_text = ", ".join(actions)
-                cur.execute("""
+        cur.execute("""
             SELECT
                 COALESCE(SUM(print_count),0) as prints,
                 COALESCE(SUM(copy_count),0) as copies,
