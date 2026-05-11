@@ -1,174 +1,144 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Председатель</title>
+<meta charset="UTF-8">
+<title>Председатель</title>
+
+<style>
+
+body{
+    background:#0f1720;
+    color:white;
+    font-family:Arial;
+    margin:0;
+}
+
+.container{
+    width:90%;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:#1d2b36;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:10px;
+}
+
+button{
+    margin-top:15px;
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    background:#0984e3;
+    color:white;
+    cursor:pointer;
+}
+
+</style>
 </head>
 <body>
 
+<div class="container">
+
 <h1>Панель председателя</h1>
 
-<a href="/logout">Выйти</a>
+<div class="card">
 
-<hr>
+<h2>Изменить пароль</h2>
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for msg in messages %}
-            <p>{{ msg }}</p>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<form method="POST" action="/change_password">
+
+<input
+type="password"
+name="new_password"
+placeholder="Новый пароль"
+required>
+
+<button type="submit">
+Изменить пароль
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
 
 <h2>Добавить секретаря</h2>
 
 <form method="POST" action="/add_secretary">
 
-    <input type="text" name="name" placeholder="Имя" required>
+<input name="name" placeholder="ФИО">
+<input name="password" placeholder="Пароль">
 
-    <input type="password" name="password" placeholder="Пароль" required>
-
-    <button type="submit">Добавить</button>
+<button type="submit">
+Добавить
+</button>
 
 </form>
 
-<hr>
+</div>
 
-<h2>Секретари</h2>
-
-{% for sec in secretaries %}
-
-<p>
-    {{ sec.name }}
-
-    <a href="/delete_secretary/{{ sec.id }}">
-        Удалить
-    </a>
-</p>
-
-{% endfor %}
-
-<hr>
+<div class="card">
 
 <h2>Расписание</h2>
 
 <form method="POST" action="/save_schedule">
 
-    {% for day in [
-        "Понедельник",
-        "Вторник",
-        "Среда",
-        "Четверг",
-        "Пятница"
-    ] %}
+{% for day in schedule %}
 
-    <p>
+<label>{{ day }}</label>
 
-        {{ day }}
+<select name="{{ day }}">
 
-        <select name="{{ day }}">
+<option value="">---</option>
 
-            <option value="">---</option>
+{% for s in secretaries %}
 
-            {% for sec in secretaries %}
-
-            <option
-                value="{{ sec.name }}"
-                {% if schedule[day] == sec.name %}selected{% endif %}
-            >
-                {{ sec.name }}
-            </option>
-
-            {% endfor %}
-
-        </select>
-
-    </p>
-
-    {% endfor %}
-
-    <button type="submit">
-        Сохранить расписание
-    </button>
-
-</form>
-
-<hr>
-
-<h2>Текущее расписание</h2>
-
-{% for day, sec in schedule.items() %}
-
-<p>
-    {{ day }}: {{ sec }}
-</p>
+<option
+value="{{ s.name }}"
+{% if schedule[day] == s.name %}
+selected
+{% endif %}
+>
+{{ s.name }}
+</option>
 
 {% endfor %}
 
-<hr>
-
-<h2>Отчёт Excel</h2>
-
-<form method="GET" action="/export_excel">
-
-    <p>
-        От:
-        <input type="date" name="date_from">
-    </p>
-
-    <p>
-        До:
-        <input type="date" name="date_to">
-    </p>
-
-    <p>
-        Секретарь:
-        <select name="secretary">
-
-            <option value="">Все</option>
-
-            {% for sec in secretaries %}
-
-            <option value="{{ sec.name }}">
-                {{ sec.name }}
-            </option>
-
-            {% endfor %}
-
-        </select>
-    </p>
-
-    <button type="submit">
-        Скачать Excel
-    </button>
-
-</form>
-
-<hr>
-
-<h2>Последние действия</h2>
-
-<table border="1">
-
-<tr>
-    <th>Студент</th>
-    <th>Секретарь</th>
-    <th>Действие</th>
-    <th>Дата</th>
-</tr>
-
-{% for e in entries %}
-
-<tr>
-    <td>{{ e.student_name }}</td>
-    <td>{{ e.secretary }}</td>
-    <td>{{ e.action_text }}</td>
-    <td>{{ e.created_at }}</td>
-</tr>
+</select>
 
 {% endfor %}
 
-</table>
+<button type="submit">
+Сохранить расписание
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<a href="/export_excel">
+<button>
+Скачать Excel
+</button>
+</a>
+
+</div>
+
+</div>
 
 </body>
 </html>
