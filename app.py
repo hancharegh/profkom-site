@@ -512,7 +512,7 @@ def chairman():
     }
 
     for row in schedule_rows:
-        schedule[row["day"]] = row["secretary"]
+        schedule[row["day"]] = row["secretary_name"]
 
     cur.close()
     conn.close()
