@@ -1,7 +1,7 @@
 # app.py
 
 import os
-import io
+from io import BytesIO
 import pandas as pd
 import csv
 from flask import (
@@ -13,7 +13,7 @@ from flask import (
     flash,
     send_file
 )
-from io import BytesIO
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
