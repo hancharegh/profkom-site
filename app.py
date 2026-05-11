@@ -1,6 +1,6 @@
 import os
-from io import BytesIO
-from datetime import datetime
+import csv
+from io import StringIO, BytesIO
 
 from flask import (
     Flask,
@@ -14,25 +14,30 @@ from flask import (
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from werkzeug.security import generate_password_hash, check_password_hash
+
 from functools import wraps
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
 
 from openpyxl import Workbook
 
 
-# =====================================================
+# ======================================================
 # FLASK
-# =====================================================
+# ======================================================
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key_2026"
+app.secret_key = "super_secret_key"
+
+
+# ======================================================
+# DATABASE
+# ======================================================
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-
-# =====================================================
-# DATABASE
-# =====================================================
 
 def get_db():
     return psycopg2.connect(
@@ -41,16 +46,15 @@ def get_db():
     )
 
 
-# =====================================================
+# ======================================================
 # INIT DB
-# =====================================================
+# ======================================================
 
 def init_db():
 
     conn = get_db()
     cur = conn.cursor()
 
-    # USERS
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -60,7 +64,6 @@ def init_db():
     )
     """)
 
-    # STUDENTS
     cur.execute("""
     CREATE TABLE IF NOT EXISTS students (
         id SERIAL PRIMARY KEY,
@@ -69,31 +72,21 @@ def init_db():
     )
     """)
 
-    # ENTRIES
     cur.execute("""
     CREATE TABLE IF NOT EXISTS entries (
         id SERIAL PRIMARY KEY,
 
-        student_barcode TEXT NOT NULL,
-        student_name TEXT NOT NULL,
-        secretary TEXT NOT NULL,
+        student_barcode TEXT,
+        student_name TEXT,
 
-        action_text TEXT NOT NULL,
+        secretary TEXT,
 
-        print_count INTEGER DEFAULT 0,
-        copy_count INTEGER DEFAULT 0,
-        ruler_count INTEGER DEFAULT 0,
-        notebook_count INTEGER DEFAULT 0,
-        corrector_count INTEGER DEFAULT 0,
-        pencil_count INTEGER DEFAULT 0,
-        eraser_sharpener_count INTEGER DEFAULT 0,
-        millimeter_count INTEGER DEFAULT 0,
+        action_text TEXT,
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
-    # SCHEDULE
     cur.execute("""
     CREATE TABLE IF NOT EXISTS schedule (
         id SERIAL PRIMARY KEY,
@@ -102,7 +95,6 @@ def init_db():
     )
     """)
 
-    # DAYS
     days = [
         "Понедельник",
         "Вторник",
@@ -121,25 +113,36 @@ def init_db():
         exists = cur.fetchone()
 
         if not exists:
-            cur.execute("""
-            INSERT INTO schedule (day_name, secretary_name)
-            VALUES (%s, %s)
-            """, (day, None))
 
-    # CHAIRMAN
+            cur.execute("""
+            INSERT INTO schedule (
+                day_name,
+                secretary_name
+            )
+            VALUES (%s, %s)
+            """, (
+                day,
+                ""
+            ))
+
     chairman_name = "Курмаева Юлия Игоревна"
 
-    cur.execute(
-        "SELECT * FROM users WHERE name=%s",
-        (chairman_name,)
-    )
+    cur.execute("""
+    SELECT *
+    FROM users
+    WHERE role='chairman'
+    """)
 
     chairman = cur.fetchone()
 
     if not chairman:
 
         cur.execute("""
-        INSERT INTO users (name, password, role)
+        INSERT INTO users (
+            name,
+            password,
+            role
+        )
         VALUES (%s, %s, %s)
         """, (
             chairman_name,
@@ -153,9 +156,9 @@ def init_db():
     conn.close()
 
 
-# =====================================================
-# ROLE
-# =====================================================
+# ======================================================
+# ROLE CHECK
+# ======================================================
 
 def role_required(role):
 
@@ -177,49 +180,55 @@ def role_required(role):
     return decorator
 
 
-# =====================================================
+# ======================================================
 # LOGIN
-# =====================================================
+# ======================================================
 
 @app.route("/", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
 
-        name = request.form.get("name")
-        password = request.form.get("password")
+        name = request.form["name"]
+        password = request.form["password"]
 
         conn = get_db()
         cur = conn.cursor()
 
-        cur.execute(
-            "SELECT * FROM users WHERE name=%s",
-            (name,)
-        )
+        cur.execute("""
+        SELECT *
+        FROM users
+        WHERE name=%s
+        """, (name,))
 
         user = cur.fetchone()
 
         cur.close()
         conn.close()
 
-        if user and check_password_hash(user["password"], password):
+        if user:
 
-            session["user"] = user["name"]
-            session["role"] = user["role"]
+            if check_password_hash(
+                user["password"],
+                password
+            ):
 
-            if user["role"] == "chairman":
-                return redirect("/chairman")
+                session["user"] = user["name"]
+                session["role"] = user["role"]
 
-            return redirect("/dashboard")
+                if user["role"] == "chairman":
+                    return redirect("/chairman")
+
+                return redirect("/dashboard")
 
         flash("Неверный логин или пароль")
 
     return render_template("login.html")
 
 
-# =====================================================
+# ======================================================
 # LOGOUT
-# =====================================================
+# ======================================================
 
 @app.route("/logout")
 def logout():
@@ -229,9 +238,9 @@ def logout():
     return redirect("/")
 
 
-# =====================================================
+# ======================================================
 # DASHBOARD
-# =====================================================
+# ======================================================
 
 @app.route("/dashboard", methods=["GET", "POST"])
 @role_required("secretary")
@@ -244,10 +253,11 @@ def dashboard():
 
         barcode = request.form["barcode"]
 
-        cur.execute(
-            "SELECT * FROM students WHERE barcode=%s",
-            (barcode,)
-        )
+        cur.execute("""
+        SELECT *
+        FROM students
+        WHERE barcode=%s
+        """, (barcode,))
 
         student = cur.fetchone()
 
@@ -255,95 +265,28 @@ def dashboard():
 
             flash("Студент не найден")
 
-            cur.close()
-            conn.close()
-
-            return redirect("/dashboard")
-
-        # COUNTS
-        print_count = int(request.form.get("print_count", 0))
-        copy_count = int(request.form.get("copy_count", 0))
-        ruler_count = int(request.form.get("ruler_count", 0))
-        notebook_count = int(request.form.get("notebook_count", 0))
-        corrector_count = int(request.form.get("corrector_count", 0))
-        pencil_count = int(request.form.get("pencil_count", 0))
-        eraser_sharpener_count = int(request.form.get("eraser_sharpener_count", 0))
-        millimeter_count = int(request.form.get("millimeter_count", 0))
-
-        # LIMITS
-        cur.execute("""
-        SELECT
-            COALESCE(SUM(print_count),0) as prints,
-            COALESCE(SUM(copy_count),0) as copies,
-            COALESCE(SUM(ruler_count),0) as rulers,
-            COALESCE(SUM(notebook_count),0) as notebooks,
-            COALESCE(SUM(corrector_count),0) as correctors,
-            COALESCE(SUM(pencil_count),0) as pencils,
-            COALESCE(SUM(eraser_sharpener_count),0) as erasers,
-            COALESCE(SUM(millimeter_count),0) as millimeters
-        FROM entries
-        WHERE student_barcode=%s
-        """, (barcode,))
-
-        limits = cur.fetchone()
-
-        if limits["prints"] + print_count > 30:
-            flash("Лимит печати превышен")
-            return redirect("/dashboard")
-
-        if limits["copies"] + copy_count > 30:
-            flash("Лимит копий превышен")
-            return redirect("/dashboard")
-
-        if limits["rulers"] + ruler_count > 1:
-            flash("Линейка уже выдана")
-            return redirect("/dashboard")
-
-        if limits["notebooks"] + notebook_count > 1:
-            flash("Тетрадь уже выдана")
-            return redirect("/dashboard")
-
-        if limits["correctors"] + corrector_count > 1:
-            flash("Корректор уже выдан")
-            return redirect("/dashboard")
-
-        if limits["pencils"] + pencil_count > 1:
-            flash("Карандаш уже выдан")
-            return redirect("/dashboard")
-
-        if limits["erasers"] + eraser_sharpener_count > 1:
-            flash("Ластик/точилка уже выданы")
-            return redirect("/dashboard")
-
-        if limits["millimeters"] + millimeter_count > 1:
-            flash("Миллиметровка уже выдана")
             return redirect("/dashboard")
 
         actions = []
 
-        if print_count:
-            actions.append(f"Печать: {print_count}")
+        fields = {
+            "Печать": request.form.get("print_count"),
+            "Копии": request.form.get("copy_count"),
+            "Тетрадь": request.form.get("notebook_count"),
+            "Линейка": request.form.get("ruler_count"),
+            "Корректор": request.form.get("corrector_count"),
+            "Карандаш": request.form.get("pencil_count"),
+            "Ластик/точилка": request.form.get("eraser_count"),
+            "Миллиметровка": request.form.get("millimeter_count")
+        }
 
-        if copy_count:
-            actions.append(f"Копии: {copy_count}")
+        for key, value in fields.items():
 
-        if ruler_count:
-            actions.append("Линейка")
+            if value and value != "0":
 
-        if notebook_count:
-            actions.append("Тетрадь")
-
-        if corrector_count:
-            actions.append("Корректор")
-
-        if pencil_count:
-            actions.append("Карандаш")
-
-        if eraser_sharpener_count:
-            actions.append("Ластик/Точилка")
-
-        if millimeter_count:
-            actions.append("Миллиметровка")
+                actions.append(
+                    f"{key}: {value}"
+                )
 
         action_text = ", ".join(actions)
 
@@ -352,32 +295,14 @@ def dashboard():
             student_barcode,
             student_name,
             secretary,
-            action_text,
-
-            print_count,
-            copy_count,
-            ruler_count,
-            notebook_count,
-            corrector_count,
-            pencil_count,
-            eraser_sharpener_count,
-            millimeter_count
+            action_text
         )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        VALUES (%s, %s, %s, %s)
         """, (
             barcode,
             student["full_name"],
             session["user"],
-            action_text,
-
-            print_count,
-            copy_count,
-            ruler_count,
-            notebook_count,
-            corrector_count,
-            pencil_count,
-            eraser_sharpener_count,
-            millimeter_count
+            action_text
         ))
 
         conn.commit()
@@ -404,35 +329,9 @@ def dashboard():
     )
 
 
-# =====================================================
-# CANCEL ENTRY
-# =====================================================
-
-@app.route("/delete_entry/<int:entry_id>")
-@role_required("secretary")
-def delete_entry(entry_id):
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute(
-        "DELETE FROM entries WHERE id=%s",
-        (entry_id,)
-    )
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    flash("Запись отменена")
-
-    return redirect("/dashboard")
-
-
-# =====================================================
+# ======================================================
 # CHAIRMAN
-# =====================================================
+# ======================================================
 
 @app.route("/chairman")
 @role_required("chairman")
@@ -452,15 +351,6 @@ def chairman():
 
     cur.execute("""
     SELECT *
-    FROM entries
-    ORDER BY created_at DESC
-    LIMIT 50
-    """)
-
-    entries = cur.fetchall()
-
-    cur.execute("""
-    SELECT *
     FROM schedule
     ORDER BY id
     """)
@@ -470,6 +360,7 @@ def chairman():
     schedule = {}
 
     for row in schedule_rows:
+
         schedule[row["day_name"]] = row["secretary_name"]
 
     cur.close()
@@ -478,14 +369,13 @@ def chairman():
     return render_template(
         "chairman.html",
         secretaries=secretaries,
-        entries=entries,
         schedule=schedule
     )
 
 
-# =====================================================
+# ======================================================
 # ADD SECRETARY
-# =====================================================
+# ======================================================
 
 @app.route("/add_secretary", methods=["POST"])
 @role_required("chairman")
@@ -500,7 +390,11 @@ def add_secretary():
     try:
 
         cur.execute("""
-        INSERT INTO users (name, password, role)
+        INSERT INTO users (
+            name,
+            password,
+            role
+        )
         VALUES (%s, %s, %s)
         """, (
             name,
@@ -513,6 +407,7 @@ def add_secretary():
         flash("Секретарь добавлен")
 
     except Exception as e:
+
         flash(f"Ошибка: {e}")
 
     cur.close()
@@ -521,35 +416,40 @@ def add_secretary():
     return redirect("/chairman")
 
 
-# =====================================================
-# DELETE SECRETARY
-# =====================================================
+# ======================================================
+# CHANGE PASSWORD
+# ======================================================
 
-@app.route("/delete_secretary/<int:user_id>")
+@app.route("/change_password", methods=["POST"])
 @role_required("chairman")
-def delete_secretary(user_id):
+def change_password():
+
+    new_password = request.form["new_password"]
 
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute(
-        "DELETE FROM users WHERE id=%s",
-        (user_id,)
-    )
+    cur.execute("""
+    UPDATE users
+    SET password=%s
+    WHERE role='chairman'
+    """, (
+        generate_password_hash(new_password),
+    ))
 
     conn.commit()
 
     cur.close()
     conn.close()
 
-    flash("Секретарь удалён")
+    flash("Пароль изменён")
 
     return redirect("/chairman")
 
 
-# =====================================================
+# ======================================================
 # SAVE SCHEDULE
-# =====================================================
+# ======================================================
 
 @app.route("/save_schedule", methods=["POST"])
 @role_required("chairman")
@@ -568,14 +468,14 @@ def save_schedule():
 
     for day in days:
 
-        secretary_name = request.form.get(day)
+        secretary = request.form.get(day)
 
         cur.execute("""
         UPDATE schedule
         SET secretary_name=%s
         WHERE day_name=%s
         """, (
-            secretary_name,
+            secretary,
             day
         ))
 
@@ -589,9 +489,9 @@ def save_schedule():
     return redirect("/chairman")
 
 
-# =====================================================
+# ======================================================
 # EXPORT EXCEL
-# =====================================================
+# ======================================================
 
 @app.route("/export_excel")
 @role_required("chairman")
@@ -600,33 +500,11 @@ def export_excel():
     conn = get_db()
     cur = conn.cursor()
 
-    date_from = request.args.get("date_from")
-    date_to = request.args.get("date_to")
-    secretary = request.args.get("secretary")
-
-    query = """
+    cur.execute("""
     SELECT *
     FROM entries
-    WHERE 1=1
-    """
-
-    params = []
-
-    if date_from:
-        query += " AND DATE(created_at) >= %s"
-        params.append(date_from)
-
-    if date_to:
-        query += " AND DATE(created_at) <= %s"
-        params.append(date_to)
-
-    if secretary:
-        query += " AND secretary=%s"
-        params.append(secretary)
-
-    query += " ORDER BY created_at DESC"
-
-    cur.execute(query, params)
+    ORDER BY created_at DESC
+    """)
 
     rows = cur.fetchall()
 
@@ -634,7 +512,6 @@ def export_excel():
     ws = wb.active
 
     ws.append([
-        "ID",
         "Баркод",
         "Студент",
         "Секретарь",
@@ -645,7 +522,6 @@ def export_excel():
     for row in rows:
 
         ws.append([
-            row["id"],
             row["student_barcode"],
             row["student_name"],
             row["secretary"],
@@ -670,9 +546,9 @@ def export_excel():
     )
 
 
-# =====================================================
+# ======================================================
 # START
-# =====================================================
+# ======================================================
 
 init_db()
 
