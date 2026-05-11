@@ -437,46 +437,64 @@ def dashboard():
         student_limits=student_limits
     )
 
-@app.route("/undo_last_action", methods=["POST"])
+@app.route("/undo_action/<int:entry_id>", methods=["POST"])
 @login_required
-def undo_last_action():
+@role_required("secretary")
+def undo_action(entry_id):
+
+    entry_id = int(entry_id)
+
     conn = get_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    try:
-        cur.execute("""
-            SELECT *
-            FROM entries
-            WHERE secretary=%s
-            ORDER BY created_at DESC
-            LIMIT 1
-        """, (session["username"],))
+    cur.execute("""
+        SELECT *
+        FROM entries
+        WHERE id = %s
+    """, (entry_id,))
 
-        last_entry = cur.fetchone()
+    entry = cur.fetchone()
 
-        if not last_entry:
-            flash("Нет действий для отмены")
-            return redirect("/dashboard")
-
-        cur.execute("""
-            DELETE FROM entries
-            WHERE id=%s
-        """, (last_entry["id"],))
-
-        conn.commit()
-
-        flash("Последнее действие отменено")
-
-    except Exception as e:
-        conn.rollback()
-        flash(f"Ошибка: {e}")
-
-    finally:
+    if not entry:
         cur.close()
         conn.close()
+        return redirect("/dashboard")
+
+    barcode = entry["student_barcode"]
+    action = entry["action_text"]
+
+    field_map = {
+        "Печать": "print_count",
+        "Копия": "copy_count",
+        "Тетрадь": "notebook_count",
+        "Линейка": "ruler_count",
+        "Корректор": "corrector_count",
+        "Карандаш": "pencil_count",
+        "Ластик/Точилка": "eraser_sharpener_count",
+        "Миллиметровка": "millimeter_count"
+    }
+
+    if action in field_map:
+
+        field = field_map[action]
+
+        cur.execute(f"""
+            UPDATE students
+            SET {field} = GREATEST({field} - 1, 0)
+            WHERE barcode = %s
+        """, (barcode,))
+
+    cur.execute("""
+        DELETE FROM entries
+        WHERE id = %s
+    """, (entry_id,))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
 
     return redirect("/dashboard")
-
 # ======================================================
 # CHAIRMAN
 # ======================================================
