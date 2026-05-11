@@ -1,99 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Председатель</title>
-
-<style>
-
-body{
-    font-family:Arial;
-    background:#f3f4f6;
-    padding:30px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
-
-.card{
-    background:white;
-    padding:20px;
-    border-radius:20px;
-    margin-bottom:20px;
-    box-shadow:0 0 10px rgba(0,0,0,0.08);
-}
-
-input,select{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border-radius:10px;
-    border:1px solid #ccc;
-    box-sizing:border-box;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    background:#2563eb;
-    color:white;
-    margin-top:10px;
-    cursor:pointer;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,td{
-    border:1px solid #ddd;
-    padding:10px;
-}
-
-th{
-    background:#2563eb;
-    color:white;
-}
-
-.danger{
-    background:#ef4444;
-    color:white;
-    padding:8px 12px;
-    border-radius:10px;
-    text-decoration:none;
-}
-
-.stats{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-    margin-bottom:20px;
-}
-
-.stat{
-    background:white;
-    padding:30px;
-    border-radius:20px;
-    text-align:center;
-    font-size:24px;
-    font-weight:bold;
-}
-
-.flash{
-    background:#dcfce7;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:20px;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <title>Председатель</title>
 </head>
 <body>
 
@@ -101,262 +10,165 @@ th{
 
 <a href="/logout">Выйти</a>
 
+<hr>
+
 {% with messages = get_flashed_messages() %}
-{% if messages %}
-{% for message in messages %}
-<div class="flash">
-{{ message }}
-</div>
-{% endfor %}
-{% endif %}
+    {% if messages %}
+        {% for msg in messages %}
+            <p>{{ msg }}</p>
+        {% endfor %}
+    {% endif %}
 {% endwith %}
-
-<div class="stats">
-
-<div class="stat">
-Студентов<br>
-{{ students_count }}
-</div>
-
-<div class="stat">
-Записей<br>
-{{ entries_count }}
-</div>
-
-</div>
-
-<div class="grid">
-
-<div class="card">
 
 <h2>Добавить секретаря</h2>
 
 <form method="POST" action="/add_secretary">
 
-<input type="text" name="name" placeholder="Имя" required>
+    <input type="text" name="name" placeholder="Имя" required>
 
-<input type="password" name="password" placeholder="Пароль" required>
+    <input type="password" name="password" placeholder="Пароль" required>
 
-<button type="submit">
-Добавить
-</button>
+    <button type="submit">Добавить</button>
 
 </form>
 
-</div>
+<hr>
 
-<div class="card">
+<h2>Секретари</h2>
 
-<h2>Добавить студента</h2>
+{% for sec in secretaries %}
 
-<form action="/add_student" method="POST">
+<p>
+    {{ sec.name }}
 
-    <input type="text"
-           name="barcode"
-           placeholder="Баркод"
-           required>
+    <a href="/delete_secretary/{{ sec.id }}">
+        Удалить
+    </a>
+</p>
 
-    <input type="text"
-           name="full_name"
-           placeholder="ФИО"
-           required>
+{% endfor %}
 
-    <button type="submit">
-        Добавить
-    </button>
+<hr>
 
-</form>
+<h2>Расписание</h2>
 
+<form method="POST" action="/save_schedule">
 
-<h2>Загрузка студентов из файла</h2>
+    {% for day in [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница"
+    ] %}
 
-<form action="/upload_students"
-      method="POST"
-      enctype="multipart/form-data">
+    <p>
 
-    <input type="file"
-           name="file"
-           required>
+        {{ day }}
 
-    <button type="submit">
-        Загрузить файл
-    </button>
+        <select name="{{ day }}">
 
-</form>
+            <option value="">---</option>
 
-<div class="card">
-    <h2>Расписание секретарей</h2>
+            {% for sec in secretaries %}
 
-    <form action="/save_schedule" method="POST">
+            <option
+                value="{{ sec.name }}"
+                {% if schedule[day] == sec.name %}selected{% endif %}
+            >
+                {{ sec.name }}
+            </option>
 
-    <label>Понедельник</label>
-    <select name="monday">
-        <option value="">---</option>
+            {% endfor %}
 
-        {% for sec in secretaries %}
-        <option value="{{ sec.name }}">
-            {{ sec.name }}
-        </option>
-        {% endfor %}
-    </select>
+        </select>
 
-    <label>Вторник</label>
-    <select name="tuesday">
-        <option value="">---</option>
+    </p>
 
-        {% for sec in secretaries %}
-        <option value="{{ sec.name }}">
-            {{ sec.name }}
-        </option>
-        {% endfor %}
-    </select>
-
-    <label>Среда</label>
-    <select name="wednesday">
-        <option value="">---</option>
-
-        {% for sec in secretaries %}
-        <option value="{{ sec.name }}">
-            {{ sec.name }}
-        </option>
-        {% endfor %}
-    </select>
-
-    <label>Четверг</label>
-    <select name="thursday">
-        <option value="">---</option>
-
-        {% for sec in secretaries %}
-        <option value="{{ sec.name }}">
-            {{ sec.name }}
-        </option>
-        {% endfor %}
-    </select>
-
-    <label>Пятница</label>
-    <select name="friday">
-        <option value="">---</option>
-
-        {% for sec in secretaries %}
-        <option value="{{ sec.name }}">
-            {{ sec.name }}
-        </option>
-        {% endfor %}
-    </select>
+    {% endfor %}
 
     <button type="submit">
         Сохранить расписание
     </button>
 
 </form>
-    
-</div>
+
+<hr>
+
 <h2>Текущее расписание</h2>
 
-<ul>
-    <li>Понедельник: {{ schedule.monday }}</li>
-    <li>Вторник: {{ schedule.tuesday }}</li>
-    <li>Среда: {{ schedule.wednesday }}</li>
-    <li>Четверг: {{ schedule.thursday }}</li>
-    <li>Пятница: {{ schedule.friday }}</li>
-</ul>
-<div class="card">
+{% for day, sec in schedule.items() %}
 
-<h2>Секретари</h2>
+<p>
+    {{ day }}: {{ sec }}
+</p>
 
-<table>
-
-<tr>
-<th>Имя</th>
-<th>Удалить</th>
-</tr>
-
-{% for secretary in secretaries %}
-<tr>
-
-<td>{{ secretary.name }}</td>
-
-<td>
-<a
-class="danger"
-href="/delete_secretary/{{ secretary.id }}"
->
-Удалить
-</a>
-</td>
-
-</tr>
 {% endfor %}
 
-</table>
+<hr>
 
-</div>
+<h2>Отчёт Excel</h2>
 
-<div class="card">
+<form method="GET" action="/export_excel">
 
+    <p>
+        От:
+        <input type="date" name="date_from">
+    </p>
 
-<h2>Excel отчёт</h2>
-<h2>Выгрузка отчёта</h2>
+    <p>
+        До:
+        <input type="date" name="date_to">
+    </p>
 
-<form action="/export_excel" method="GET">
+    <p>
+        Секретарь:
+        <select name="secretary">
 
-    <label>Дата от:</label>
-    <input type="date" name="date_from">
+            <option value="">Все</option>
 
-    <label>Дата до:</label>
-    <input type="date" name="date_to">
+            {% for sec in secretaries %}
 
-    <label>Секретарь:</label>
-    <select name="secretary">
-
-        <option value="">Все</option>
-
-        {% for sec in secretaries %}
             <option value="{{ sec.name }}">
                 {{ sec.name }}
             </option>
-        {% endfor %}
 
-    </select>
+            {% endfor %}
+
+        </select>
+    </p>
 
     <button type="submit">
         Скачать Excel
     </button>
 
 </form>
-    
 
-</div>
+<hr>
 
-<div class="card">
+<h2>Последние действия</h2>
 
-<h2>Последние записи</h2>
-
-<table>
+<table border="1">
 
 <tr>
-<th>Студент</th>
-<th>Секретарь</th>
-<th>Печать</th>
-<th>Копии</th>
-<th>Дата</th>
+    <th>Студент</th>
+    <th>Секретарь</th>
+    <th>Действие</th>
+    <th>Дата</th>
 </tr>
 
-{% for entry in entries %}
+{% for e in entries %}
+
 <tr>
-
-<td>{{ entry.student_name }}</td>
-<td>{{ entry.secretary }}</td>
-<td>{{ entry.print_count }}</td>
-<td>{{ entry.copy_count }}</td>
-<td>{{ entry.created_at }}</td>
-
+    <td>{{ e.student_name }}</td>
+    <td>{{ e.secretary }}</td>
+    <td>{{ e.action_text }}</td>
+    <td>{{ e.created_at }}</td>
 </tr>
+
 {% endfor %}
 
 </table>
-
-</div>
 
 </body>
 </html>
