@@ -320,9 +320,9 @@ def dashboard():
         barcode = request.form.get("barcode", "").strip()
         action = request.form.get("action", "").strip()
 
-        if not barcode or not action:
+        if not barcode:
 
-            error = "Заполните все поля"
+            error = "Введите Баркод"
 
         else:
 
