@@ -181,12 +181,11 @@
 
                 <td>
 
-                    <a
-                        class="danger"
-                        href="/delete_entry/{{ entry.id }}"
-                    >
-                        Отменить
-                    </a>
+                   <form method="POST" action="/undo_last_action">
+                        <button class="danger-btn">
+                            Отменить последнее действие
+                        </button>
+                   </form>
 
                 </td>
 
