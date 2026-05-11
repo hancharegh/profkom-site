@@ -1,111 +1,361 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Секретарь</title>
+    <meta charset="UTF-8">
+    <title>Панель секретаря</title>
 
-<style>
+    <style>
 
-body{
-    background:#101820;
-    color:white;
-    font-family:Arial;
-    margin:0;
-}
+        *{
+            box-sizing:border-box;
+        }
 
-.container{
-    width:90%;
-    margin:auto;
-    padding:20px;
-}
+        body{
+            margin:0;
+            font-family:Arial, sans-serif;
+            background:#f4f7fb;
+            color:#1f2937;
+        }
 
-.card{
-    background:#1b2a35;
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
-}
+        .topbar{
+            background:white;
+            padding:20px 35px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            box-shadow:0 2px 10px rgba(0,0,0,0.05);
+        }
 
-input{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border:none;
-    border-radius:10px;
-}
+        .topbar h1{
+            margin:0;
+            font-size:28px;
+        }
 
-button{
-    margin-top:15px;
-    padding:12px 20px;
-    border:none;
-    border-radius:10px;
-    background:#00b894;
-    color:white;
-    cursor:pointer;
-}
+        .logout-btn{
+            text-decoration:none;
+            background:#ef4444;
+            color:white;
+            padding:12px 20px;
+            border-radius:10px;
+            font-weight:bold;
+        }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-}
+        .wrapper{
+            width:95%;
+            max-width:1500px;
+            margin:30px auto;
+        }
 
-th, td{
-    padding:12px;
-    border-bottom:1px solid #333;
-}
+        .grid{
+            display:grid;
+            grid-template-columns:420px 1fr;
+            gap:25px;
+        }
 
-</style>
+        .card{
+            background:white;
+            border-radius:18px;
+            padding:25px;
+            box-shadow:0 3px 14px rgba(0,0,0,0.06);
+        }
+
+        .card h2{
+            margin-top:0;
+            margin-bottom:20px;
+            font-size:24px;
+        }
+
+        label{
+            display:block;
+            margin-bottom:8px;
+            margin-top:18px;
+            font-weight:bold;
+        }
+
+        input{
+            width:100%;
+            padding:13px;
+            border:1px solid #d1d5db;
+            border-radius:12px;
+            font-size:15px;
+        }
+
+        button{
+            margin-top:25px;
+            width:100%;
+            border:none;
+            background:#2563eb;
+            color:white;
+            padding:15px;
+            border-radius:12px;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+        }
+
+        .limits{
+            margin-top:20px;
+            background:#eff6ff;
+            border-radius:14px;
+            padding:18px;
+            line-height:1.8;
+        }
+
+        .limits h3{
+            margin-top:0;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th{
+            background:#f3f4f6;
+            padding:14px;
+            text-align:left;
+        }
+
+        td{
+            padding:14px;
+            border-top:1px solid #e5e7eb;
+            vertical-align:top;
+        }
+
+        .flash{
+            background:#dcfce7;
+            color:#166534;
+            padding:15px;
+            border-radius:12px;
+            margin-bottom:20px;
+            font-weight:bold;
+        }
+
+        .history{
+            max-height:750px;
+            overflow:auto;
+        }
+
+        .action-block{
+            line-height:1.7;
+        }
+
+        .badge{
+            display:inline-block;
+            background:#dbeafe;
+            color:#1d4ed8;
+            padding:5px 10px;
+            border-radius:999px;
+            margin:3px;
+            font-size:14px;
+            font-weight:bold;
+        }
+
+        @media(max-width:1100px){
+
+            .grid{
+                grid-template-columns:1fr;
+            }
+
+        }
+
+    </style>
 </head>
 <body>
 
-<div class="container">
+<div class="topbar">
+    <h1>Панель секретаря</h1>
 
-<h1>Панель секретаря</h1>
-
-<div class="card">
-
-<form method="POST">
-
-<input name="barcode" placeholder="Баркод">
-
-<input type="number" name="print_count" placeholder="Печать">
-<input type="number" name="copy_count" placeholder="Копии">
-<input type="number" name="notebook_count" placeholder="Тетрадь">
-<input type="number" name="ruler_count" placeholder="Линейка">
-
-<button type="submit">
-Сохранить
-</button>
-
-</form>
-
+    <a href="/logout" class="logout-btn">
+        Выйти
+    </a>
 </div>
 
-<div class="card">
+<div class="wrapper">
 
-<h2>Последние действия</h2>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-<table>
+    <div class="grid">
 
-<tr>
-<th>Студент</th>
-<th>Секретарь</th>
-<th>Действие</th>
-</tr>
+        <div class="card">
 
-{% for e in entries %}
+            <h2>Выдача продукции</h2>
 
-<tr>
-<td>{{ e.student_name }}</td>
-<td>{{ e.secretary }}</td>
-<td>{{ e.action_text }}</td>
-</tr>
+            <form method="POST">
 
-{% endfor %}
+                <label>Баркод студента</label>
 
-</table>
+                <input
+                    type="text"
+                    name="barcode"
+                    required
+                >
 
-</div>
+                {% if student_limits %}
+
+                <div class="limits">
+
+                    <h3>Остаток лимитов</h3>
+
+                    <div>Печать: {{ student_limits.prints }}</div>
+                    <div>Копии: {{ student_limits.copies }}</div>
+                    <div>Тетради: {{ student_limits.notebooks }}</div>
+                    <div>Линейки: {{ student_limits.rulers }}</div>
+                    <div>Корректоры: {{ student_limits.correctors }}</div>
+                    <div>Карандаши: {{ student_limits.pencils }}</div>
+                    <div>Ластики/точилки: {{ student_limits.erasers }}</div>
+                    <div>Миллиметровки: {{ student_limits.millimeters }}</div>
+
+                </div>
+
+                {% endif %}
+
+                <label>Печать</label>
+                <input type="number" name="print_count" min="0" value="0">
+
+                <label>Копии</label>
+                <input type="number" name="copy_count" min="0" value="0">
+
+                <label>Тетради</label>
+                <input type="number" name="notebook_count" min="0" value="0">
+
+                <label>Линейки</label>
+                <input type="number" name="ruler_count" min="0" value="0">
+
+                <label>Корректоры</label>
+                <input type="number" name="corrector_count" min="0" value="0">
+
+                <label>Карандаши</label>
+                <input type="number" name="pencil_count" min="0" value="0">
+
+                <label>Ластики / точилки</label>
+                <input type="number" name="eraser_sharpener_count" min="0" value="0">
+
+                <label>Миллиметровки</label>
+                <input type="number" name="millimeter_count" min="0" value="0">
+
+                <button type="submit">
+                    Сохранить выдачу
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="card history">
+
+            <h2>Последние действия</h2>
+
+            <table>
+
+                <thead>
+
+                <tr>
+                    <th>Студент</th>
+                    <th>Секретарь</th>
+                    <th>Действие</th>
+                    <th>Дата</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for entry in entries %}
+
+                <tr>
+
+                    <td>
+                        {{ entry.student_name }}
+                    </td>
+
+                    <td>
+                        {{ entry.secretary }}
+                    </td>
+
+                    <td>
+
+                        <div class="action-block">
+
+                            {% if entry.print_count > 0 %}
+                                <span class="badge">
+                                    Печать: {{ entry.print_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.copy_count > 0 %}
+                                <span class="badge">
+                                    Копии: {{ entry.copy_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.notebook_count > 0 %}
+                                <span class="badge">
+                                    Тетради: {{ entry.notebook_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.ruler_count > 0 %}
+                                <span class="badge">
+                                    Линейки: {{ entry.ruler_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.corrector_count > 0 %}
+                                <span class="badge">
+                                    Корректоры: {{ entry.corrector_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.pencil_count > 0 %}
+                                <span class="badge">
+                                    Карандаши: {{ entry.pencil_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.eraser_sharpener_count > 0 %}
+                                <span class="badge">
+                                    Ластики/точилки: {{ entry.eraser_sharpener_count }}
+                                </span>
+                            {% endif %}
+
+                            {% if entry.millimeter_count > 0 %}
+                                <span class="badge">
+                                    Миллиметровка: {{ entry.millimeter_count }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </td>
+
+                    <td>
+                        {{ entry.created_at }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
 </div>
 
