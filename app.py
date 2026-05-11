@@ -459,28 +459,60 @@ def chairman():
     conn = get_db()
     cur = conn.cursor()
 
+    # Секретари
     cur.execute("""
-    SELECT *
-    FROM users
-    WHERE role='secretary'
-    ORDER BY name
+        SELECT *
+        FROM users
+        WHERE role='secretary'
+        ORDER BY name
     """)
 
     secretaries = cur.fetchall()
 
+    # Количество студентов
     cur.execute("""
-    SELECT *
-    FROM schedule
-    ORDER BY id
+        SELECT COUNT(*) as count
+        FROM students
+    """)
+
+    students_count = cur.fetchone()["count"]
+
+    # Количество выдач
+    cur.execute("""
+        SELECT COUNT(*) as count
+        FROM entries
+    """)
+
+    entries_count = cur.fetchone()["count"]
+
+    # Последние действия
+    cur.execute("""
+        SELECT *
+        FROM entries
+        ORDER BY created_at DESC
+        LIMIT 50
+    """)
+
+    entries = cur.fetchall()
+
+    # Расписание
+    cur.execute("""
+        SELECT *
+        FROM schedule
     """)
 
     schedule_rows = cur.fetchall()
 
-    schedule = {}
+    schedule = {
+        "Понедельник": "",
+        "Вторник": "",
+        "Среда": "",
+        "Четверг": "",
+        "Пятница": ""
+    }
 
     for row in schedule_rows:
-
-        schedule[row["day_name"]] = row["secretary_name"]
+        schedule[row["day"]] = row["secretary"]
 
     cur.close()
     conn.close()
@@ -488,6 +520,9 @@ def chairman():
     return render_template(
         "chairman.html",
         secretaries=secretaries,
+        students_count=students_count,
+        entries_count=entries_count,
+        entries=entries,
         schedule=schedule
     )
 
