@@ -1,112 +1,45 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
+
     <meta charset="UTF-8">
+
     <title>Панель секретаря</title>
 
     <style>
 
-        *{
-            box-sizing:border-box;
-        }
-
         body{
             margin:0;
-            font-family:Arial, sans-serif;
+            padding:30px;
+            font-family:Arial;
             background:#f4f7fb;
-            color:#1f2937;
-        }
-
-        .topbar{
-            background:white;
-            padding:20px 35px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            box-shadow:0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .topbar h1{
-            margin:0;
-            font-size:28px;
-        }
-
-        .logout-btn{
-            text-decoration:none;
-            background:#ef4444;
-            color:white;
-            padding:12px 20px;
-            border-radius:10px;
-            font-weight:bold;
-        }
-
-        .wrapper{
-            width:95%;
-            max-width:1500px;
-            margin:30px auto;
-        }
-
-        .grid{
-            display:grid;
-            grid-template-columns:420px 1fr;
-            gap:25px;
         }
 
         .card{
             background:white;
-            border-radius:18px;
             padding:25px;
-            box-shadow:0 3px 14px rgba(0,0,0,0.06);
-        }
-
-        .card h2{
-            margin-top:0;
-            margin-bottom:20px;
-            font-size:24px;
-        }
-
-        label{
-            display:block;
-            margin-bottom:8px;
-            margin-top:18px;
-            font-weight:bold;
+            border-radius:18px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom:25px;
         }
 
         input{
             width:100%;
-            padding:13px;
-            border:1px solid #d1d5db;
+            padding:12px;
             border-radius:12px;
-            font-size:15px;
+            border:1px solid #ddd;
+            margin-bottom:15px;
+            box-sizing:border-box;
         }
 
         button{
-            margin-top:25px;
-            width:100%;
-            border:none;
             background:#2563eb;
             color:white;
-            padding:15px;
+            border:none;
+            padding:12px 20px;
             border-radius:12px;
-            font-size:16px;
-            font-weight:bold;
             cursor:pointer;
-        }
-
-        button:hover{
-            background:#1d4ed8;
-        }
-
-        .limits{
-            margin-top:20px;
-            background:#eff6ff;
-            border-radius:14px;
-            padding:18px;
-            line-height:1.8;
-        }
-
-        .limits h3{
-            margin-top:0;
         }
 
         table{
@@ -115,262 +48,155 @@
         }
 
         th{
-            background:#f3f4f6;
-            padding:14px;
+            background:#eef2ff;
+            padding:12px;
             text-align:left;
         }
 
         td{
-            padding:14px;
-            border-top:1px solid #e5e7eb;
-            vertical-align:top;
+            padding:12px;
+            border-top:1px solid #eee;
         }
 
-        .flash{
-            background:#dcfce7;
-            color:#166534;
-            padding:15px;
+        .danger{
+            background:#ef4444;
+            color:white;
+            text-decoration:none;
+            padding:8px 12px;
+            border-radius:10px;
+        }
+
+        .topbar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:25px;
+        }
+
+        .logout{
+            background:#111827;
+            color:white;
+            padding:10px 18px;
             border-radius:12px;
-            margin-bottom:20px;
-            font-weight:bold;
-        }
-
-        .history{
-            max-height:750px;
-            overflow:auto;
-        }
-
-        .action-block{
-            line-height:1.7;
-        }
-
-        .badge{
-            display:inline-block;
-            background:#dbeafe;
-            color:#1d4ed8;
-            padding:5px 10px;
-            border-radius:999px;
-            margin:3px;
-            font-size:14px;
-            font-weight:bold;
-        }
-
-        @media(max-width:1100px){
-
-            .grid{
-                grid-template-columns:1fr;
-            }
-
+            text-decoration:none;
         }
 
     </style>
+
 </head>
+
 <body>
 
 <div class="topbar">
+
     <h1>Панель секретаря</h1>
 
-    <a href="/logout" class="logout-btn">
+    <a class="logout" href="/logout">
         Выйти
     </a>
+
 </div>
 
-<div class="wrapper">
+<div class="card">
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="flash">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <h2>Выдача</h2>
 
-    <div class="grid">
+    <form method="POST">
 
-        <div class="card">
+        <input
+            type="text"
+            name="barcode"
+            placeholder="Баркод"
+            required
+        >
 
-            <h2>Выдача продукции</h2>
+        <input type="number" name="print_count" placeholder="Печать">
+        <input type="number" name="copy_count" placeholder="Копии">
+        <input type="number" name="notebook_count" placeholder="Тетради">
+        <input type="number" name="ruler_count" placeholder="Линейки">
+        <input type="number" name="corrector_count" placeholder="Корректоры">
+        <input type="number" name="pencil_count" placeholder="Карандаши">
+        <input type="number" name="eraser_sharpener_count" placeholder="Ластики/Точилки">
+        <input type="number" name="millimeter_count" placeholder="Миллиметровки">
 
-            <form method="POST">
+        <button type="submit">
+            Сохранить
+        </button>
 
-                <label>Баркод студента</label>
+    </form>
 
-                <input
-                    type="text"
-                    name="barcode"
-                    required
-                >
+</div>
 
-                {% if student_limits %}
+{% if student_limits %}
 
-                <div class="limits">
+<div class="card">
 
-                    <h3>Остаток лимитов</h3>
+    <h2>Остатки лимитов</h2>
 
-                    <div>Печать: {{ student_limits.prints }}</div>
-                    <div>Копии: {{ student_limits.copies }}</div>
-                    <div>Тетради: {{ student_limits.notebooks }}</div>
-                    <div>Линейки: {{ student_limits.rulers }}</div>
-                    <div>Корректоры: {{ student_limits.correctors }}</div>
-                    <div>Карандаши: {{ student_limits.pencils }}</div>
-                    <div>Ластики/точилки: {{ student_limits.erasers }}</div>
-                    <div>Миллиметровки: {{ student_limits.millimeters }}</div>
+    <table>
 
-                </div>
+        <tr><td>Печать</td><td>{{ student_limits.prints }}</td></tr>
+        <tr><td>Копии</td><td>{{ student_limits.copies }}</td></tr>
+        <tr><td>Тетради</td><td>{{ student_limits.notebooks }}</td></tr>
+        <tr><td>Линейки</td><td>{{ student_limits.rulers }}</td></tr>
+        <tr><td>Корректоры</td><td>{{ student_limits.correctors }}</td></tr>
+        <tr><td>Карандаши</td><td>{{ student_limits.pencils }}</td></tr>
+        <tr><td>Ластики/Точилки</td><td>{{ student_limits.erasers }}</td></tr>
+        <tr><td>Миллиметровки</td><td>{{ student_limits.millimeters }}</td></tr>
 
-                {% endif %}
+    </table>
 
-                <label>Печать</label>
-                <input type="number" name="print_count" min="0" value="0">
+</div>
 
-                <label>Копии</label>
-                <input type="number" name="copy_count" min="0" value="0">
+{% endif %}
 
-                <label>Тетради</label>
-                <input type="number" name="notebook_count" min="0" value="0">
+<div class="card">
 
-                <label>Линейки</label>
-                <input type="number" name="ruler_count" min="0" value="0">
+    <h2>Последние действия</h2>
 
-                <label>Корректоры</label>
-                <input type="number" name="corrector_count" min="0" value="0">
+    <table>
 
-                <label>Карандаши</label>
-                <input type="number" name="pencil_count" min="0" value="0">
+        <thead>
 
-                <label>Ластики / точилки</label>
-                <input type="number" name="eraser_sharpener_count" min="0" value="0">
+            <tr>
+                <th>Студент</th>
+                <th>Действие</th>
+                <th>Дата</th>
+                <th></th>
+            </tr>
 
-                <label>Миллиметровки</label>
-                <input type="number" name="millimeter_count" min="0" value="0">
+        </thead>
 
-                <button type="submit">
-                    Сохранить выдачу
-                </button>
+        <tbody>
 
-            </form>
+        {% for entry in entries %}
 
-        </div>
-<a
-    href="/undo_last"
-    style="
-        display:block;
-        text-align:center;
-        margin-top:15px;
-        padding:14px;
-        border-radius:12px;
-        background:#ef4444;
-        color:white;
-        text-decoration:none;
-        font-weight:bold;
-    "
->
-    Отменить последнюю операцию
-</a>
-        <div class="card history">
+            <tr>
 
-            <h2>Последние действия</h2>
+                <td>{{ entry.student_name }}</td>
 
-            <table>
+                <td>{{ entry.action_text }}</td>
 
-                <thead>
+                <td>{{ entry.created_at }}</td>
 
-                <tr>
-                    <th>Студент</th>
-                    <th>Секретарь</th>
-                    <th>Действие</th>
-                    <th>Дата</th>
-                </tr>
+                <td>
 
-                </thead>
+                    <a
+                        class="danger"
+                        href="/delete_entry/{{ entry.id }}"
+                    >
+                        Отменить
+                    </a>
 
-                <tbody>
+                </td>
 
-                {% for entry in entries %}
+            </tr>
 
-                <tr>
+        {% endfor %}
 
-                    <td>
-                        {{ entry.student_name }}
-                    </td>
+        </tbody>
 
-                    <td>
-                        {{ entry.secretary }}
-                    </td>
-
-                    <td>
-
-                        <div class="action-block">
-
-                            {% if entry.print_count > 0 %}
-                                <span class="badge">
-                                    Печать: {{ entry.print_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.copy_count > 0 %}
-                                <span class="badge">
-                                    Копии: {{ entry.copy_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.notebook_count > 0 %}
-                                <span class="badge">
-                                    Тетради: {{ entry.notebook_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.ruler_count > 0 %}
-                                <span class="badge">
-                                    Линейки: {{ entry.ruler_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.corrector_count > 0 %}
-                                <span class="badge">
-                                    Корректоры: {{ entry.corrector_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.pencil_count > 0 %}
-                                <span class="badge">
-                                    Карандаши: {{ entry.pencil_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.eraser_sharpener_count > 0 %}
-                                <span class="badge">
-                                    Ластики/точилки: {{ entry.eraser_sharpener_count }}
-                                </span>
-                            {% endif %}
-
-                            {% if entry.millimeter_count > 0 %}
-                                <span class="badge">
-                                    Миллиметровка: {{ entry.millimeter_count }}
-                                </span>
-                            {% endif %}
-
-                        </div>
-
-                    </td>
-
-                    <td>
-                        {{ entry.created_at }}
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
+    </table>
 
 </div>
 
