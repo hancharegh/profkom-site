@@ -289,7 +289,64 @@ def dashboard():
                 )
 
         action_text = ", ".join(actions)
+                cur.execute("""
+            SELECT
+                COALESCE(SUM(print_count),0) as prints,
+                COALESCE(SUM(copy_count),0) as copies,
+                COALESCE(SUM(notebook_count),0) as notebooks,
+                COALESCE(SUM(ruler_count),0) as rulers,
+                COALESCE(SUM(corrector_count),0) as correctors,
+                COALESCE(SUM(pencil_count),0) as pencils,
+                COALESCE(SUM(eraser_sharpener_count),0) as erasers,
+                COALESCE(SUM(millimeter_count),0) as millimeters
+            FROM entries
+            WHERE student_barcode=%s
+        """, (barcode,))
 
+        used = cur.fetchone()
+
+        LIMITS = {
+            "prints": 30,
+            "copies": 30,
+            "notebooks": 1,
+            "rulers": 1,
+            "correctors": 1,
+            "pencils": 1,
+            "erasers": 1,
+            "millimeters": 1
+        }
+
+        if used["prints"] + print_count > LIMITS["prints"]:
+            flash("Лимит печати превышен")
+            return redirect("/dashboard")
+
+        if used["copies"] + copy_count > LIMITS["copies"]:
+            flash("Лимит копий превышен")
+            return redirect("/dashboard")
+
+        if used["notebooks"] + notebook_count > LIMITS["notebooks"]:
+            flash("Лимит тетрадей превышен")
+            return redirect("/dashboard")
+
+        if used["rulers"] + ruler_count > LIMITS["rulers"]:
+            flash("Лимит линеек превышен")
+            return redirect("/dashboard")
+
+        if used["correctors"] + corrector_count > LIMITS["correctors"]:
+            flash("Лимит корректоров превышен")
+            return redirect("/dashboard")
+
+        if used["pencils"] + pencil_count > LIMITS["pencils"]:
+            flash("Лимит карандашей превышен")
+            return redirect("/dashboard")
+
+        if used["erasers"] + eraser_sharpener_count > LIMITS["erasers"]:
+            flash("Лимит ластиков/точилок превышен")
+            return redirect("/dashboard")
+
+        if used["millimeters"] + millimeter_count > LIMITS["millimeters"]:
+            flash("Лимит миллиметровок превышен")
+            return redirect("/dashboard")
         cur.execute("""
         INSERT INTO entries (
             student_barcode,
@@ -322,12 +379,70 @@ def dashboard():
 
     cur.close()
     conn.close()
+        student_limits = None
 
+    barcode = request.args.get("barcode")
+
+    if barcode:
+
+        cur.execute("""
+            SELECT
+                COALESCE(SUM(print_count),0) as prints,
+                COALESCE(SUM(copy_count),0) as copies,
+                COALESCE(SUM(notebook_count),0) as notebooks,
+                COALESCE(SUM(ruler_count),0) as rulers,
+                COALESCE(SUM(corrector_count),0) as correctors,
+                COALESCE(SUM(pencil_count),0) as pencils,
+                COALESCE(SUM(eraser_sharpener_count),0) as erasers,
+                COALESCE(SUM(millimeter_count),0) as millimeters
+            FROM entries
+            WHERE student_barcode=%s
+        """, (barcode,))
+
+        used = cur.fetchone()
+
+        student_limits = {
+            "prints": 30 - used["prints"],
+            "copies": 30 - used["copies"],
+            "notebooks": 1 - used["notebooks"],
+            "rulers": 1 - used["rulers"],
+            "correctors": 1 - used["correctors"],
+            "pencils": 1 - used["pencils"],
+            "erasers": 1 - used["erasers"],
+            "millimeters": 1 - used["millimeters"]
+        }
     return render_template(
-        "dashboard.html",
-        entries=entries
-    )
+    "dashboard.html",
+    entries=entries,
+    student_limits=student_limits
+)
 
+@app.route("/undo_last")
+@role_required("secretary")
+def undo_last():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM entries
+        WHERE id = (
+            SELECT id
+            FROM entries
+            WHERE secretary=%s
+            ORDER BY created_at DESC
+            LIMIT 1
+        )
+    """, (session["user"],))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    flash("Последняя операция отменена")
+
+    return redirect("/dashboard")
 
 # ======================================================
 # CHAIRMAN
@@ -430,11 +545,12 @@ def change_password():
     cur = conn.cursor()
 
     cur.execute("""
-    UPDATE users
-    SET password=%s
-    WHERE role='chairman'
+        UPDATE users
+        SET password=%s
+        WHERE name=%s
     """, (
         generate_password_hash(new_password),
+        session["user"]
     ))
 
     conn.commit()
@@ -445,7 +561,6 @@ def change_password():
     flash("Пароль изменён")
 
     return redirect("/chairman")
-
 
 # ======================================================
 # SAVE SCHEDULE
@@ -545,7 +660,64 @@ def export_excel():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+@app.route("/upload_students", methods=["POST"])
+@role_required("chairman")
+def upload_students():
 
+    file = request.files["file"]
+
+    if not file:
+        flash("Файл не выбран")
+        return redirect("/chairman")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    content = file.read().decode("utf-8").splitlines()
+
+    added = 0
+
+    for line in content:
+
+        parts = line.split(";")
+
+        if len(parts) != 2:
+            continue
+
+        barcode = parts[0].strip()
+        full_name = parts[1].strip()
+
+        cur.execute("""
+            SELECT * FROM students
+            WHERE barcode=%s
+        """, (barcode,))
+
+        exists = cur.fetchone()
+
+        if exists:
+            continue
+
+        cur.execute("""
+            INSERT INTO students (
+                barcode,
+                full_name
+            )
+            VALUES (%s,%s)
+        """, (
+            barcode,
+            full_name
+        ))
+
+        added += 1
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    flash(f"Добавлено студентов: {added}")
+
+    return redirect("/chairman")
 # ======================================================
 # START
 # ======================================================
