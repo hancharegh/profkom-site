@@ -612,49 +612,86 @@ def save_schedule():
 @role_required("chairman")
 def export_excel():
 
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+    secretary = request.args.get("secretary")
+
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("""
-    SELECT *
-    FROM entries
-    ORDER BY created_at DESC
-    """)
+    query = """
+        SELECT
+            student_name,
+            secretary,
+            print_count,
+            copy_count,
+            notebook_count,
+            ruler_count,
+            corrector_count,
+            pencil_count,
+            eraser_sharpener_count,
+            millimeter_count,
+            created_at
+        FROM entries
+        WHERE 1=1
+    """
 
-    rows = cur.fetchall()
+    params = []
 
-    wb = Workbook()
-    ws = wb.active
+    if date_from:
+        query += " AND DATE(created_at) >= %s"
+        params.append(date_from)
 
-    ws.append([
-        "Баркод",
-        "Студент",
-        "Секретарь",
-        "Действие",
-        "Дата"
-    ])
+    if date_to:
+        query += " AND DATE(created_at) <= %s"
+        params.append(date_to)
 
-    for row in rows:
+    if secretary:
+        query += " AND secretary = %s"
+        params.append(secretary)
 
-        ws.append([
-            row["student_barcode"],
-            row["student_name"],
-            row["secretary"],
-            row["action_text"],
-            str(row["created_at"])
-        ])
+    query += " ORDER BY created_at DESC"
 
-    file_stream = BytesIO()
+    cur.execute(query, tuple(params))
 
-    wb.save(file_stream)
-
-    file_stream.seek(0)
+    entries = cur.fetchall()
 
     cur.close()
     conn.close()
 
+    data = []
+
+    for row in entries:
+
+        data.append({
+
+            "Студент": row["student_name"],
+            "Секретарь": row["secretary"],
+
+            "Печать": row["print_count"],
+            "Копии": row["copy_count"],
+
+            "Тетради": row["notebook_count"],
+            "Линейки": row["ruler_count"],
+            "Корректоры": row["corrector_count"],
+            "Карандаши": row["pencil_count"],
+            "Ластики/Точилки": row["eraser_sharpener_count"],
+            "Миллиметровки": row["millimeter_count"],
+
+            "Дата": str(row["created_at"])
+        })
+
+    df = pd.DataFrame(data)
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Отчет")
+
+    output.seek(0)
+
     return send_file(
-        file_stream,
+        output,
         as_attachment=True,
         download_name="report.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
