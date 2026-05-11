@@ -1,69 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Панель секретаря</title>
-
-<style>
-
-body{
-    font-family:Arial;
-    background:#f3f4f6;
-    padding:30px;
-}
-
-.card{
-    background:white;
-    padding:20px;
-    border-radius:20px;
-    margin-bottom:20px;
-    box-shadow:0 0 10px rgba(0,0,0,0.08);
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border-radius:10px;
-    border:1px solid #ccc;
-    box-sizing:border-box;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    background:#2563eb;
-    color:white;
-    margin-top:10px;
-    cursor:pointer;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,td{
-    border:1px solid #ddd;
-    padding:10px;
-}
-
-th{
-    background:#2563eb;
-    color:white;
-}
-
-.flash{
-    background:#dcfce7;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:20px;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <title>Секретарь</title>
 </head>
 <body>
 
@@ -71,126 +10,103 @@ th{
 
 <a href="/logout">Выйти</a>
 
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-{% for message in messages %}
-<div class="flash">
-    {{ message }}
-</div>
-{% endfor %}
-{% endif %}
-{% endwith %}
-
-<div class="card">
-
-<h2>Проверка лимитов</h2>
-
-<form method="GET">
-
-<input
-type="text"
-name="barcode"
-placeholder="Введите баркод"
-required
->
-
-<button type="submit">
-Проверить
-</button>
-
-</form>
-
-{% if student_info %}
-
 <hr>
 
-<h3>{{ student_info.name }}</h3>
-
-<p>
-Печать использовано:
-<b>{{ student_info.prints_used }}</b>
-</p>
-
-<p>
-Печать осталось:
-<b>{{ student_info.prints_left }}</b>
-</p>
-
-<p>
-Копий использовано:
-<b>{{ student_info.copies_used }}</b>
-</p>
-
-<p>
-Копий осталось:
-<b>{{ student_info.copies_left }}</b>
-</p>
-
-{% endif %}
-
-</div>
-
-<div class="card">
-
-<h2>Добавить запись</h2>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for msg in messages %}
+            <p>{{ msg }}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
 <form method="POST">
 
-<input type="text" name="barcode" placeholder="Баркод" required>
+    <p>
+        Баркод:
+        <input type="text" name="barcode" required>
+    </p>
 
-<input type="number" name="print_count" placeholder="Печать">
+    <p>
+        Печать:
+        <input type="number" name="print_count" value="0">
+    </p>
 
-<input type="number" name="copy_count" placeholder="Копии">
+    <p>
+        Копии:
+        <input type="number" name="copy_count" value="0">
+    </p>
 
-<input type="number" name="ruler_count" placeholder="Линейки">
+    <p>
+        Линейка:
+        <input type="number" name="ruler_count" value="0">
+    </p>
 
-<input type="number" name="notebook_count" placeholder="Тетради">
+    <p>
+        Тетрадь:
+        <input type="number" name="notebook_count" value="0">
+    </p>
 
-<input type="number" name="corrector_count" placeholder="Корректоры">
+    <p>
+        Корректор:
+        <input type="number" name="corrector_count" value="0">
+    </p>
 
-<input type="number" name="pencil_count" placeholder="Карандаши">
+    <p>
+        Карандаш:
+        <input type="number" name="pencil_count" value="0">
+    </p>
 
-<input type="number" name="eraser_sharpener_count" placeholder="Ластики/точилки">
+    <p>
+        Ластик/Точилка:
+        <input type="number" name="eraser_sharpener_count" value="0">
+    </p>
 
-<input type="number" name="millimeter_count" placeholder="Миллиметровка">
+    <p>
+        Миллиметровка:
+        <input type="number" name="millimeter_count" value="0">
+    </p>
 
-<button type="submit">
-Сохранить
-</button>
+    <button type="submit">
+        Сохранить
+    </button>
 
 </form>
 
-</div>
+<hr>
 
-<div class="card">
+<h2>Последние действия</h2>
 
-<h2>Последние записи</h2>
-
-<table>
+<table border="1">
 
 <tr>
-<th>Студент</th>
-<th>Секретарь</th>
-<th>Печать</th>
-<th>Копии</th>
-<th>Дата</th>
+    <th>Студент</th>
+    <th>Действие</th>
+    <th>Дата</th>
+    <th>Отмена</th>
 </tr>
 
-{% for entry in entries %}
+{% for e in entries %}
+
 <tr>
 
-<td>{{ entry.student_name }}</td>
-<td>{{ entry.secretary }}</td>
-<td>{{ entry.print_count }}</td>
-<td>{{ entry.copy_count }}</td>
-<td>{{ entry.created_at }}</td>
+    <td>{{ e.student_name }}</td>
+
+    <td>{{ e.action_text }}</td>
+
+    <td>{{ e.created_at }}</td>
+
+    <td>
+        <a href="/delete_entry/{{ e.id }}">
+            Отменить
+        </a>
+    </td>
 
 </tr>
+
 {% endfor %}
 
 </table>
-
-</div>
 
 </body>
 </html>
