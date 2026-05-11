@@ -23,7 +23,12 @@ from werkzeug.security import (
 
 from openpyxl import Workbook
 
+def get_connection():
 
+    return psycopg2.connect(
+        os.environ.get("DATABASE_URL"),
+        sslmode="require"
+    )
 # ======================================================
 # FLASK
 # ======================================================
