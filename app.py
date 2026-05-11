@@ -405,12 +405,10 @@ def dashboard():
         limits=LIMITS
     )
 
-@app.route("/undo_action/<int:entry_id>", methods=["POST"])
+@app.route("/undo/<int:entry_id>", methods=["POST"])
 @login_required
 @role_required("secretary")
-def undo_action(entry_id):
-
-    entry_id = int(entry_id)
+def undo(entry_id):
 
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -424,12 +422,10 @@ def undo_action(entry_id):
     entry = cur.fetchone()
 
     if not entry:
+
         cur.close()
         conn.close()
         return redirect("/dashboard")
-
-    barcode = entry["student_barcode"]
-    action = entry["action_text"]
 
     field_map = {
         "Печать": "print_count",
@@ -442,15 +438,22 @@ def undo_action(entry_id):
         "Миллиметровка": "millimeter_count"
     }
 
+    action = entry["action_text"]
+
     if action in field_map:
 
-        field = field_map[action]
+        field_name = field_map[action]
 
         cur.execute(f"""
             UPDATE students
-            SET {field} = GREATEST({field} - 1, 0)
+            SET {field_name} =
+                CASE
+                    WHEN {field_name} > 0
+                    THEN {field_name} - 1
+                    ELSE 0
+                END
             WHERE barcode = %s
-        """, (barcode,))
+        """, (entry["student_barcode"],))
 
     cur.execute("""
         DELETE FROM entries
