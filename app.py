@@ -23,19 +23,19 @@ from werkzeug.security import (
 
 from openpyxl import Workbook
 
-def get_connection():
 
-    return psycopg2.connect(
-        os.environ.get("DATABASE_URL"),
-        sslmode="require"
-    )
 # ======================================================
 # FLASK
 # ======================================================
 
 app = Flask(__name__)
 app.secret_key = "secret123"
+def get_connection():
 
+    return psycopg2.connect(
+        os.environ.get("DATABASE_URL"),
+        sslmode="require"
+    )
 
 def login_required(func):
 
