@@ -29,7 +29,41 @@ from openpyxl import Workbook
 # ======================================================
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key"
+app.secret_key = "secret123"
+
+
+def login_required(func):
+
+    from functools import wraps
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        if "user" not in session:
+            return redirect("/")
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def role_required(role):
+
+    from functools import wraps
+
+    def decorator(func):
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+
+            if session.get("role") != role:
+                return redirect("/")
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 # ======================================================
@@ -243,198 +277,127 @@ def logout():
 # ======================================================
 
 @app.route("/dashboard", methods=["GET", "POST"])
+@login_required
 @role_required("secretary")
 def dashboard():
 
-    conn = get_db()
-    cur = conn.cursor()
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    error = None
+    success = None
+    student_limits = None
+
+    LIMITS = {
+        "Печать": 20,
+        "Копия": 20,
+        "Тетрадь": 1,
+        "Линейка": 1,
+        "Корректор": 1,
+        "Карандаш": 1,
+        "Ластик/Точилка": 1,
+        "Миллиметровка": 2
+    }
+
+    FIELD_MAP = {
+        "Печать": "print_count",
+        "Копия": "copy_count",
+        "Тетрадь": "notebook_count",
+        "Линейка": "ruler_count",
+        "Корректор": "corrector_count",
+        "Карандаш": "pencil_count",
+        "Ластик/Точилка": "eraser_sharpener_count",
+        "Миллиметровка": "millimeter_count"
+    }
 
     if request.method == "POST":
 
-        barcode = request.form["barcode"]
+        barcode = request.form.get("barcode", "").strip()
+        action = request.form.get("action", "").strip()
 
-        cur.execute("""
-        SELECT *
-        FROM students
-        WHERE barcode=%s
-        """, (barcode,))
+        if not barcode or not action:
 
-        student = cur.fetchone()
+            error = "Заполните все поля"
 
-        if not student:
+        else:
 
-            flash("Студент не найден")
+            cur.execute("""
+                SELECT *
+                FROM students
+                WHERE barcode = %s
+            """, (barcode,))
 
-            return redirect("/dashboard")
+            student = cur.fetchone()
 
-        actions = []
+            if not student:
 
-        fields = {
-            "Печать": request.form.get("print_count"),
-            "Копии": request.form.get("copy_count"),
-            "Тетрадь": request.form.get("notebook_count"),
-            "Линейка": request.form.get("ruler_count"),
-            "Корректор": request.form.get("corrector_count"),
-            "Карандаш": request.form.get("pencil_count"),
-            "Ластик/точилка": request.form.get("eraser_count"),
-            "Миллиметровка": request.form.get("millimeter_count")
-        }
+                error = "Студент не найден"
 
-        for key, value in fields.items():
+            else:
 
-            if value and value != "0":
+                field_name = FIELD_MAP[action]
 
-                actions.append(
-                    f"{key}: {value}"
-                )
+                current_value = student[field_name]
 
-        action_text = ", ".join(actions)
-        cur.execute("""
-            SELECT
-                COALESCE(SUM(print_count),0) as prints,
-                COALESCE(SUM(copy_count),0) as copies,
-                COALESCE(SUM(notebook_count),0) as notebooks,
-                COALESCE(SUM(ruler_count),0) as rulers,
-                COALESCE(SUM(corrector_count),0) as correctors,
-                COALESCE(SUM(pencil_count),0) as pencils,
-                COALESCE(SUM(eraser_sharpener_count),0) as erasers,
-                COALESCE(SUM(millimeter_count),0) as millimeters
-            FROM entries
-            WHERE student_barcode=%s
-        """, (barcode,))
+                if current_value >= LIMITS[action]:
 
-        used = cur.fetchone()
+                    error = f"Лимит для '{action}' исчерпан"
 
-        LIMITS = {
-            "prints": 30,
-            "copies": 30,
-            "notebooks": 1,
-            "rulers": 1,
-            "correctors": 1,
-            "pencils": 1,
-            "erasers": 1,
-            "millimeters": 1
-        }
+                else:
 
-        if used["prints"] + print_count > LIMITS["prints"]:
-            flash("Лимит печати превышен")
-            return redirect("/dashboard")
+                    cur.execute(f"""
+                        UPDATE students
+                        SET {field_name} = {field_name} + 1
+                        WHERE barcode = %s
+                    """, (barcode,))
 
-        if used["copies"] + copy_count > LIMITS["copies"]:
-            flash("Лимит копий превышен")
-            return redirect("/dashboard")
+                    cur.execute("""
+                        INSERT INTO entries (
+                            student_barcode,
+                            student_name,
+                            secretary,
+                            action_text
+                        )
+                        VALUES (%s, %s, %s, %s)
+                    """, (
+                        barcode,
+                        student["name"],
+                        session["user"],
+                        action
+                    ))
 
-        if used["notebooks"] + notebook_count > LIMITS["notebooks"]:
-            flash("Лимит тетрадей превышен")
-            return redirect("/dashboard")
+                    conn.commit()
 
-        if used["rulers"] + ruler_count > LIMITS["rulers"]:
-            flash("Лимит линеек превышен")
-            return redirect("/dashboard")
+                    success = f"{action} успешно выдан"
 
-        if used["correctors"] + corrector_count > LIMITS["correctors"]:
-            flash("Лимит корректоров превышен")
-            return redirect("/dashboard")
+                    cur.execute("""
+                        SELECT *
+                        FROM students
+                        WHERE barcode = %s
+                    """, (barcode,))
 
-        if used["pencils"] + pencil_count > LIMITS["pencils"]:
-            flash("Лимит карандашей превышен")
-            return redirect("/dashboard")
-
-        if used["erasers"] + eraser_sharpener_count > LIMITS["erasers"]:
-            flash("Лимит ластиков/точилок превышен")
-            return redirect("/dashboard")
-
-        if used["millimeters"] + millimeter_count > LIMITS["millimeters"]:
-            flash("Лимит миллиметровок превышен")
-            return redirect("/dashboard")
-        cur.execute("""
-    INSERT INTO entries (
-        student_barcode,
-        student_name,
-        secretary,
-        print_count,
-        copy_count,
-        ruler_count,
-        notebook_count,
-        corrector_count,
-        pencil_count,
-        eraser_sharpener_count,
-        millimeter_count,
-        action_text
-    )
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-""", (
-    barcode,
-    student["name"],
-    session["username"],
-    print_count,
-    copy_count,
-    ruler_count,
-    notebook_count,
-    corrector_count,
-    pencil_count,
-    eraser_sharpener_count,
-    millimeter_count,
-    action_text
-))
-
-        conn.commit()
-
-        flash("Запись добавлена")
-
-        return redirect("/dashboard")
-
-        # HISTORY
+                    student_limits = cur.fetchone()
 
     cur.execute("""
         SELECT *
         FROM entries
         ORDER BY created_at DESC
-        LIMIT 50
+        LIMIT 20
     """)
 
     entries = cur.fetchall()
-
-    student_limits = None
-
-    barcode = request.args.get("barcode")
-
-    if barcode:
-
-        cur.execute("""
-            SELECT
-                COALESCE(SUM(print_count),0) as prints,
-                COALESCE(SUM(copy_count),0) as copies,
-                COALESCE(SUM(notebook_count),0) as notebooks,
-                COALESCE(SUM(ruler_count),0) as rulers,
-                COALESCE(SUM(corrector_count),0) as correctors,
-                COALESCE(SUM(pencil_count),0) as pencils,
-                COALESCE(SUM(eraser_sharpener_count),0) as erasers,
-                COALESCE(SUM(millimeter_count),0) as millimeters
-            FROM entries
-            WHERE student_barcode=%s
-        """, (barcode,))
-
-        used = cur.fetchone()
-
-        student_limits = {
-            "prints": 30 - used["prints"],
-            "copies": 30 - used["copies"],
-            "notebooks": 1 - used["notebooks"],
-            "rulers": 1 - used["rulers"],
-            "correctors": 1 - used["correctors"],
-            "pencils": 1 - used["pencils"],
-            "erasers": 1 - used["erasers"],
-            "millimeters": 1 - used["millimeters"]
-        }
 
     cur.close()
     conn.close()
 
     return render_template(
         "dashboard.html",
+        user=session["user"],
         entries=entries,
-        student_limits=student_limits
+        error=error,
+        success=success,
+        student_limits=student_limits,
+        limits=LIMITS
     )
 
 @app.route("/undo_action/<int:entry_id>", methods=["POST"])
