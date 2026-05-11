@@ -368,18 +368,18 @@ def dashboard():
 
         return redirect("/dashboard")
 
+        # HISTORY
+
     cur.execute("""
-    SELECT *
-    FROM entries
-    ORDER BY created_at DESC
-    LIMIT 50
+        SELECT *
+        FROM entries
+        ORDER BY created_at DESC
+        LIMIT 50
     """)
 
     entries = cur.fetchall()
 
-    cur.close()
-    conn.close()
-        student_limits = None
+    student_limits = None
 
     barcode = request.args.get("barcode")
 
@@ -411,11 +411,15 @@ def dashboard():
             "erasers": 1 - used["erasers"],
             "millimeters": 1 - used["millimeters"]
         }
+
+    cur.close()
+    conn.close()
+
     return render_template(
-    "dashboard.html",
-    entries=entries,
-    student_limits=student_limits
-)
+        "dashboard.html",
+        entries=entries,
+        student_limits=student_limits
+    )
 
 @app.route("/undo_last")
 @role_required("secretary")
