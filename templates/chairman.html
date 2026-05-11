@@ -199,7 +199,24 @@
     </a>
 
 </div>
+<hr style="margin:25px 0;">
 
+<h2>Изменить пароль</h2>
+
+<form method="POST" action="/change_password">
+
+    <input
+        type="password"
+        name="new_password"
+        placeholder="Новый пароль"
+        required
+    >
+
+    <button type="submit">
+        Изменить пароль
+    </button>
+
+</form>
 <div class="wrapper">
 
     {% with messages = get_flashed_messages() %}
