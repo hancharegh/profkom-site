@@ -1,112 +1,113 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Секретарь</title>
+<meta charset="UTF-8">
+<title>Секретарь</title>
+
+<style>
+
+body{
+    background:#101820;
+    color:white;
+    font-family:Arial;
+    margin:0;
+}
+
+.container{
+    width:90%;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:#1b2a35;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:10px;
+}
+
+button{
+    margin-top:15px;
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    background:#00b894;
+    color:white;
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td{
+    padding:12px;
+    border-bottom:1px solid #333;
+}
+
+</style>
 </head>
 <body>
 
+<div class="container">
+
 <h1>Панель секретаря</h1>
 
-<a href="/logout">Выйти</a>
-
-<hr>
-
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for msg in messages %}
-            <p>{{ msg }}</p>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<div class="card">
 
 <form method="POST">
 
-    <p>
-        Баркод:
-        <input type="text" name="barcode" required>
-    </p>
+<input name="barcode" placeholder="Баркод">
 
-    <p>
-        Печать:
-        <input type="number" name="print_count" value="0">
-    </p>
+<input type="number" name="print_count" placeholder="Печать">
+<input type="number" name="copy_count" placeholder="Копии">
+<input type="number" name="notebook_count" placeholder="Тетрадь">
+<input type="number" name="ruler_count" placeholder="Линейка">
 
-    <p>
-        Копии:
-        <input type="number" name="copy_count" value="0">
-    </p>
-
-    <p>
-        Линейка:
-        <input type="number" name="ruler_count" value="0">
-    </p>
-
-    <p>
-        Тетрадь:
-        <input type="number" name="notebook_count" value="0">
-    </p>
-
-    <p>
-        Корректор:
-        <input type="number" name="corrector_count" value="0">
-    </p>
-
-    <p>
-        Карандаш:
-        <input type="number" name="pencil_count" value="0">
-    </p>
-
-    <p>
-        Ластик/Точилка:
-        <input type="number" name="eraser_sharpener_count" value="0">
-    </p>
-
-    <p>
-        Миллиметровка:
-        <input type="number" name="millimeter_count" value="0">
-    </p>
-
-    <button type="submit">
-        Сохранить
-    </button>
+<button type="submit">
+Сохранить
+</button>
 
 </form>
 
-<hr>
+</div>
+
+<div class="card">
 
 <h2>Последние действия</h2>
 
-<table border="1">
+<table>
 
 <tr>
-    <th>Студент</th>
-    <th>Действие</th>
-    <th>Дата</th>
-    <th>Отмена</th>
+<th>Студент</th>
+<th>Секретарь</th>
+<th>Действие</th>
 </tr>
 
 {% for e in entries %}
 
 <tr>
-
-    <td>{{ e.student_name }}</td>
-
-    <td>{{ e.action_text }}</td>
-
-    <td>{{ e.created_at }}</td>
-
-    <td>
-        <a href="/delete_entry/{{ e.id }}">
-            Отменить
-        </a>
-    </td>
-
+<td>{{ e.student_name }}</td>
+<td>{{ e.secretary }}</td>
+<td>{{ e.action_text }}</td>
 </tr>
 
 {% endfor %}
 
 </table>
+
+</div>
+
+</div>
 
 </body>
 </html>
