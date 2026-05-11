@@ -348,19 +348,35 @@ def dashboard():
             flash("Лимит миллиметровок превышен")
             return redirect("/dashboard")
         cur.execute("""
-        INSERT INTO entries (
-            student_barcode,
-            student_name,
-            secretary,
-            action_text
-        )
-        VALUES (%s, %s, %s, %s)
-        """, (
-            barcode,
-            student["full_name"],
-            session["user"],
-            action_text
-        ))
+    INSERT INTO entries (
+        student_barcode,
+        student_name,
+        secretary,
+        print_count,
+        copy_count,
+        ruler_count,
+        notebook_count,
+        corrector_count,
+        pencil_count,
+        eraser_sharpener_count,
+        millimeter_count,
+        action_text
+    )
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+""", (
+    barcode,
+    student["name"],
+    session["username"],
+    print_count,
+    copy_count,
+    ruler_count,
+    notebook_count,
+    corrector_count,
+    pencil_count,
+    eraser_sharpener_count,
+    millimeter_count,
+    action_text
+))
 
         conn.commit()
 
@@ -421,30 +437,43 @@ def dashboard():
         student_limits=student_limits
     )
 
-@app.route("/undo_last")
-@role_required("secretary")
-def undo_last():
-
-    conn = get_db()
+@app.route("/undo_last_action", methods=["POST"])
+@login_required
+def undo_last_action():
+    conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        DELETE FROM entries
-        WHERE id = (
-            SELECT id
+    try:
+        cur.execute("""
+            SELECT *
             FROM entries
             WHERE secretary=%s
             ORDER BY created_at DESC
             LIMIT 1
-        )
-    """, (session["user"],))
+        """, (session["username"],))
 
-    conn.commit()
+        last_entry = cur.fetchone()
 
-    cur.close()
-    conn.close()
+        if not last_entry:
+            flash("Нет действий для отмены")
+            return redirect("/dashboard")
 
-    flash("Последняя операция отменена")
+        cur.execute("""
+            DELETE FROM entries
+            WHERE id=%s
+        """, (last_entry["id"],))
+
+        conn.commit()
+
+        flash("Последнее действие отменено")
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Ошибка: {e}")
+
+    finally:
+        cur.close()
+        conn.close()
 
     return redirect("/dashboard")
 
