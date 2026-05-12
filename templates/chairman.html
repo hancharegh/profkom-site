@@ -351,6 +351,12 @@ setInterval(() => {
 }, 240000); 
     
 </script>
+<script> 
+setInterval(() => { 
+    fetch("/ping")
+        .catch(() => {}); 
+}, 240000); 
     
+</script>   
 </body>
 </html>
