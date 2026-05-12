@@ -423,12 +423,55 @@ def dashboard():
                     "millimeters": limits["millimeters"] - (used["millimeters"] + millimeter_count)
                 }
 
-    cur.execute("""
-        SELECT *
-        FROM entries
-        ORDER BY created_at DESC
-        LIMIT 15
-    """)
+    ```python id="1tq7yn"
+actions = {
+    "Печать": print_count,
+    "Копия": copy_count,
+    "Тетрадь": notebook_count,
+    "Линейка": ruler_count,
+    "Корректор": corrector_count,
+    "Карандаш": pencil_count,
+    "Ластик/Точилка": eraser_sharpener_count,
+    "Миллиметровка": millimeter_count
+}
+
+for action_name, count in actions.items():
+
+    if count > 0:
+
+        action_text = f"{action_name}: {count}"
+
+        cur.execute("""
+        INSERT INTO entries (
+            student_barcode,
+            student_name,
+            secretary,
+            action_text,
+            print_count,
+            copy_count,
+            notebook_count,
+            ruler_count,
+            corrector_count,
+            pencil_count,
+            eraser_sharpener_count,
+            millimeter_count
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            barcode,
+            student["name"],
+            session["user"],
+            action_text,
+            print_count,
+            copy_count,
+            notebook_count,
+            ruler_count,
+            corrector_count,
+            pencil_count,
+            eraser_sharpener_count,
+            millimeter_count
+        ))
+
 
     entries = cur.fetchall()
 
