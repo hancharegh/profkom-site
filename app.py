@@ -235,9 +235,9 @@ def login():
         cur = conn.cursor()
 
         cur.execute("""
-        SELECT *
-        FROM users
-        WHERE name=%s
+            SELECT *
+            FROM users
+            WHERE name = %s
         """, (name,))
 
         user = cur.fetchone()
@@ -252,7 +252,8 @@ def login():
                 password
             ):
 
-                session["user"] = user["name"]
+                session["user_id"] = user["id"]
+                session["name"] = user["name"]
                 session["role"] = user["role"]
 
                 if user["role"] == "chairman":
