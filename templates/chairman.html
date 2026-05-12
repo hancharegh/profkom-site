@@ -344,6 +344,13 @@
     </table>
 
 </div>
-
+<script> 
+setInterval(() => { 
+    fetch("/ping")
+        .catch(() => {}); 
+}, 240000); 
+    
+</script>
+    
 </body>
 </html>
