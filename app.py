@@ -182,7 +182,7 @@ def init_db():
     VALUES (%s, %s, %s)
     ON CONFLICT (name) DO NOTHING
     """, (
-        "Курмаева Юлия Игоревна",
+        "chairman_name",
         generate_password_hash("1234"),
         "chairman"
     ))
