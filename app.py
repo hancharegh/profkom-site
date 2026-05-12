@@ -194,29 +194,6 @@ def init_db():
     conn.close()
 
 
-# ======================================================
-# ROLE CHECK
-# ======================================================
-
-def role_required(role):
-
-    def decorator(func):
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-
-            if "user" not in session:
-                return redirect("/")
-
-            if session.get("role") != role:
-                return "Нет доступа"
-
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
 
 # ======================================================
 # LOGIN
