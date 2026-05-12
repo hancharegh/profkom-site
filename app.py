@@ -426,7 +426,7 @@ def dashboard():
                                     VALUES (%s, %s, %s, %s, NOW())
                                 """, (
                                     barcode,
-                                    student["student_name"],
+                                    student["full_name"],
                                     session["username"],
                                     action_text
                                 ))
