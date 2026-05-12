@@ -175,17 +175,16 @@ def init_db():
     chairman = cur.fetchone()
 
     if not chairman:
-
         
-    cur.execute("""
-    INSERT INTO users (name, password, role)
-    VALUES (%s, %s, %s)
-    ON CONFLICT (name) DO NOTHING
-    """, (
-        "chairman_name",
-        generate_password_hash("1234"),
-        "chairman"
-    ))
+        cur.execute("""
+        INSERT INTO users (name, password, role)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (name) DO NOTHING
+        """, (
+            "chairman_name",
+            generate_password_hash("1234"),
+            "chairman"
+        ))
     
 
 
