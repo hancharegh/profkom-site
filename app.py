@@ -176,18 +176,18 @@ def init_db():
 
     if not chairman:
 
-        cur.execute("""
-        INSERT INTO users (
-            name,
-            password,
-            role
-        )
-        VALUES (%s, %s, %s)
-        """, (
-            chairman_name,
-            generate_password_hash("1234"),
-            "chairman"
-        ))
+        
+    cur.execute("""
+    INSERT INTO users (name, password, role)
+    VALUES (%s, %s, %s)
+    ON CONFLICT (name) DO NOTHING
+    """, (
+        "Курмаева Юлия Игоревна",
+        generate_password_hash("1234"),
+        "chairman"
+    ))
+    
+
 
     conn.commit()
 
