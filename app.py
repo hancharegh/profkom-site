@@ -290,41 +290,27 @@ def dashboard():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     error = None
-    success = None
+    message = None
     student_limits = None
-
-    LIMITS = {
-        "Печать": 20,
-        "Копия": 20,
-        "Тетрадь": 1,
-        "Линейка": 1,
-        "Корректор": 1,
-        "Карандаш": 1,
-        "Ластик/Точилка": 1,
-        "Миллиметровка": 2
-    }
-
-    FIELD_MAP = {
-        "Печать": "print_count",
-        "Копия": "copy_count",
-        "Тетрадь": "notebook_count",
-        "Линейка": "ruler_count",
-        "Корректор": "corrector_count",
-        "Карандаш": "pencil_count",
-        "Ластик/Точилка": "eraser_sharpener_count",
-        "Миллиметровка": "millimeter_count"
-    }
 
     if request.method == "POST":
 
         barcode = request.form.get("barcode", "").strip()
-        action = request.form.get("action", "").strip()
 
         if not barcode:
 
-            error = "Введите Баркод"
+            error = "Введите barcode"
 
         else:
+
+            print_count = int(request.form.get("print_count", 0) or 0)
+            copy_count = int(request.form.get("copy_count", 0) or 0)
+            notebook_count = int(request.form.get("notebook_count", 0) or 0)
+            ruler_count = int(request.form.get("ruler_count", 0) or 0)
+            corrector_count = int(request.form.get("corrector_count", 0) or 0)
+            pencil_count = int(request.form.get("pencil_count", 0) or 0)
+            eraser_sharpener_count = int(request.form.get("eraser_sharpener_count", 0) or 0)
+            millimeter_count = int(request.form.get("millimeter_count", 0) or 0)
 
             cur.execute("""
                 SELECT *
@@ -340,54 +326,131 @@ def dashboard():
 
             else:
 
-                field_name = FIELD_MAP[action]
+                limits = {
+                    "prints": 30,
+                    "copies": 30,
+                    "notebooks": 1,
+                    "rulers": 1,
+                    "correctors": 1,
+                    "pencils": 1,
+                    "erasers": 1,
+                    "millimeters": 50
+                }
 
-                current_value = student[field_name]
+                used = {
+                    "prints": student["print_count"],
+                    "copies": student["copy_count"],
+                    "notebooks": student["notebook_count"],
+                    "rulers": student["ruler_count"],
+                    "correctors": student["corrector_count"],
+                    "pencils": student["pencil_count"],
+                    "erasers": student["eraser_sharpener_count"],
+                    "millimeters": student["millimeter_count"]
+                }
 
-                if current_value >= LIMITS[action]:
+                if used["prints"] + print_count > limits["prints"]:
+                    error = "Превышен лимит печати"
 
-                    error = f"Лимит для '{action}' исчерпан"
+                elif used["copies"] + copy_count > limits["copies"]:
+                    error = "Превышен лимит копий"
+
+                elif used["notebooks"] + notebook_count > limits["notebooks"]:
+                    error = "Тетрадь уже выдавалась"
+
+                elif used["rulers"] + ruler_count > limits["rulers"]:
+                    error = "Линейка уже выдавалась"
+
+                elif used["correctors"] + corrector_count > limits["correctors"]:
+                    error = "Корректор уже выдавался"
+
+                elif used["pencils"] + pencil_count > limits["pencils"]:
+                    error = "Карандаш уже выдавался"
+
+                elif used["erasers"] + eraser_sharpener_count > limits["erasers"]:
+                    error = "Ластик/точилка уже выдавались"
+
+                elif used["millimeters"] + millimeter_count > limits["millimeters"]:
+                    error = "Превышен лимит миллиметровок"
 
                 else:
 
-                    cur.execute(f"""
-                        UPDATE students
-                        SET {field_name} = {field_name} + 1
-                        WHERE barcode = %s
-                    """, (barcode,))
-
                     cur.execute("""
-                        INSERT INTO entries (
-                            student_barcode,
-                            student_name,
-                            secretary,
-                            action_text
-                        )
-                        VALUES (%s, %s, %s, %s)
+                        UPDATE students
+                        SET
+                            print_count = print_count + %s,
+                            copy_count = copy_count + %s,
+                            notebook_count = notebook_count + %s,
+                            ruler_count = ruler_count + %s,
+                            corrector_count = corrector_count + %s,
+                            pencil_count = pencil_count + %s,
+                            eraser_sharpener_count = eraser_sharpener_count + %s,
+                            millimeter_count = millimeter_count + %s
+                        WHERE barcode = %s
                     """, (
-                        barcode,
-                        student["name"],
-                        session["user"],
-                        action
+                        print_count,
+                        copy_count,
+                        notebook_count,
+                        ruler_count,
+                        corrector_count,
+                        pencil_count,
+                        eraser_sharpener_count,
+                        millimeter_count,
+                        barcode
                     ))
+
+                    actions = {
+                        "Печать": print_count,
+                        "Копия": copy_count,
+                        "Тетрадь": notebook_count,
+                        "Линейка": ruler_count,
+                        "Корректор": corrector_count,
+                        "Карандаш": pencil_count,
+                        "Ластик/Точилка": eraser_sharpener_count,
+                        "Миллиметровка": millimeter_count
+                    }
+
+                    for action_text, amount in actions.items():
+
+                        if amount > 0:
+
+                            for i in range(amount):
+
+                                cur.execute("""
+                                    INSERT INTO entries (
+                                        student_barcode,
+                                        student_name,
+                                        secretary,
+                                        action_text,
+                                        created_at
+                                    )
+                                    VALUES (%s, %s, %s, %s, NOW())
+                                """, (
+                                    barcode,
+                                    student["name"],
+                                    session["username"],
+                                    action_text
+                                ))
 
                     conn.commit()
 
-                    success = f"{action} успешно выдан"
+                    message = "Выдача успешно сохранена"
 
-                    cur.execute("""
-                        SELECT *
-                        FROM students
-                        WHERE barcode = %s
-                    """, (barcode,))
-
-                    student_limits = cur.fetchone()
+                student_limits = {
+                    "prints": limits["prints"] - (used["prints"] + print_count),
+                    "copies": limits["copies"] - (used["copies"] + copy_count),
+                    "notebooks": limits["notebooks"] - (used["notebooks"] + notebook_count),
+                    "rulers": limits["rulers"] - (used["rulers"] + ruler_count),
+                    "correctors": limits["correctors"] - (used["correctors"] + corrector_count),
+                    "pencils": limits["pencils"] - (used["pencils"] + pencil_count),
+                    "erasers": limits["erasers"] - (used["erasers"] + eraser_sharpener_count),
+                    "millimeters": limits["millimeters"] - (used["millimeters"] + millimeter_count)
+                }
 
     cur.execute("""
         SELECT *
         FROM entries
         ORDER BY created_at DESC
-        LIMIT 20
+        LIMIT 15
     """)
 
     entries = cur.fetchall()
@@ -397,13 +460,12 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
-        user=session["user"],
         entries=entries,
         error=error,
-        success=success,
-        student_limits=student_limits,
-        limits=LIMITS
+        message=message,
+        student_limits=student_limits
     )
+
 
 @app.route("/undo/<int:entry_id>", methods=["POST"])
 @login_required
@@ -425,6 +487,7 @@ def undo(entry_id):
 
         cur.close()
         conn.close()
+
         return redirect("/dashboard")
 
     field_map = {
@@ -466,6 +529,7 @@ def undo(entry_id):
     conn.close()
 
     return redirect("/dashboard")
+
 # ======================================================
 # CHAIRMAN
 # ======================================================
