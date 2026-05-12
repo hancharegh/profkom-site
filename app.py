@@ -427,7 +427,7 @@ def dashboard():
                                 """, (
                                     barcode,
                                     student["full_name"],
-                                    session["username"],
+                                    session["name"],
                                     action_text
                                 ))
 
