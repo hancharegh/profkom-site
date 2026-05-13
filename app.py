@@ -349,7 +349,8 @@ def dashboard():
                 elif used["millimeters"] + millimeter_count > limits["millimeters"]:
                     error = "Превышен лимит миллиметровок"
 
-                else:cur.execute("""
+                else:
+                    cur.execute("""
                         UPDATE students
                         SET
                             print_count = print_count + %s,
@@ -434,7 +435,8 @@ def dashboard():
 
                     conn.commit()
 
-                    message = "Выдача успешно сохранена"student_limits = {
+                    message = "Выдача успешно сохранена"
+                    student_limits = {
                         "prints": limits["prints"] - (used["prints"] + print_count),
                         "copies": limits["copies"] - (used["copies"] + copy_count),
                         "notebooks": limits["notebooks"] - (used["notebooks"] + notebook_count),
