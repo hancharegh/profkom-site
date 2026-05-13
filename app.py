@@ -374,7 +374,7 @@ def dashboard():
                         barcode
                     ))
 
-                                       actions = []
+                    actions = []
 
                     if print_count > 0:
                         actions.append(f"Печать: {print_count}")
