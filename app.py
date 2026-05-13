@@ -429,7 +429,7 @@ def dashboard():
                     """, (
                         barcode,
                         student.get("full_name") or student.get("name"),
-                        session.get("user"),
+                        session.get("name"),
                         action_text,
 
                         int(print_count),
