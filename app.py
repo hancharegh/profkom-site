@@ -465,7 +465,7 @@ def dashboard():
                     "millimeters": limits["millimeters"] - (used["millimeters"] + millimeter_count)
                 }
 
-    ```python id="1tq7yn"
+
 actions = {
     "Печать": print_count,
     "Копия": copy_count,
