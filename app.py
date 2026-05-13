@@ -420,7 +420,7 @@ def dashboard():
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """, (
                         barcode,
-                        student.get("name"),
+                        student.get("student_name"),
                         session.get("user"),
                         action_text,
                         print_count,
