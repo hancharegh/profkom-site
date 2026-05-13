@@ -120,6 +120,14 @@
 <div class="topbar">
 
     <h1>Панель секретаря</h1>
+    
+    <p style="
+        margin-top:-10px;
+        color:#6b7280;
+        font-size:16px;
+    ">
+        {{ session["name"] }}
+    </p>
 
     <a href="/logout" class="logout">
         Выйти
@@ -157,16 +165,32 @@
 
 
         
-        <input type="number" min="0" max="30" value="0" name="print_count" placeholder="Печать">
-        <input type="number" min="0" max="30" value="0" name="copy_count" placeholder="Копии">
+       
+        <label>Печать</label>
+        <input type="number" name="print_count" min="0" value="">
         
-        <input type="number" min="0" max="1" value="0" name="notebook_count" placeholder="Тетради">
-        <input type="number" min="0" max="1" value="0" name="ruler_count" placeholder="Линейки">
-        <input type="number" min="0" max="1" value="0" name="corrector_count" placeholder="Корректоры">
-        <input type="number" min="0" max="1" value="0" name="pencil_count" placeholder="Карандаши">
-        <input type="number" min="0" max="1" value="0" name="eraser_sharpener_count" placeholder="Ластики / Точилки">
+        <label>Копии</label>
+        <input type="number" name="copy_count" min="0" value="">
         
-        <input type="number" min="0" max="50" value="0" name="millimeter_count" placeholder="Миллиметровки">
+        <label>Тетради</label>
+        <input type="number" name="notebook_count" min="0" value="">
+        
+        <label>Линейки</label>
+        <input type="number" name="ruler_count" min="0" value="">
+        
+        <label>Корректоры</label>
+        <input type="number" name="corrector_count" min="0" value="">
+        
+        <label>Карандаши</label>
+        <input type="number" name="pencil_count" min="0" value="">
+        
+        <label>Ластики / Точилки</label>
+        <input type="number" name="eraser_sharpener_count" min="0" value="">
+        
+        <label>Миллиметровки</label>
+        <input type="number" name="millimeter_count" min="0" value="">
+
+
         
 
 
