@@ -374,7 +374,7 @@ def dashboard():
                         barcode
                     ))
 
-                    actions = []
+                                       actions = []
 
                     if print_count > 0:
                         actions.append(f"Печать: {print_count}")
@@ -401,9 +401,11 @@ def dashboard():
                         actions.append(f"Миллиметровки: {millimeter_count}")
 
                     action_text = ", ".join(actions)
+
                     print(student)
                     print(session)
                     print(action_text)
+
                     cur.execute("""
                         INSERT INTO entries (
                             student_barcode,
@@ -429,18 +431,17 @@ def dashboard():
                         student.get("student_name") or student.get("name"),
                         session.get("user"),
                         action_text,
-                    
+
                         int(print_count),
                         int(copy_count),
                         int(notebook_count),
                         int(ruler_count),
-                    
+
                         int(corrector_count),
                         int(pencil_count),
                         int(eraser_sharpener_count),
                         int(millimeter_count)
                     ))
-
                     conn.commit()
 
                     message = "Выдача успешно сохранена"
