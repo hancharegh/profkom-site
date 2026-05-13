@@ -315,14 +315,14 @@ def dashboard():
                 }
 
                 used = {
-                    "prints": student["print_count"],
-                    "copies": student["copy_count"],
-                    "notebooks": student["notebook_count"],
-                    "rulers": student["ruler_count"],
-                    "correctors": student["corrector_count"],
-                    "pencils": student["pencil_count"],
-                    "erasers": student["eraser_sharpener_count"],
-                    "millimeters": student["millimeter_count"]
+                    "prints": student.get("print_count", 0),
+                    "copies": student.get("copy_count", 0),
+                    "notebooks": student.get("notebook_count", 0),
+                    "rulers": student.get("ruler_count", 0),
+                    "correctors": student.get("corrector_count", 0),
+                    "pencils": student.get("pencil_count", 0),
+                    "erasers": student.get("eraser_sharpener_count", 0),
+                    "millimeters": student.get("millimeter_count", 0)
                 }
 
                 if used["prints"] + print_count > limits["prints"]:
@@ -349,9 +349,7 @@ def dashboard():
                 elif used["millimeters"] + millimeter_count > limits["millimeters"]:
                     error = "Превышен лимит миллиметровок"
 
-                else:
-
-                    cur.execute("""
+                else:cur.execute("""
                         UPDATE students
                         SET
                             print_count = print_count + %s,
@@ -375,145 +373,84 @@ def dashboard():
                         barcode
                     ))
 
-                    actions = {
-                        "Печать": print_count,
-                        "Копия": copy_count,
-                        "Тетрадь": notebook_count,
-                        "Линейка": ruler_count,
-                        "Корректор": corrector_count,
-                        "Карандаш": pencil_count,
-                        "Ластик/Точилка": eraser_sharpener_count,
-                        "Миллиметровка": millimeter_count
-                    }
+                    actions = []
 
-                    for action_text, amount in actions.items():
+                    if print_count > 0:
+                        actions.append(f"Печать: {print_count}")
 
-                        if amount > 0:
+                    if copy_count > 0:
+                        actions.append(f"Копии: {copy_count}")
 
-                            actions = []
+                    if notebook_count > 0:
+                        actions.append(f"Тетради: {notebook_count}")
 
-                            if print_count > 0:
-                                actions.append(f"Печать: {print_count}")
-                            
-                            if copy_count > 0:
-                                actions.append(f"Копии: {copy_count}")
-                            
-                            if notebook_count > 0:
-                                actions.append(f"Тетради: {notebook_count}")
-                            
-                            if ruler_count > 0:
-                                actions.append(f"Линейки: {ruler_count}")
-                            
-                            if corrector_count > 0:
-                                actions.append(f"Корректоры: {corrector_count}")
-                            
-                            if pencil_count > 0:
-                                actions.append(f"Карандаши: {pencil_count}")
-                            
-                            if eraser_sharpener_count > 0:
-                                actions.append(f"Ластики/Точилки: {eraser_sharpener_count}")
-                            
-                            if millimeter_count > 0:
-                                actions.append(f"Миллиметровки: {millimeter_count}")
-                            
-                            action_text = ", ".join(actions)
-                            
-                            cur.execute("""
-                            INSERT INTO entries (
-                                student_barcode,
-                                student_name,
-                                secretary,
-                                action_text,
-                                print_count,
-                                copy_count,
-                                notebook_count,
-                                ruler_count,
-                                corrector_count,
-                                pencil_count,
-                                eraser_sharpener_count,
-                                millimeter_count
-                            )
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                            """, (
-                                barcode,
-                                student["name"],
-                                session["name"],
-                                action_text,
-                                print_count,
-                                copy_count,
-                                notebook_count,
-                                ruler_count,
-                                corrector_count,
-                                pencil_count,
-                                eraser_sharpener_count,
-                                millimeter_count
-                            ))
+                    if ruler_count > 0:
+                        actions.append(f"Линейки: {ruler_count}")
 
+                    if corrector_count > 0:
+                        actions.append(f"Корректоры: {corrector_count}")
+
+                    if pencil_count > 0:
+                        actions.append(f"Карандаши: {pencil_count}")
+
+                    if eraser_sharpener_count > 0:
+                        actions.append(f"Ластики/Точилки: {eraser_sharpener_count}")
+
+                    if millimeter_count > 0:
+                        actions.append(f"Миллиметровки: {millimeter_count}")
+
+                    action_text = ", ".join(actions)
+
+                    cur.execute("""
+                        INSERT INTO entries (
+                            student_barcode,
+                            student_name,
+                            secretary,
+                            action_text,
+                            print_count,
+                            copy_count,
+                            notebook_count,
+                            ruler_count,
+                            corrector_count,
+                            pencil_count,
+                            eraser_sharpener_count,
+                            millimeter_count
+                        )
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """, (
+                        barcode,
+                        student.get("name"),
+                        session.get("user"),
+                        action_text,
+                        print_count,
+                        copy_count,
+                        notebook_count,
+                        ruler_count,
+                        corrector_count,
+                        pencil_count,
+                        eraser_sharpener_count,
+                        millimeter_count
+                    ))
 
                     conn.commit()
 
-                    message = "Выдача успешно сохранена"
+                    message = "Выдача успешно сохранена"student_limits = {
+                        "prints": limits["prints"] - (used["prints"] + print_count),
+                        "copies": limits["copies"] - (used["copies"] + copy_count),
+                        "notebooks": limits["notebooks"] - (used["notebooks"] + notebook_count),
+                        "rulers": limits["rulers"] - (used["rulers"] + ruler_count),
+                        "correctors": limits["correctors"] - (used["correctors"] + corrector_count),
+                        "pencils": limits["pencils"] - (used["pencils"] + pencil_count),
+                        "erasers": limits["erasers"] - (used["erasers"] + eraser_sharpener_count),
+                        "millimeters": limits["millimeters"] - (used["millimeters"] + millimeter_count)
+                    }
 
-                student_limits = {
-                    "prints": limits["prints"] - (used["prints"] + print_count),
-                    "copies": limits["copies"] - (used["copies"] + copy_count),
-                    "notebooks": limits["notebooks"] - (used["notebooks"] + notebook_count),
-                    "rulers": limits["rulers"] - (used["rulers"] + ruler_count),
-                    "correctors": limits["correctors"] - (used["correctors"] + corrector_count),
-                    "pencils": limits["pencils"] - (used["pencils"] + pencil_count),
-                    "erasers": limits["erasers"] - (used["erasers"] + eraser_sharpener_count),
-                    "millimeters": limits["millimeters"] - (used["millimeters"] + millimeter_count)
-                }
-
-
-actions = {
-    "Печать": print_count,
-    "Копия": copy_count,
-    "Тетрадь": notebook_count,
-    "Линейка": ruler_count,
-    "Корректор": corrector_count,
-    "Карандаш": pencil_count,
-    "Ластик/Точилка": eraser_sharpener_count,
-    "Миллиметровка": millimeter_count
-}
-
-    for action_name, count in actions.items():
-    
-        if count > 0:
-    
-            action_text = f"{action_name}: {count}"
-    
-            cur.execute("""
-            INSERT INTO entries (
-                student_barcode,
-                student_name,
-                secretary,
-                action_text,
-                print_count,
-                copy_count,
-                notebook_count,
-                ruler_count,
-                corrector_count,
-                pencil_count,
-                eraser_sharpener_count,
-                millimeter_count
-            )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            """, (
-                barcode,
-                student["name"],
-                session["user"],
-                action_text,
-                print_count,
-                copy_count,
-                notebook_count,
-                ruler_count,
-                corrector_count,
-                pencil_count,
-                eraser_sharpener_count,
-                millimeter_count
-            ))
-
+    cur.execute("""
+        SELECT *
+        FROM entries
+        ORDER BY created_at DESC
+        LIMIT 20
+    """)
 
     entries = cur.fetchall()
 
