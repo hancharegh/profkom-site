@@ -428,7 +428,7 @@ def dashboard():
                         )
                     """, (
                         barcode,
-                        student.get("student_name") or student.get("name"),
+                        student.get("full_name") or student.get("name"),
                         session.get("user"),
                         action_text,
 
