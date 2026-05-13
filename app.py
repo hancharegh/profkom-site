@@ -401,43 +401,45 @@ def dashboard():
                         actions.append(f"Миллиметровки: {millimeter_count}")
 
                     action_text = ", ".join(actions)
-
-                   cur.execute("""
-                    INSERT INTO entries (
-                        student_barcode,
-                        student_name,
-                        secretary,
+                    print(student)
+                    print(session)
+                    print(action_text)
+                    cur.execute("""
+                        INSERT INTO entries (
+                            student_barcode,
+                            student_name,
+                            secretary,
+                            action_text,
+                            print_count,
+                            copy_count,
+                            notebook_count,
+                            ruler_count,
+                            corrector_count,
+                            pencil_count,
+                            eraser_sharpener_count,
+                            millimeter_count
+                        )
+                        VALUES (
+                            %s,%s,%s,%s,
+                            %s,%s,%s,%s,
+                            %s,%s,%s,%s
+                        )
+                    """, (
+                        barcode,
+                        student.get("student_name") or student.get("name"),
+                        session.get("user"),
                         action_text,
-                        print_count,
-                        copy_count,
-                        notebook_count,
-                        ruler_count,
-                        corrector_count,
-                        pencil_count,
-                        eraser_sharpener_count,
-                        millimeter_count
-                    )
-                    VALUES (
-                        %s,%s,%s,%s,
-                        %s,%s,%s,%s,
-                        %s,%s,%s,%s
-                    )
-                """, (
-                    barcode,
-                    student.get("student_name") or student.get("name"),
-                    session.get("user"),
-                    action_text,
-                
-                    int(print_count),
-                    int(copy_count),
-                    int(notebook_count),
-                    int(ruler_count),
-                
-                    int(corrector_count),
-                    int(pencil_count),
-                    int(eraser_sharpener_count),
-                    int(millimeter_count)
-                ))
+                    
+                        int(print_count),
+                        int(copy_count),
+                        int(notebook_count),
+                        int(ruler_count),
+                    
+                        int(corrector_count),
+                        int(pencil_count),
+                        int(eraser_sharpener_count),
+                        int(millimeter_count)
+                    ))
 
                     conn.commit()
 
