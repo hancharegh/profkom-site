@@ -681,7 +681,7 @@ def change_password():
         WHERE name=%s
     """, (
         generate_password_hash(new_password),
-        session["user"]
+        session["name"]
     ))
 
     conn.commit()
