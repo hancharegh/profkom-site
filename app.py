@@ -390,23 +390,65 @@ def dashboard():
 
                         if amount > 0:
 
-                            for i in range(amount):
+                            actions = []
 
-                                cur.execute("""
-                                    INSERT INTO entries (
-                                        student_barcode,
-                                        student_name,
-                                        secretary,
-                                        action_text,
-                                        created_at
-                                    )
-                                    VALUES (%s, %s, %s, %s, NOW())
-                                """, (
-                                    barcode,
-                                    student["full_name"],
-                                    session["name"],
-                                    action_text
-                                ))
+                            if print_count > 0:
+                                actions.append(f"Печать: {print_count}")
+                            
+                            if copy_count > 0:
+                                actions.append(f"Копии: {copy_count}")
+                            
+                            if notebook_count > 0:
+                                actions.append(f"Тетради: {notebook_count}")
+                            
+                            if ruler_count > 0:
+                                actions.append(f"Линейки: {ruler_count}")
+                            
+                            if corrector_count > 0:
+                                actions.append(f"Корректоры: {corrector_count}")
+                            
+                            if pencil_count > 0:
+                                actions.append(f"Карандаши: {pencil_count}")
+                            
+                            if eraser_sharpener_count > 0:
+                                actions.append(f"Ластики/Точилки: {eraser_sharpener_count}")
+                            
+                            if millimeter_count > 0:
+                                actions.append(f"Миллиметровки: {millimeter_count}")
+                            
+                            action_text = ", ".join(actions)
+                            
+                            cur.execute("""
+                            INSERT INTO entries (
+                                student_barcode,
+                                student_name,
+                                secretary,
+                                action_text,
+                                print_count,
+                                copy_count,
+                                notebook_count,
+                                ruler_count,
+                                corrector_count,
+                                pencil_count,
+                                eraser_sharpener_count,
+                                millimeter_count
+                            )
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            """, (
+                                barcode,
+                                student["name"],
+                                session["name"],
+                                action_text,
+                                print_count,
+                                copy_count,
+                                notebook_count,
+                                ruler_count,
+                                corrector_count,
+                                pencil_count,
+                                eraser_sharpener_count,
+                                millimeter_count
+                            ))
+
 
                     conn.commit()
 
