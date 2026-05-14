@@ -335,6 +335,17 @@ barcodeInput.addEventListener("keydown", function(event){
 });
 
 </script>
-
+<script> 
+setInterval(() => { 
+    fetch("/ping")
+        .catch(() => {}); 
+}, 240000); 
+    
+</script>
+<script> 
+setInterval(() => { 
+    fetch("/ping")
+        .catch(() => {}); 
+}, 240000); 
 </body>
 </html>
