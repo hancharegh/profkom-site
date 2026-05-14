@@ -30,6 +30,8 @@ from openpyxl import Workbook
 
 app = Flask(__name__)
 app.secret_key = "secret123"
+app.config["PROPAGATE_EXCEPTIONS"] = True
+app.debug = True
 def get_connection():
 
     return psycopg2.connect(
