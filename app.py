@@ -481,7 +481,7 @@ def dashboard():
                         or student.get("name")
                         or "Неизвестно",
 
-                        session.get("user", "Секретарь"),
+                        session["user"],
 
                         action_text,
 
