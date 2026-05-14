@@ -110,7 +110,23 @@
             border-radius:12px;
             margin-bottom:20px;
         }
+    #search_results{
+    background:white;
+    border:1px solid #ddd;
+    border-radius:10px;
+    margin-top:-10px;
+    margin-bottom:15px;
+    overflow:hidden;
+}
 
+.search-item{
+    padding:10px;
+    cursor:pointer;
+}
+
+.search-item:hover{
+    background:#f3f4f6;
+}
     </style>
 
 </head>
@@ -152,8 +168,16 @@
     <h2>Выдача продукции</h2>
 
     <form method="POST">
+    
+    <input
+    type="text"
+    id="student_search"
+    placeholder="Поиск по ФИО"
+>
 
-        
+<div id="search_results">
+    
+</div>    
     <input
         type="text"
         id="barcode"
@@ -354,20 +378,46 @@ setInterval(() => {
 <script>
 
 const searchInput = document.getElementById("student_search");
-const barcodeInput = document.querySelector('input[name="barcode"]');
+const resultsBox = document.getElementById("search_results");
+const barcodeInput = document.getElementById("barcode");
 
 searchInput.addEventListener("input", async function(){
 
-    const query = this.value;
+    const query = this.value.trim();
 
     if(query.length < 2){
+        resultsBox.innerHTML = "";
         return;
     }
 
     const response = await fetch(`/search_students?q=${query}`);
-    const data = await response.json();
+    const students = await response.json();
 
-    console.log(data);
+    resultsBox.innerHTML = "";
+
+    students.forEach(student => {
+
+        const div = document.createElement("div");
+
+        div.className = "search-item";
+
+        div.innerHTML = `
+            ${student.full_name}
+            <br>
+            <small>${student.barcode}</small>
+        `;
+
+        div.onclick = () => {
+
+            barcodeInput.value = student.barcode;
+            searchInput.value = student.full_name;
+
+            resultsBox.innerHTML = "";
+        };
+
+        resultsBox.appendChild(div);
+
+    });
 
 });
 
