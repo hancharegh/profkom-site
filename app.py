@@ -10,6 +10,7 @@ from flask import (
     session,
     flash,
     send_file
+    jsonify
 )
 
 import psycopg2
@@ -982,6 +983,30 @@ def upload_students():
     flash(f"Добавлено студентов: {added}")
 
     return redirect("/chairman")
+
+
+@app.route("/search_students")
+@login_required
+def search_students():
+
+    query = request.args.get("q", "")
+
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT barcode, full_name
+        FROM students
+        WHERE LOWER(full_name) LIKE LOWER(%s)
+        LIMIT 10
+    """, (f"%{query}%",))
+
+    students = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(students)
 # ======================================================
 # START
 # ======================================================
