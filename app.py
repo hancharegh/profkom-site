@@ -229,7 +229,7 @@ def login():
             ):
 
                 session["user_id"] = user["id"]
-                session["name"] = user["name"]
+                session["user"] = user["name"]
                 session["role"] = user["role"]
 
                 if user["role"] == "chairman":
