@@ -258,6 +258,9 @@ def logout():
 # DASHBOARD
 # ======================================================
 
+from datetime import datetime
+
+
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 @role_required("secretary")
@@ -269,6 +272,17 @@ def dashboard():
     error = None
     message = None
     student_limits = None
+
+    LIMITS = {
+        "prints": 30,
+        "copies": 30,
+        "notebooks": 1,
+        "rulers": 1,
+        "correctors": 1,
+        "pencils": 1,
+        "erasers": 1,
+        "millimeters": 50
+    }
 
     if request.method == "POST":
 
@@ -286,7 +300,9 @@ def dashboard():
             ruler_count = int(request.form.get("ruler_count", 0) or 0)
             corrector_count = int(request.form.get("corrector_count", 0) or 0)
             pencil_count = int(request.form.get("pencil_count", 0) or 0)
-            eraser_sharpener_count = int(request.form.get("eraser_sharpener_count", 0) or 0)
+            eraser_sharpener_count = int(
+                request.form.get("eraser_sharpener_count", 0) or 0
+            )
             millimeter_count = int(request.form.get("millimeter_count", 0) or 0)
 
             cur.execute("""
@@ -303,16 +319,48 @@ def dashboard():
 
             else:
 
-                limits = {
-                    "prints": 30,
-                    "copies": 30,
-                    "notebooks": 1,
-                    "rulers": 1,
-                    "correctors": 1,
-                    "pencils": 1,
-                    "erasers": 1,
-                    "millimeters": 50
-                }
+                current_month = datetime.now().month
+                current_year = datetime.now().year
+
+                last_month = student.get("limit_month")
+                last_year = student.get("limit_year")
+
+                # Сброс лимитов нового месяца
+                if (
+                    last_month != current_month
+                    or last_year != current_year
+                ):
+
+                    cur.execute("""
+                        UPDATE students
+                        SET
+                            print_count = 0,
+                            copy_count = 0,
+                            notebook_count = 0,
+                            ruler_count = 0,
+                            corrector_count = 0,
+                            pencil_count = 0,
+                            eraser_sharpener_count = 0,
+                            millimeter_count = 0,
+                            limit_month = %s,
+                            limit_year = %s
+                        WHERE barcode = %s
+                    """, (
+                        current_month,
+                        current_year,
+                        barcode
+                    ))
+
+                    conn.commit()
+
+                    student["print_count"] = 0
+                    student["copy_count"] = 0
+                    student["notebook_count"] = 0
+                    student["ruler_count"] = 0
+                    student["corrector_count"] = 0
+                    student["pencil_count"] = 0
+                    student["eraser_sharpener_count"] = 0
+                    student["millimeter_count"] = 0
 
                 used = {
                     "prints": student.get("print_count", 0),
@@ -325,31 +373,32 @@ def dashboard():
                     "millimeters": student.get("millimeter_count", 0)
                 }
 
-                if used["prints"] + print_count > limits["prints"]:
+                if used["prints"] + print_count > LIMITS["prints"]:
                     error = "Превышен лимит печати"
 
-                elif used["copies"] + copy_count > limits["copies"]:
+                elif used["copies"] + copy_count > LIMITS["copies"]:
                     error = "Превышен лимит копий"
 
-                elif used["notebooks"] + notebook_count > limits["notebooks"]:
+                elif used["notebooks"] + notebook_count > LIMITS["notebooks"]:
                     error = "Тетрадь уже выдавалась"
 
-                elif used["rulers"] + ruler_count > limits["rulers"]:
+                elif used["rulers"] + ruler_count > LIMITS["rulers"]:
                     error = "Линейка уже выдавалась"
 
-                elif used["correctors"] + corrector_count > limits["correctors"]:
+                elif used["correctors"] + corrector_count > LIMITS["correctors"]:
                     error = "Корректор уже выдавался"
 
-                elif used["pencils"] + pencil_count > limits["pencils"]:
+                elif used["pencils"] + pencil_count > LIMITS["pencils"]:
                     error = "Карандаш уже выдавался"
 
-                elif used["erasers"] + eraser_sharpener_count > limits["erasers"]:
+                elif used["erasers"] + eraser_sharpener_count > LIMITS["erasers"]:
                     error = "Ластик/точилка уже выдавались"
 
-                elif used["millimeters"] + millimeter_count > limits["millimeters"]:
+                elif used["millimeters"] + millimeter_count > LIMITS["millimeters"]:
                     error = "Превышен лимит миллиметровок"
 
                 else:
+
                     cur.execute("""
                         UPDATE students
                         SET
@@ -395,16 +444,16 @@ def dashboard():
                         actions.append(f"Карандаши: {pencil_count}")
 
                     if eraser_sharpener_count > 0:
-                        actions.append(f"Ластики/Точилки: {eraser_sharpener_count}")
+                        actions.append(
+                            f"Ластики/Точилки: {eraser_sharpener_count}"
+                        )
 
                     if millimeter_count > 0:
-                        actions.append(f"Миллиметровки: {millimeter_count}")
+                        actions.append(
+                            f"Миллиметровки: {millimeter_count}"
+                        )
 
                     action_text = ", ".join(actions)
-
-                    print(student)
-                    print(session)
-                    print(action_text)
 
                     cur.execute("""
                         INSERT INTO entries (
@@ -428,32 +477,60 @@ def dashboard():
                         )
                     """, (
                         barcode,
-                        student.get("full_name") or student.get("name"),
-                        session.get("name"),
+                        student.get("full_name")
+                        or student.get("name")
+                        or "Неизвестно",
+
+                        session.get("user", "Секретарь"),
+
                         action_text,
 
-                        int(print_count),
-                        int(copy_count),
-                        int(notebook_count),
-                        int(ruler_count),
-
-                        int(corrector_count),
-                        int(pencil_count),
-                        int(eraser_sharpener_count),
-                        int(millimeter_count)
+                        print_count,
+                        copy_count,
+                        notebook_count,
+                        ruler_count,
+                        corrector_count,
+                        pencil_count,
+                        eraser_sharpener_count,
+                        millimeter_count
                     ))
+
                     conn.commit()
 
                     message = "Выдача успешно сохранена"
+
                     student_limits = {
-                        "prints": limits["prints"] - (used["prints"] + print_count),
-                        "copies": limits["copies"] - (used["copies"] + copy_count),
-                        "notebooks": limits["notebooks"] - (used["notebooks"] + notebook_count),
-                        "rulers": limits["rulers"] - (used["rulers"] + ruler_count),
-                        "correctors": limits["correctors"] - (used["correctors"] + corrector_count),
-                        "pencils": limits["pencils"] - (used["pencils"] + pencil_count),
-                        "erasers": limits["erasers"] - (used["erasers"] + eraser_sharpener_count),
-                        "millimeters": limits["millimeters"] - (used["millimeters"] + millimeter_count)
+                        "prints": LIMITS["prints"] - (
+                            used["prints"] + print_count
+                        ),
+
+                        "copies": LIMITS["copies"] - (
+                            used["copies"] + copy_count
+                        ),
+
+                        "notebooks": LIMITS["notebooks"] - (
+                            used["notebooks"] + notebook_count
+                        ),
+
+                        "rulers": LIMITS["rulers"] - (
+                            used["rulers"] + ruler_count
+                        ),
+
+                        "correctors": LIMITS["correctors"] - (
+                            used["correctors"] + corrector_count
+                        ),
+
+                        "pencils": LIMITS["pencils"] - (
+                            used["pencils"] + pencil_count
+                        ),
+
+                        "erasers": LIMITS["erasers"] - (
+                            used["erasers"] + eraser_sharpener_count
+                        ),
+
+                        "millimeters": LIMITS["millimeters"] - (
+                            used["millimeters"] + millimeter_count
+                        )
                     }
 
     cur.execute("""
