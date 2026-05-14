@@ -221,23 +221,43 @@ def login():
         cur.close()
         conn.close()
 
-        if user and check_password_hash(
-            user["password"],
-            password
-        ):
+        print("USER:", user)
+
+        if not user:
+            flash("Пользователь не найден")
+            return render_template("login.html")
+
+        try:
+
+            password_ok = check_password_hash(
+                user["password"],
+                password
+            )
+
+        except Exception as e:
+
+            print("HASH ERROR:", e)
+
+            flash("Ошибка пароля")
+            return render_template("login.html")
+
+        print("PASSWORD OK:", password_ok)
+
+        if password_ok:
 
             session["user"] = user["name"]
             session["role"] = user["role"]
+
+            print("SESSION:", session)
 
             if user["role"] == "chairman":
                 return redirect("/chairman")
 
             return redirect("/dashboard")
 
-        flash("Неверный логин или пароль")
+        flash("Неверный пароль")
 
     return render_template("login.html")
-
 
 # ======================================================
 # LOGOUT
