@@ -39,12 +39,10 @@ def get_connection():
 
 def login_required(func):
 
-    from functools import wraps
-
     @wraps(func)
     def wrapper(*args, **kwargs):
 
-        if "name" not in session:
+        if "user" not in session:
             return redirect("/")
 
         return func(*args, **kwargs)
@@ -54,12 +52,13 @@ def login_required(func):
 
 def role_required(role):
 
-    from functools import wraps
-
     def decorator(func):
 
         @wraps(func)
         def wrapper(*args, **kwargs):
+
+            if "user" not in session:
+                return redirect("/")
 
             if session.get("role") != role:
                 return redirect("/")
