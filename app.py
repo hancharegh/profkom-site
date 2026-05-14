@@ -314,16 +314,23 @@ def dashboard():
                     "millimeters": 50
                 }
 
-                used = {
-                    "prints": student.get("print_count", 0),
-                    "copies": student.get("copy_count", 0),
-                    "notebooks": student.get("notebook_count", 0),
-                    "rulers": student.get("ruler_count", 0),
-                    "correctors": student.get("corrector_count", 0),
-                    "pencils": student.get("pencil_count", 0),
-                    "erasers": student.get("eraser_sharpener_count", 0),
-                    "millimeters": student.get("millimeter_count", 0)
-                }
+                cur.execute("""
+    SELECT
+        COALESCE(SUM(print_count), 0) AS prints,
+        COALESCE(SUM(copy_count), 0) AS copies,
+        COALESCE(SUM(notebook_count), 0) AS notebooks,
+        COALESCE(SUM(ruler_count), 0) AS rulers,
+        COALESCE(SUM(corrector_count), 0) AS correctors,
+        COALESCE(SUM(pencil_count), 0) AS pencils,
+        COALESCE(SUM(eraser_sharpener_count), 0) AS erasers,
+        COALESCE(SUM(millimeter_count), 0) AS millimeters
+    FROM entries
+    WHERE student_barcode = %s
+    AND DATE_TRUNC('month', created_at) =
+        DATE_TRUNC('month', CURRENT_DATE)
+""", (barcode,))
+
+                used = cur.fetchone()
 
                 if used["prints"] + print_count > limits["prints"]:
                     error = "Превышен лимит печати"
@@ -350,30 +357,21 @@ def dashboard():
                     error = "Превышен лимит миллиметровок"
 
                 else:
-                    cur.execute("""
-                        UPDATE students
-                        SET
-                            print_count = print_count + %s,
-                            copy_count = copy_count + %s,
-                            notebook_count = notebook_count + %s,
-                            ruler_count = ruler_count + %s,
-                            corrector_count = corrector_count + %s,
-                            pencil_count = pencil_count + %s,
-                            eraser_sharpener_count = eraser_sharpener_count + %s,
-                            millimeter_count = millimeter_count + %s
-                        WHERE barcode = %s
-                    """, (
-                        print_count,
-                        copy_count,
-                        notebook_count,
-                        ruler_count,
-                        corrector_count,
-                        pencil_count,
-                        eraser_sharpener_count,
-                        millimeter_count,
-                        barcode
-                    ))
-
+                   cur.execute("""
+SELECT
+    COALESCE(SUM(print_count), 0) AS prints,
+    COALESCE(SUM(copy_count), 0) AS copies,
+    COALESCE(SUM(notebook_count), 0) AS notebooks,
+    COALESCE(SUM(ruler_count), 0) AS rulers,
+    COALESCE(SUM(corrector_count), 0) AS correctors,
+    COALESCE(SUM(pencil_count), 0) AS pencils,
+    COALESCE(SUM(eraser_sharpener_count), 0) AS erasers,
+    COALESCE(SUM(millimeter_count), 0) AS millimeters
+FROM entries
+WHERE student_barcode = %s
+AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
+""", (barcode,))
+                    used = cur.fetchone()
                     actions = []
 
                     if print_count > 0:
@@ -402,9 +400,6 @@ def dashboard():
 
                     action_text = ", ".join(actions)
 
-                    print(student)
-                    print(session)
-                    print(action_text)
 
                     cur.execute("""
                         INSERT INTO entries (
