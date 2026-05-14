@@ -162,7 +162,11 @@
         required
         autofocus
     >
-
+    <input
+    type="text"
+    id="student_search"
+    placeholder="Поиск по ФИО"
+    >
 
         
        
@@ -346,6 +350,27 @@ setInterval(() => {
 setInterval(() => { 
     fetch("/ping")
         .catch(() => {}); 
-}, 240000); 
+}, 240000);
+<script>
+
+const searchInput = document.getElementById("student_search");
+const barcodeInput = document.querySelector('input[name="barcode"]');
+
+searchInput.addEventListener("input", async function(){
+
+    const query = this.value;
+
+    if(query.length < 2){
+        return;
+    }
+
+    const response = await fetch(`/search_students?q=${query}`);
+    const data = await response.json();
+
+    console.log(data);
+
+});
+
+</script>
 </body>
 </html>
