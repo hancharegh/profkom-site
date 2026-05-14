@@ -481,7 +481,10 @@ def dashboard():
                         or student.get("name")
                         or "Неизвестно",
 
-                        session["user"],
+                        session.get("user")
+                        or session.get("name")
+                        or session.get("username")
+                        or "Секретарь",
 
                         action_text,
 
