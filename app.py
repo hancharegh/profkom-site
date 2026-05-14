@@ -207,8 +207,8 @@ def login():
         name = request.form["name"]
         password = request.form["password"]
 
-        conn = get_db()
-        cur = conn.cursor()
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
         cur.execute("""
             SELECT *
@@ -221,21 +221,18 @@ def login():
         cur.close()
         conn.close()
 
-        if user:
+        if user and check_password_hash(
+            user["password"],
+            password
+        ):
 
-            if check_password_hash(
-                user["password"],
-                password
-            ):
+            session["user"] = user["name"]
+            session["role"] = user["role"]
 
-                session["user_id"] = user["id"]
-                session["user"] = user["name"]
-                session["role"] = user["role"]
+            if user["role"] == "chairman":
+                return redirect("/chairman")
 
-                if user["role"] == "chairman":
-                    return redirect("/chairman")
-
-                return redirect("/dashboard")
+            return redirect("/dashboard")
 
         flash("Неверный логин или пароль")
 
