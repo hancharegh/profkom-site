@@ -924,31 +924,7 @@ def export_excel():
         download_name="report.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-@app.route("/search_students")
-@login_required
-@role_required("secretary")
-def search_students():
 
-    query = request.args.get("q", "").strip()
-
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-        SELECT barcode, full_name
-        FROM students
-        WHERE LOWER(full_name) LIKE LOWER(%s)
-        ORDER BY full_name
-        LIMIT 10
-    """, (f"%{query}%",))
-
-    students = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return jsonify(students)
-@app.route("/upload_students", methods=["POST"])
 @role_required("chairman")
 def upload_students():
 
