@@ -139,7 +139,7 @@
 </head>
 
 <body>
-
+<body id="body">
 <div class="topbar">
 
     <div>
@@ -530,6 +530,24 @@ searchInput.addEventListener("keydown", function(event){
             firstInput.select();
         }
     }
+
+const now = new Date();
+
+const month = now.getMonth() + 1;
+
+if(month === 12){
+
+    document.body.style.background =
+        "linear-gradient(to bottom, #dbeafe, #ffffff)";
+}
+
+if(month === 9){
+
+    document.body.style.background =
+        "linear-gradient(to bottom, #fff7ed, #ffffff)";
+}
+
+
 });
 
 
