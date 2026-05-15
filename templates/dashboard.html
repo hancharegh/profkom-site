@@ -344,16 +344,28 @@
 
 </div>
 
+
 <script>
 
 const searchInput = document.getElementById("student_search");
 const resultsBox = document.getElementById("search_results");
 const barcodeInput = document.getElementById("barcode");
 
+
+// Поиск студентов
 searchInput.addEventListener("input", async function(){
 
     const query = this.value.trim();
 
+    // Если это barcode со сканера
+    if(/^\d+$/.test(query)){
+
+        barcodeInput.value = query;
+        resultsBox.innerHTML = "";
+        return;
+    }
+
+    // Иначе поиск по ФИО
     if(query.length < 2){
 
         resultsBox.innerHTML = "";
@@ -408,12 +420,19 @@ searchInput.addEventListener("input", async function(){
 });
 
 
-// Сканер barcode
+// Enter после сканера
 searchInput.addEventListener("keydown", function(event){
 
     if(event.key === "Enter"){
 
         event.preventDefault();
+
+        // Если barcode не заполнен —
+        // берём значение из поля поиска
+        if(!barcodeInput.value){
+
+            barcodeInput.value = searchInput.value.trim();
+        }
 
         const firstInput =
             document.querySelector('input[name="print_count"]');
@@ -436,6 +455,7 @@ setInterval(() => {
 }, 240000);
 
 </script>
+
 
 </body>
 </html>
