@@ -295,7 +295,7 @@ def dashboard():
     error = None
     message = None
     student_limits = None
-    achievment = None
+    achievement = None
 
     LIMITS = {
         "prints": 30,
