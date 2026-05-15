@@ -205,6 +205,12 @@ def login():
     if request.method == "POST":
 
         name = request.form["name"]
+        
+        if name.lower() in ["тигр", "tiger"]:
+        
+            flash("🐯 доступ только для тигров и тигриц")
+        
+            return render_template("login.html")
         password = request.form["password"]
 
         conn = get_connection()
