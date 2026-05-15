@@ -1006,6 +1006,63 @@ def search_students():
     conn.close()
 
     return jsonify(students)
+
+
+
+@app.route("/student_limits/<barcode>")
+@login_required
+@role_required("secretary")
+def student_limits_api(barcode):
+
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    LIMITS = {
+        "prints": 30,
+        "copies": 30,
+        "notebooks": 1,
+        "rulers": 1,
+        "correctors": 1,
+        "pencils": 1,
+        "erasers": 1,
+        "millimeters": 50
+    }
+
+    cur.execute("""
+        SELECT
+            COALESCE(SUM(print_count), 0) as prints,
+            COALESCE(SUM(copy_count), 0) as copies,
+            COALESCE(SUM(notebook_count), 0) as notebooks,
+            COALESCE(SUM(ruler_count), 0) as rulers,
+            COALESCE(SUM(corrector_count), 0) as correctors,
+            COALESCE(SUM(pencil_count), 0) as pencils,
+            COALESCE(SUM(eraser_sharpener_count), 0) as erasers,
+            COALESCE(SUM(millimeter_count), 0) as millimeters
+        FROM entries
+        WHERE student_barcode = %s
+        AND DATE_TRUNC('month', created_at)
+            = DATE_TRUNC('month', CURRENT_DATE)
+    """, (barcode,))
+
+    used = cur.fetchone()
+
+    result = {
+        "prints": LIMITS["prints"] - used["prints"],
+        "copies": LIMITS["copies"] - used["copies"],
+        "notebooks": LIMITS["notebooks"] - used["notebooks"],
+        "rulers": LIMITS["rulers"] - used["rulers"],
+        "correctors": LIMITS["correctors"] - used["correctors"],
+        "pencils": LIMITS["pencils"] - used["pencils"],
+        "erasers": LIMITS["erasers"] - used["erasers"],
+        "millimeters": LIMITS["millimeters"] - used["millimeters"]
+    }
+
+    cur.close()
+    conn.close()
+
+    return jsonify(result)
+
+
 # ======================================================
 # START
 # ======================================================
