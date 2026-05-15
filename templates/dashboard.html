@@ -177,14 +177,20 @@
 
 <div id="search_results">
     
-</div>    
+<div style="position:relative;">
+
     <input
         type="text"
-        id="barcode"
+        id="student_search"
         name="barcode"
-        placeholder="Баркод"
+        placeholder="Сканируйте баркод или введите ФИО"
+        autocomplete="off"
         required
-        autofocus
+    >
+
+    <div id="search_results"></div>
+
+</div>
 
 
         
