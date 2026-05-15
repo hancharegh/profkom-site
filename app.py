@@ -12,7 +12,7 @@ from flask import (
     send_file,
     jsonify
 )
-
+import random
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -517,7 +517,41 @@ def dashboard():
 
                     conn.commit()
 
-                    message = "Выдача успешно сохранена"
+
+                    messages = [
+                        "Выдача успешно сохранена",
+                        "🐯 Тигр успешно накормлен",
+                        "📚 Бумажная промышленность процветает",
+                        "⚡ Профком доволен вами",
+                        "🖨️ Печать пошла в бой",
+                        "🏆 +100 к уважению секретаря"
+                    ]
+                    
+                    if random.randint(1, 10) == 1:
+                        message = random.choice(messages)
+                    else:
+                        message = "Выдача успешно сохранена"
+
+                    cur.execute("""
+                        SELECT COUNT(*) as total
+                        FROM entries
+                        WHERE secretary = %s
+                    """, (session["user"],))
+                    
+                    total_actions = cur.fetchone()["total"]
+                    
+                    achievement = None
+                    
+                    if total_actions == 100:
+                        achievement = "🏆 Достижение: 100 выдач"
+                    
+                    elif total_actions == 500:
+                        achievement = "🐯 Легенда профкома"
+                    
+                    elif total_actions == 1000:
+                        achievement = "👑 Верховный тигр"
+
+
 
                     student_limits = {
                         "prints": LIMITS["prints"] - (
@@ -564,7 +598,7 @@ def dashboard():
 
     cur.close()
     conn.close()
-
+    achievement=achievement
     return render_template(
         "dashboard.html",
         entries=entries,
