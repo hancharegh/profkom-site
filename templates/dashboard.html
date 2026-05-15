@@ -422,6 +422,16 @@ searchInput.addEventListener("input", async function(){
         resultsBox.innerHTML = "";
         return;
     }
+   
+    if(query === "/tiger"){
+    
+        alert("🐯 Тигр найден");
+    
+        searchInput.value = "";
+    
+        return;
+    }
+
 
     // Иначе поиск по ФИО
     if(query.length < 2){
