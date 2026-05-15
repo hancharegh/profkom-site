@@ -1063,6 +1063,30 @@ def student_limits_api(barcode):
     return jsonify(result)
 
 
+@app.route("/delete_student/<barcode>", methods=["POST"])
+@login_required
+@role_required("chairman")
+def delete_student(barcode):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM students
+        WHERE barcode = %s
+    """, (barcode,))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    flash("Студент удалён")
+
+    return redirect("/chairman")
+
+
+
 # ======================================================
 # START
 # ======================================================
