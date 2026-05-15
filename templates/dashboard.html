@@ -445,6 +445,25 @@ searchInput.addEventListener("input", async function(){
             `;
 
             div.onclick = () => {
+        
+            fetch(`/student_limits/${student.barcode}`)
+                .then(response => response.json())
+                .then(data => {
+            
+                    document.getElementById("live_limits").style.display = "block";
+            
+                    document.getElementById("limit_prints").innerText = data.prints;
+                    document.getElementById("limit_copies").innerText = data.copies;
+                    document.getElementById("limit_notebooks").innerText = data.notebooks;
+                    document.getElementById("limit_rulers").innerText = data.rulers;
+                    document.getElementById("limit_correctors").innerText = data.correctors;
+                    document.getElementById("limit_pencils").innerText = data.pencils;
+                    document.getElementById("limit_erasers").innerText = data.erasers;
+                    document.getElementById("limit_millimeters").innerText = data.millimeters;
+            
+                });
+
+
 
                 searchInput.value = student.full_name;
                 barcodeInput.value = student.barcode;
