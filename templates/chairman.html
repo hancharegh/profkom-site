@@ -124,6 +124,19 @@
         </div>
     </div>
 
+    <form method="POST" action="/delete_student/{{ student.barcode }}">
+
+    <button
+        type="submit"
+        class="danger-btn"
+        onclick="return confirm('Удалить студента?')"
+    >
+        Удалить
+    </button>
+
+</form>
+
+
     <div class="card">
         Всего выдач
         <div class="stat">
