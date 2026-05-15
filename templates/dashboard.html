@@ -46,8 +46,8 @@
 
         label{
             display:block;
+            margin-top:12px;
             margin-bottom:6px;
-            margin-top:10px;
             font-weight:bold;
         }
 
@@ -69,7 +69,6 @@
             border-radius:12px;
             cursor:pointer;
             font-weight:bold;
-            transition:0.2s;
         }
 
         button:hover{
@@ -112,15 +111,20 @@
             margin-bottom:20px;
         }
 
+        .search-wrapper{
+            position:relative;
+        }
+
         #search_results{
             position:absolute;
-            width:100%;
+            top:100%;
+            left:0;
+            right:0;
             background:white;
             border:1px solid #ddd;
             border-radius:12px;
-            margin-top:-10px;
-            z-index:999;
             overflow:hidden;
+            z-index:999;
             box-shadow:0 4px 12px rgba(0,0,0,0.1);
         }
 
@@ -139,18 +143,14 @@
 </head>
 
 <body>
-<body id="body">
+
 <div class="topbar">
 
     <div>
 
         <h1>Панель секретаря</h1>
 
-        <p style="
-            margin-top:-10px;
-            color:#6b7280;
-            font-size:16px;
-        ">
+        <p style="margin-top:-10px;color:#6b7280;">
             {{ session["user"] }}
         </p>
 
@@ -161,6 +161,7 @@
     </a>
 
 </div>
+
 
 {% if message %}
 <div class="message">
@@ -174,12 +175,12 @@
 </div>
 {% endif %}
 
-
 {% if error %}
 <div class="error">
     {{ error }}
 </div>
 {% endif %}
+
 
 <div class="card">
 
@@ -187,15 +188,16 @@
 
     <form method="POST">
 
-        <div style="position:relative;">
+        <div class="search-wrapper">
 
             <label>Студент</label>
 
             <input
                 type="text"
                 id="student_search"
-                placeholder="Введите ФИО студента"
+                placeholder="Сканируйте barcode или введите ФИО"
                 autocomplete="off"
+                required
             >
 
             <input
@@ -206,58 +208,63 @@
 
             <div id="search_results"></div>
 
-            <div class="card" id="live_limits" style="display:none;">
-            
-                <h2>Лимиты студента</h2>
-            
-                <table>
-            
-                    <tr>
-                        <td>Печать</td>
-                        <td id="limit_prints"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Копии</td>
-                        <td id="limit_copies"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Тетради</td>
-                        <td id="limit_notebooks"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Линейки</td>
-                        <td id="limit_rulers"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Корректоры</td>
-                        <td id="limit_correctors"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Карандаши</td>
-                        <td id="limit_pencils"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Ластики / Точилки</td>
-                        <td id="limit_erasers"></td>
-                    </tr>
-            
-                    <tr>
-                        <td>Миллиметровки</td>
-                        <td id="limit_millimeters"></td>
-                    </tr>
-            
-                </table>
-            
-            </div>
+        </div>
 
+
+        <div
+            class="card"
+            id="live_limits"
+            style="display:none;"
+        >
+
+            <h2>Лимиты студента</h2>
+
+            <table>
+
+                <tr>
+                    <td>Печать</td>
+                    <td id="limit_prints"></td>
+                </tr>
+
+                <tr>
+                    <td>Копии</td>
+                    <td id="limit_copies"></td>
+                </tr>
+
+                <tr>
+                    <td>Тетради</td>
+                    <td id="limit_notebooks"></td>
+                </tr>
+
+                <tr>
+                    <td>Линейки</td>
+                    <td id="limit_rulers"></td>
+                </tr>
+
+                <tr>
+                    <td>Корректоры</td>
+                    <td id="limit_correctors"></td>
+                </tr>
+
+                <tr>
+                    <td>Карандаши</td>
+                    <td id="limit_pencils"></td>
+                </tr>
+
+                <tr>
+                    <td>Ластики / Точилки</td>
+                    <td id="limit_erasers"></td>
+                </tr>
+
+                <tr>
+                    <td>Миллиметровки</td>
+                    <td id="limit_millimeters"></td>
+                </tr>
+
+            </table>
 
         </div>
+
 
         <label>Печать</label>
         <input type="number" name="print_count" min="0">
@@ -291,59 +298,6 @@
 
 </div>
 
-{% if student_limits %}
-
-<div class="card">
-
-    <h2>Оставшиеся лимиты</h2>
-
-    <table>
-
-        <tr>
-            <td>Печать</td>
-            <td>{{ student_limits.prints }}</td>
-        </tr>
-
-        <tr>
-            <td>Копии</td>
-            <td>{{ student_limits.copies }}</td>
-        </tr>
-
-        <tr>
-            <td>Тетради</td>
-            <td>{{ student_limits.notebooks }}</td>
-        </tr>
-
-        <tr>
-            <td>Линейки</td>
-            <td>{{ student_limits.rulers }}</td>
-        </tr>
-
-        <tr>
-            <td>Корректоры</td>
-            <td>{{ student_limits.correctors }}</td>
-        </tr>
-
-        <tr>
-            <td>Карандаши</td>
-            <td>{{ student_limits.pencils }}</td>
-        </tr>
-
-        <tr>
-            <td>Ластики / Точилки</td>
-            <td>{{ student_limits.erasers }}</td>
-        </tr>
-
-        <tr>
-            <td>Миллиметровки</td>
-            <td>{{ student_limits.millimeters }}</td>
-        </tr>
-
-    </table>
-
-</div>
-
-{% endif %}
 
 <div class="card">
 
@@ -353,14 +307,14 @@
 
         <thead>
 
-        <tr>
-            <th>Студент</th>
-            <th>Секретарь</th>
-            <th>Баркод</th>
-            <th>Действие</th>
-            <th>Дата</th>
-            <th>Отмена</th>
-        </tr>
+            <tr>
+                <th>Студент</th>
+                <th>Секретарь</th>
+                <th>Баркод</th>
+                <th>Действие</th>
+                <th>Дата</th>
+                <th>Отмена</th>
+            </tr>
 
         </thead>
 
@@ -368,31 +322,37 @@
 
         {% for entry in entries %}
 
-        <tr>
+            <tr>
 
-            <td>{{ entry.student_name }}</td>
+                <td>{{ entry.student_name }}</td>
 
-            <td>{{ entry.secretary }}</td>
+                <td>{{ entry.secretary }}</td>
 
-            <td>{{ entry.student_barcode }}</td>
+                <td>{{ entry.student_barcode }}</td>
 
-            <td>{{ entry.action_text }}</td>
+                <td>{{ entry.action_text }}</td>
 
-            <td>{{ entry.created_at }}</td>
+                <td>{{ entry.created_at }}</td>
 
-            <td>
+                <td>
 
-                <form method="POST" action="/undo/{{ entry.id }}">
+                    <form
+                        method="POST"
+                        action="/undo/{{ entry.id }}"
+                    >
 
-                    <button type="submit" class="danger-btn">
-                        Отменить
-                    </button>
+                        <button
+                            type="submit"
+                            class="danger-btn"
+                        >
+                            Отменить
+                        </button>
 
-                </form>
+                    </form>
 
-            </td>
+                </td>
 
-        </tr>
+            </tr>
 
         {% endfor %}
 
@@ -405,9 +365,14 @@
 
 <script>
 
-const searchInput = document.getElementById("student_search");
-const resultsBox = document.getElementById("search_results");
-const barcodeInput = document.getElementById("barcode");
+const searchInput =
+    document.getElementById("student_search");
+
+const resultsBox =
+    document.getElementById("search_results");
+
+const barcodeInput =
+    document.getElementById("barcode");
 
 
 // Поиск студентов
@@ -415,28 +380,30 @@ searchInput.addEventListener("input", async function(){
 
     const query = this.value.trim();
 
-    // Если это barcode со сканера
+    // barcode со сканера
     if(/^\d+$/.test(query)){
 
         barcodeInput.value = query;
         resultsBox.innerHTML = "";
+
         return;
     }
-   
-    if(query === "/tiger"){
-    
+
+    // Пасхалка
+    if(query.toLowerCase() === "/tiger"){
+
         alert("🐯 Тигр найден");
-    
+
         searchInput.value = "";
-    
+
         return;
     }
 
-
-    // Иначе поиск по ФИО
+    // Минимум 2 символа
     if(query.length < 2){
 
         resultsBox.innerHTML = "";
+
         return;
     }
 
@@ -461,36 +428,55 @@ searchInput.addEventListener("input", async function(){
                 <small>${student.barcode}</small>
             `;
 
-            div.onclick = () => {
-        
-            fetch(`/student_limits/${student.barcode}`)
-                .then(response => response.json())
-                .then(data => {
-            
-                    document.getElementById("live_limits").style.display = "block";
-            
-                    document.getElementById("limit_prints").innerText = data.prints;
-                    document.getElementById("limit_copies").innerText = data.copies;
-                    document.getElementById("limit_notebooks").innerText = data.notebooks;
-                    document.getElementById("limit_rulers").innerText = data.rulers;
-                    document.getElementById("limit_correctors").innerText = data.correctors;
-                    document.getElementById("limit_pencils").innerText = data.pencils;
-                    document.getElementById("limit_erasers").innerText = data.erasers;
-                    document.getElementById("limit_millimeters").innerText = data.millimeters;
-            
-                });
-
-
+            div.onclick = async () => {
 
                 searchInput.value = student.full_name;
+
                 barcodeInput.value = student.barcode;
 
                 resultsBox.innerHTML = "";
 
+                // Получение лимитов
+                const limitsResponse =
+                    await fetch(`/student_limits/${student.barcode}`);
+
+                const data =
+                    await limitsResponse.json();
+
+                document.getElementById("live_limits")
+                    .style.display = "block";
+
+                document.getElementById("limit_prints")
+                    .innerText = data.prints;
+
+                document.getElementById("limit_copies")
+                    .innerText = data.copies;
+
+                document.getElementById("limit_notebooks")
+                    .innerText = data.notebooks;
+
+                document.getElementById("limit_rulers")
+                    .innerText = data.rulers;
+
+                document.getElementById("limit_correctors")
+                    .innerText = data.correctors;
+
+                document.getElementById("limit_pencils")
+                    .innerText = data.pencils;
+
+                document.getElementById("limit_erasers")
+                    .innerText = data.erasers;
+
+                document.getElementById("limit_millimeters")
+                    .innerText = data.millimeters;
+
                 const firstInput =
-                    document.querySelector('input[name="print_count"]');
+                    document.querySelector(
+                        'input[name="print_count"]'
+                    );
 
                 if(firstInput){
+
                     firstInput.focus();
                 }
             };
@@ -499,9 +485,9 @@ searchInput.addEventListener("input", async function(){
 
         });
 
-    }catch(err){
+    }catch(error){
 
-        console.log(err);
+        console.log(error);
     }
 
 });
@@ -514,15 +500,16 @@ searchInput.addEventListener("keydown", function(event){
 
         event.preventDefault();
 
-        // Если barcode не заполнен —
-        // берём значение из поля поиска
         if(!barcodeInput.value){
 
-            barcodeInput.value = searchInput.value.trim();
+            barcodeInput.value =
+                searchInput.value.trim();
         }
 
         const firstInput =
-            document.querySelector('input[name="print_count"]');
+            document.querySelector(
+                'input[name="print_count"]'
+            );
 
         if(firstInput){
 
@@ -531,6 +518,10 @@ searchInput.addEventListener("keydown", function(event){
         }
     }
 
+});
+
+
+// Пасхалки по месяцам
 const now = new Date();
 
 const month = now.getMonth() + 1;
@@ -548,9 +539,6 @@ if(month === 9){
 }
 
 
-});
-
-
 // Anti sleep
 setInterval(() => {
 
@@ -560,7 +548,6 @@ setInterval(() => {
 }, 240000);
 
 </script>
-
 
 </body>
 </html>
