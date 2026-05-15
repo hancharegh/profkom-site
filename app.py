@@ -311,6 +311,18 @@ def dashboard():
 
         barcode = request.form.get("barcode", "").strip()
 
+        if barcode == "000000":
+        
+            error = "🐯 Верховный тигр вошёл в систему"
+        
+            return render_template(
+                "dashboard.html",
+                entries=[],
+                error=error
+            )
+
+
+
         if not barcode:
 
             error = "Введите barcode"
