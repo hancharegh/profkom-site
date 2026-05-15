@@ -1,425 +1,256 @@
-<!DOCTYPE html>
-<html lang="ru">
-
-<head>
-
-    <meta charset="UTF-8">
-    <title>Панель секретаря</title>
-
-    <style>
-
-        body{
-            margin:0;
-            padding:30px;
-            font-family:Arial,sans-serif;
-            background:#f4f7fb;
-            color:#111827;
-        }
-
-        .topbar{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:25px;
-        }
-
-        .logout{
-            background:#111827;
-            color:white;
-            text-decoration:none;
-            padding:12px 18px;
-            border-radius:12px;
-            font-weight:bold;
-        }
-
-        .card{
-            background:white;
-            padding:25px;
-            border-radius:18px;
-            box-shadow:0 4px 12px rgba(0,0,0,0.06);
-            margin-bottom:25px;
-        }
-
-        h1,h2{
-            margin-top:0;
-        }
-
-        input{
-            width:100%;
-            padding:12px;
-            border-radius:12px;
-            border:1px solid #d1d5db;
-            margin-bottom:15px;
-            box-sizing:border-box;
-            font-size:15px;
-        }
-
-        button{
-            background:#2563eb;
-            color:white;
-            border:none;
-            padding:12px 20px;
-            border-radius:12px;
-            cursor:pointer;
-            font-weight:bold;
-            transition:0.2s;
-        }
-
-        button:hover{
-            opacity:0.9;
-        }
-
-        .danger-btn{
-            background:#ef4444;
-            padding:10px 16px;
-            border-radius:10px;
-            color:white;
-            border:none;
-            cursor:pointer;
-            font-weight:bold;
-        }
-
-        table{
-            width:100%;
-            border-collapse:collapse;
-        }
-
-        th{
-            background:#eef2ff;
-            padding:14px;
-            text-align:left;
-        }
-
-        td{
-            padding:14px;
-            border-top:1px solid #e5e7eb;
-        }
-
-        .message{
-            background:#dcfce7;
-            color:#166534;
-            padding:14px;
-            border-radius:12px;
-            margin-bottom:20px;
-        }
-
-        .error{
-            background:#fee2e2;
-            color:#991b1b;
-            padding:14px;
-            border-radius:12px;
-            margin-bottom:20px;
-        }
-   #search_results{
-    position:absolute;
-    width:100%;
-    background:white;
-    border:1px solid #ddd;
-    border-radius:12px;
-    margin-top:-10px;
-    z-index:999;
-    overflow:hidden;
-}
-
-.search-item{
-    padding:12px;
-    cursor:pointer;
-    border-bottom:1px solid #eee;
-}
-
-.search-item:hover{
-    background:#f3f4f6;
-}
-    </style>
-
-</head>
-
-<body>
-
-<div class="topbar">
-
-    <h1>Панель секретаря</h1>
-    
-    <p style="
-        margin-top:-10px;
-        color:#6b7280;
-        font-size:16px;
-    ">
-        {{ session["name"] }}
-    </p>
-
-    <a href="/logout" class="logout">
-        Выйти
-    </a>
-
-</div>
-
-{% if message %}
-<div class="message">
-    {{ message }}
-</div>
-{% endif %}
-
-{% if error %}
-<div class="error">
-    {{ error }}
-</div>
-{% endif %}
-
-<div class="card">
-
-    <h2>Выдача продукции</h2>
-
-    <form method="POST">
-    
-
-<div id="search_results">
-    
-<div style="position:relative;">
-
-    <input
-        type="text"
-        id="student_search"
-        name="barcode"
-        placeholder="Сканируйте баркод или введите ФИО"
-        autocomplete="off"
-        required
-    >
-
-    <div id="search_results"></div>
-
-</div>
-
-
-        
-       
-        <label>Печать</label>
-        <input type="number" name="print_count" min="0" value="">
-        
-        <label>Копии</label>
-        <input type="number" name="copy_count" min="0" value="">
-        
-        <label>Тетради</label>
-        <input type="number" name="notebook_count" min="0" value="">
-        
-        <label>Линейки</label>
-        <input type="number" name="ruler_count" min="0" value="">
-        
-        <label>Корректоры</label>
-        <input type="number" name="corrector_count" min="0" value="">
-        
-        <label>Карандаши</label>
-        <input type="number" name="pencil_count" min="0" value="">
-        
-        <label>Ластики / Точилки</label>
-        <input type="number" name="eraser_sharpener_count" min="0" value="">
-        
-        <label>Миллиметровки</label>
-        <input type="number" name="millimeter_count" min="0" value="">
-
-
-        
-
-
-        <button type="submit">
-            Сохранить
-        </button>
-
-    </form>
-
-</div>
-
-{% if student_limits %}
-
-<div class="card">
-
-    <h2>Оставшиеся лимиты</h2>
-
-    <table>
-
-        <tr>
-            <td>Печать</td>
-            <td>{{ student_limits.prints }}</td>
-        </tr>
-
-        <tr>
-            <td>Копии</td>
-            <td>{{ student_limits.copies }}</td>
-        </tr>
-
-        <tr>
-            <td>Тетради</td>
-            <td>{{ student_limits.notebooks }}</td>
-        </tr>
-
-        <tr>
-            <td>Линейки</td>
-            <td>{{ student_limits.rulers }}</td>
-        </tr>
-
-        <tr>
-            <td>Корректоры</td>
-            <td>{{ student_limits.correctors }}</td>
-        </tr>
-
-        <tr>
-            <td>Карандаши</td>
-            <td>{{ student_limits.pencils }}</td>
-        </tr>
-
-        <tr>
-            <td>Ластики / Точилки</td>
-            <td>{{ student_limits.erasers }}</td>
-        </tr>
-
-        <tr>
-            <td>Миллиметровки</td>
-            <td>{{ student_limits.millimeters }}</td>
-        </tr>
-
-    </table>
-
-</div>
-
-{% endif %}
-
-<div class="card">
-
-    <h2>Последние действия</h2>
-
-    <table>
-
-        <thead>
-
-        <tr>
-            <th>Студент</th>
-            <th>Секретарь</th>
-            <th>Баркод</th>
-            <th>Действие</th>
-            <th>Дата</th>
-            <th>Отмена</th>
-        </tr>
-
-        </thead>
-
-        <tbody>
-
-        {% for entry in entries %}
-
-        <tr>
-
-            <td>{{ entry.student_name }}</td>
-
-            <td>{{ entry.secretary }}</td>
-
-            <td>{{ entry.student_barcode }}</td>
-
-            <td>{{ entry.action_text }}</td>
-
-            <td>{{ entry.created_at }}</td>
-
-            <td>
-
-                <form method="POST" action="/undo/{{ entry.id }}">
-
-                    <button type="submit" class="danger-btn">
-                        Отменить
-                    </button>
-
-                </form>
-
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-        </tbody>
-
-    </table>
-
-</div>
-
-<script>
-
-const barcodeInput = document.querySelector('input[name="barcode"]');
-
-barcodeInput.addEventListener("keydown", function(event){
-
-    if(event.key === "Enter"){
-
-        event.preventDefault();
-
-        const firstProductInput =
-            document.querySelector('input[name="print_count"]');
-
-        if(firstProductInput){
-
-            firstProductInput.focus();
-            firstProductInput.select();
-        }
-    }
-});
-
-</script>
-<script> 
-setInterval(() => { 
-    fetch("/ping")
-        .catch(() => {}); 
-}, 240000); 
-    
-</script>
-<script> 
-setInterval(() => { 
-    fetch("/ping")
-        .catch(() => {}); 
-}, 240000);
-<script>
-
-const searchInput = document.getElementById("student_search");
-const resultsBox = document.getElementById("search_results");
-const barcodeInput = document.getElementById("barcode");
-
-searchInput.addEventListener("input", async function(){
-
-    const query = this.value.trim();
-
-    if(query.length < 2){
-        resultsBox.innerHTML = "";
-        return;
+```python
+@app.route("/dashboard", methods=["GET", "POST"])
+@login_required
+@role_required("secretary")
+def dashboard():
+
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    error = None
+    message = None
+    student_limits = None
+
+    LIMITS = {
+        "prints": 30,
+        "copies": 30,
+        "notebooks": 1,
+        "rulers": 1,
+        "correctors": 1,
+        "pencils": 1,
+        "erasers": 1,
+        "millimeters": 50
     }
 
-    const response = await fetch(`/search_students?q=${query}`);
-    const students = await response.json();
+    if request.method == "POST":
 
-    resultsBox.innerHTML = "";
+        barcode = request.form.get("barcode", "").strip()
 
-    students.forEach(student => {
+        if not barcode:
 
-        const div = document.createElement("div");
+            error = "Выберите студента"
 
-        div.className = "search-item";
+        else:
 
-        div.innerHTML = `
-            ${student.full_name}
-            <br>
-            <small>${student.barcode}</small>
-        `;
+            try:
 
-        div.onclick = () => {
+                print_count = int(request.form.get("print_count") or 0)
+                copy_count = int(request.form.get("copy_count") or 0)
+                notebook_count = int(request.form.get("notebook_count") or 0)
+                ruler_count = int(request.form.get("ruler_count") or 0)
+                corrector_count = int(request.form.get("corrector_count") or 0)
+                pencil_count = int(request.form.get("pencil_count") or 0)
+                eraser_sharpener_count = int(
+                    request.form.get("eraser_sharpener_count") or 0
+                )
+                millimeter_count = int(
+                    request.form.get("millimeter_count") or 0
+                )
 
-            barcodeInput.value = student.barcode;
-            searchInput.value = student.full_name;
+            except:
 
-            resultsBox.innerHTML = "";
-        };
+                error = "Неверные значения"
 
-        resultsBox.appendChild(div);
+                print_count = 0
+                copy_count = 0
+                notebook_count = 0
+                ruler_count = 0
+                corrector_count = 0
+                pencil_count = 0
+                eraser_sharpener_count = 0
+                millimeter_count = 0
 
-    });
+            cur.execute("""
+                SELECT *
+                FROM students
+                WHERE barcode = %s
+            """, (barcode,))
 
-});
+            student = cur.fetchone()
 
-</script>
-</body>
-</html>
+            if not student:
+
+                error = "Студент не найден"
+
+            else:
+
+                # Текущий месяц
+                cur.execute("""
+                    SELECT
+                        COALESCE(SUM(print_count), 0) as prints,
+                        COALESCE(SUM(copy_count), 0) as copies,
+                        COALESCE(SUM(notebook_count), 0) as notebooks,
+                        COALESCE(SUM(ruler_count), 0) as rulers,
+                        COALESCE(SUM(corrector_count), 0) as correctors,
+                        COALESCE(SUM(pencil_count), 0) as pencils,
+                        COALESCE(SUM(eraser_sharpener_count), 0) as erasers,
+                        COALESCE(SUM(millimeter_count), 0) as millimeters
+                    FROM entries
+                    WHERE student_barcode = %s
+                    AND DATE_TRUNC('month', created_at)
+                        = DATE_TRUNC('month', CURRENT_DATE)
+                """, (barcode,))
+
+                used = cur.fetchone()
+
+                if used["prints"] + print_count > LIMITS["prints"]:
+                    error = "Превышен лимит печати"
+
+                elif used["copies"] + copy_count > LIMITS["copies"]:
+                    error = "Превышен лимит копий"
+
+                elif used["notebooks"] + notebook_count > LIMITS["notebooks"]:
+                    error = "Тетрадь уже выдавалась"
+
+                elif used["rulers"] + ruler_count > LIMITS["rulers"]:
+                    error = "Линейка уже выдавалась"
+
+                elif used["correctors"] + corrector_count > LIMITS["correctors"]:
+                    error = "Корректор уже выдавался"
+
+                elif used["pencils"] + pencil_count > LIMITS["pencils"]:
+                    error = "Карандаш уже выдавался"
+
+                elif used["erasers"] + eraser_sharpener_count > LIMITS["erasers"]:
+                    error = "Ластик/точилка уже выдавались"
+
+                elif used["millimeters"] + millimeter_count > LIMITS["millimeters"]:
+                    error = "Превышен лимит миллиметровок"
+
+                else:
+
+                    actions = []
+
+                    if print_count > 0:
+                        actions.append(f"Печать: {print_count}")
+
+                    if copy_count > 0:
+                        actions.append(f"Копии: {copy_count}")
+
+                    if notebook_count > 0:
+                        actions.append(f"Тетради: {notebook_count}")
+
+                    if ruler_count > 0:
+                        actions.append(f"Линейки: {ruler_count}")
+
+                    if corrector_count > 0:
+                        actions.append(f"Корректоры: {corrector_count}")
+
+                    if pencil_count > 0:
+                        actions.append(f"Карандаши: {pencil_count}")
+
+                    if eraser_sharpener_count > 0:
+                        actions.append(
+                            f"Ластики/Точилки: {eraser_sharpener_count}"
+                        )
+
+                    if millimeter_count > 0:
+                        actions.append(
+                            f"Миллиметровки: {millimeter_count}"
+                        )
+
+                    action_text = ", ".join(actions)
+
+                    cur.execute("""
+                        INSERT INTO entries (
+                            student_barcode,
+                            student_name,
+                            secretary,
+                            action_text,
+
+                            print_count,
+                            copy_count,
+                            notebook_count,
+                            ruler_count,
+
+                            corrector_count,
+                            pencil_count,
+                            eraser_sharpener_count,
+                            millimeter_count
+                        )
+                        VALUES (
+                            %s,%s,%s,%s,
+                            %s,%s,%s,%s,
+                            %s,%s,%s,%s
+                        )
+                    """, (
+                        barcode,
+                        student["full_name"],
+                        session.get("user"),
+                        action_text,
+
+                        print_count,
+                        copy_count,
+                        notebook_count,
+                        ruler_count,
+
+                        corrector_count,
+                        pencil_count,
+                        eraser_sharpener_count,
+                        millimeter_count
+                    ))
+
+                    conn.commit()
+
+                    message = "Выдача успешно сохранена"
+
+                    student_limits = {
+                        "prints":
+                            LIMITS["prints"]
+                            - (used["prints"] + print_count),
+
+                        "copies":
+                            LIMITS["copies"]
+                            - (used["copies"] + copy_count),
+
+                        "notebooks":
+                            LIMITS["notebooks"]
+                            - (used["notebooks"] + notebook_count),
+
+                        "rulers":
+                            LIMITS["rulers"]
+                            - (used["rulers"] + ruler_count),
+
+                        "correctors":
+                            LIMITS["correctors"]
+                            - (used["correctors"] + corrector_count),
+
+                        "pencils":
+                            LIMITS["pencils"]
+                            - (used["pencils"] + pencil_count),
+
+                        "erasers":
+                            LIMITS["erasers"]
+                            - (
+                                used["erasers"]
+                                + eraser_sharpener_count
+                            ),
+
+                        "millimeters":
+                            LIMITS["millimeters"]
+                            - (
+                                used["millimeters"]
+                                + millimeter_count
+                            )
+                    }
+
+    cur.execute("""
+        SELECT *
+        FROM entries
+        ORDER BY created_at DESC
+        LIMIT 20
+    """)
+
+    entries = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "dashboard.html",
+        entries=entries,
+        error=error,
+        message=message,
+        student_limits=student_limits
+    )
+```
