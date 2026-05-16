@@ -469,6 +469,61 @@ function changeCatGif(){
 }
 
 </script>
+    {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
+
+<div class="card" style="text-align:center;">
+
+    <img
+        id="otterGif"
+        src="https://media.tenor.com/6c6kQ7Q6wXAAAAAC/otter.gif"
+        style="
+            width:260px;
+            border-radius:18px;
+            margin-bottom:15px;
+        "
+    >
+
+    <h2 style="color:#0ea5e9;">
+        🦦 ВЫДРРР
+    </h2>
+
+    <button
+        type="button"
+        onclick="changeOtterGif()"
+        style="
+            background:#0ea5e9;
+            margin-top:10px;
+        "
+    >
+        Погладить выдру 🦦
+    </button>
+
+</div>
+
+<script>
+
+const otterGifs = [
+
+    "https://media.tenor.com/6c6kQ7Q6wXAAAAAC/otter.gif",
+    "https://media.tenor.com/jpI0_S8b2b0AAAAC/otter-cute.gif",
+    "https://media.tenor.com/HN5ovTjmrw8AAAAC/otter-swim.gif",
+    "https://media.tenor.com/Ki2h0mY8n3YAAAAC/sea-otter.gif",
+    "https://media.tenor.com/3X2f7VY8l8EAAAAC/otter-animal.gif",
+    "https://media.tenor.com/fM9z7jK7lS8AAAAC/otter-cute-otter.gif"
+
+];
+
+function changeOtterGif(){
+
+    const randomGif =
+        otterGifs[Math.floor(Math.random() * otterGifs.length)];
+
+    document.getElementById("otterGif").src = randomGif;
+}
+
+</script>
+
+{% endif %}
 </body>
 </html>
 
