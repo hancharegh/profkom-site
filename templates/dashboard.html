@@ -404,37 +404,39 @@ setInterval(() => {
     box-shadow:0 6px 18px rgba(0,0,0,0.18);
     z-index:99999;
 ">
+   <div style="text-align:center; margin-top:20px;">
+
     <img
-        id="cat_img"
-        src="https://media.tenor.com/9PTGVf4BLwYAAAAC/cat-computer.gif"
+        id="catGif"
+        src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif"
         style="
-            width:100%;
-            height:220px;
-            object-fit:cover;
+            width:180px;
+            border-radius:18px;
+            margin-bottom:15px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.15);
         "
     >
-    <div id="cat_text" style="
-        padding:14px;
-        text-align:center;
-        font-weight:bold;
-    ">
-        🐱 Котик наблюдает...
-    </div>
+
+    <br>
+
     <button
-        id="pet_btn"
+        type="button"
+        onclick="changeCatGif()"
         style="
-            width:100%;
-            border:none;
             background:#2563eb;
             color:white;
-            padding:12px;
+            border:none;
+            padding:12px 20px;
+            border-radius:12px;
             cursor:pointer;
+            font-weight:bold;
         "
     >
         Погладить котика 🐾
     </button>
+
 </div>
-<script>
+    <script>
 const catText =
     document.getElementById("cat_text");
 const catImg =
@@ -445,6 +447,28 @@ document.getElementById("pet_btn")
 });
 </script>
 {% endif %}
+    <script>
+
+const catGifs = [
+
+    "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+    "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
+    "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif",
+    "https://media.giphy.com/media/13borq7Zo2kulO/giphy.gif",
+    "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
+    "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif"
+
+];
+
+function changeCatGif(){
+
+    const randomGif =
+        catGifs[Math.floor(Math.random() * catGifs.length)];
+
+    document.getElementById("catGif").src = randomGif;
+}
+
+</script>
 </body>
 </html>
 
