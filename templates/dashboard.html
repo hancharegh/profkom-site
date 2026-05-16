@@ -548,7 +548,131 @@ setInterval(() => {
 }, 240000);
 
 </script>
+<script>
 
+const body = document.getElementById("body");
+
+searchInput.addEventListener("input", function(){
+
+    const query = this.value.trim().toLowerCase();
+
+    // MATRIX MODE
+
+    if(query === "/matrix"){
+
+        body.style.background = "black";
+
+        body.style.color = "#00ff00";
+
+        document.querySelectorAll(".card").forEach(card => {
+
+            card.style.background = "#111";
+
+            card.style.color = "#00ff00";
+
+            card.style.border = "1px solid #00ff00";
+
+        });
+
+        alert("🟢 MATRIX MODE ACTIVATED");
+
+        searchInput.value = "";
+
+        return;
+
+    }
+
+    // PARTY MODE
+
+    if(query === "/party"){
+
+        const emojis = ["🎉","🎊","✨","🐯"];
+
+        for(let i = 0; i < 80; i++){
+
+            const div = document.createElement("div");
+
+            div.innerText =
+
+                emojis[Math.floor(Math.random()*emojis.length)];
+
+            div.style.position = "fixed";
+
+            div.style.left = Math.random()*100 + "vw";
+
+            div.style.top = "-50px";
+
+            div.style.fontSize = "30px";
+
+            div.style.zIndex = "9999";
+
+            div.style.transition = "5s linear";
+
+            document.body.appendChild(div);
+
+            setTimeout(() => {
+
+                div.style.top = "110vh";
+
+            }, 100);
+
+            setTimeout(() => {
+
+                div.remove();
+
+            }, 6000);
+
+        }
+
+        alert("🎉 PARTY MODE");
+
+        searchInput.value = "";
+
+        return;
+
+    }
+
+    // BOSS MODE
+
+    if(query === "/boss"){
+
+        alert("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ");
+
+        body.style.background = "#fff7ed";
+
+        searchInput.value = "";
+
+        return;
+
+    }
+
+    // SUPREME MODE
+
+    if(query === "/supreme"){
+
+        body.style.background =
+
+            "linear-gradient(to bottom, #fef3c7, #fde68a)";
+
+        document.querySelectorAll(".card").forEach(card => {
+
+            card.style.background = "#fffbea";
+
+            card.style.border = "2px solid gold";
+
+        });
+
+        alert("👑 SUPREME MODE");
+
+        searchInput.value = "";
+
+        return;
+
+    }
+
+});
+
+</script>
 </body>
 </html>
 
