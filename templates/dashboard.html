@@ -673,6 +673,247 @@ searchInput.addEventListener("input", function(){
 });
 
 </script>
+{% if session["user"] == "Бахвалова Анастасия Владимировна" %}
+
+<div id="cat_box" style="
+
+    position:fixed;
+
+    bottom:20px;
+
+    right:20px;
+
+    width:260px;
+
+    background:white;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    box-shadow:0 6px 18px rgba(0,0,0,0.18);
+
+    z-index:99999;
+
+    transition:0.3s;
+
+">
+
+    <img
+
+        id="cat_img"
+
+        src="https://media.tenor.com/9PTGVf4BLwYAAAAC/cat-computer.gif"
+
+        style="
+
+            width:100%;
+
+            height:220px;
+
+            object-fit:cover;
+
+        "
+
+    >
+
+    <div id="cat_text" style="
+
+        padding:14px;
+
+        text-align:center;
+
+        font-weight:bold;
+
+        font-size:15px;
+
+    ">
+
+        🐱 Котик наблюдает...
+
+    </div>
+
+    <button
+
+        id="pet_btn"
+
+        style="
+
+            width:100%;
+
+            border:none;
+
+            background:#2563eb;
+
+            color:white;
+
+            padding:12px;
+
+            cursor:pointer;
+
+            font-weight:bold;
+
+        "
+
+    >
+
+        Погладить котика 🐾
+
+    </button>
+
+</div>
+
+<script>
+
+const catBox = document.getElementById("cat_box");
+
+const catText = document.getElementById("cat_text");
+
+const catImg = document.getElementById("cat_img");
+
+const petBtn = document.getElementById("pet_btn");
+
+const normalPhrases = [
+
+    "🐱 Всё под контролем",
+
+    "🐱 Принтер пока жив",
+
+    "🐱 Тигры одобряют",
+
+    "🐱 Хорошая выдача",
+
+    "🐱 Не забудь чай",
+
+    "🐱 Мяу",
+
+    "🐱 Секретарь легенда",
+
+    "🐱 Я слежу за копиями"
+
+];
+
+const angryPhrases = [
+
+    "😾 ОПЯТЬ МНОГО ПЕЧАТИ",
+
+    "😾 Принтеру плохо",
+
+    "😾 Кто сделал 200 копий?",
+
+    "😾 Это suspicious"
+
+];
+
+const happyGifs = [
+
+    "https://media.tenor.com/JIX9pEh5KGMAAAAC/cat-computer.gif",
+
+    "https://media.tenor.com/bCfpwMjfAi0AAAAC/cat-typing.gif",
+
+    "https://media.tenor.com/3ZZ8h0-q-WYAAAAC/cute-cat.gif"
+
+];
+
+const angryGifs = [
+
+    "https://media.tenor.com/mCiM7CmGGI4AAAAC/angry-cat-cat.gif",
+
+    "https://media.tenor.com/LmMBK9kpghAAAAAC/cat-mad.gif"
+
+];
+
+// Случайные фразы
+
+setInterval(() => {
+
+    catText.innerText =
+
+        normalPhrases[
+
+            Math.floor(Math.random()*normalPhrases.length)
+
+        ];
+
+}, 7000);
+
+// Погладить кота
+
+petBtn.addEventListener("click", () => {
+
+    catText.innerText = "😺 МУРРРР";
+
+    catBox.style.transform = "scale(1.05)";
+
+    setTimeout(() => {
+
+        catBox.style.transform = "scale(1)";
+
+    }, 300);
+
+});
+
+// Реакция на большие значения
+
+document.querySelectorAll("input[type='number']")
+
+.forEach(input => {
+
+    input.addEventListener("input", () => {
+
+        const value = parseInt(input.value || 0);
+
+        if(value >= 15){
+
+            catText.innerText =
+
+                angryPhrases[
+
+                    Math.floor(Math.random()*angryPhrases.length)
+
+                ];
+
+            catImg.src =
+
+                angryGifs[
+
+                    Math.floor(Math.random()*angryGifs.length)
+
+                ];
+
+        }else{
+
+            catImg.src =
+
+                happyGifs[
+
+                    Math.floor(Math.random()*happyGifs.length)
+
+                ];
+
+        }
+
+    });
+
+});
+
+// Редкая пасхалка
+
+setInterval(() => {
+
+    const chance = Math.random();
+
+    if(chance < 0.05){
+
+        alert("🐱 Котик принёс удачу");
+
+    }
+
+}, 30000);
+
+</script>
+
+{% endif %}
 </body>
 </html>
 
