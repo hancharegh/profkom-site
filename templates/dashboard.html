@@ -1,28 +1,23 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
-
     <meta charset="UTF-8">
     <title>Панель секретаря</title>
-
     <style>
-
         body{
             margin:0;
             padding:30px;
             font-family:Arial,sans-serif;
             background:#f4f7fb;
             color:#111827;
+            transition:0.3s;
         }
-
         .topbar{
             display:flex;
             justify-content:space-between;
             align-items:center;
             margin-bottom:25px;
         }
-
         .logout{
             background:#111827;
             color:white;
@@ -31,26 +26,23 @@
             border-radius:12px;
             font-weight:bold;
         }
-
         .card{
             background:white;
             padding:25px;
             border-radius:18px;
             box-shadow:0 4px 12px rgba(0,0,0,0.06);
             margin-bottom:25px;
+            transition:0.3s;
         }
-
         h1,h2{
             margin-top:0;
         }
-
         label{
             display:block;
             margin-top:12px;
             margin-bottom:6px;
             font-weight:bold;
         }
-
         input{
             width:100%;
             padding:12px;
@@ -60,7 +52,6 @@
             box-sizing:border-box;
             font-size:15px;
         }
-
         button{
             background:#2563eb;
             color:white;
@@ -70,31 +61,27 @@
             cursor:pointer;
             font-weight:bold;
         }
-
         button:hover{
             opacity:0.9;
         }
-
         .danger-btn{
             background:#ef4444;
         }
-
         table{
             width:100%;
             border-collapse:collapse;
         }
-
         th{
             background:#eef2ff;
             padding:14px;
             text-align:left;
+            position:sticky;
+            top:0;
         }
-
         td{
             padding:14px;
             border-top:1px solid #e5e7eb;
         }
-
         .message{
             background:#dcfce7;
             color:#166534;
@@ -102,7 +89,6 @@
             border-radius:12px;
             margin-bottom:20px;
         }
-
         .error{
             background:#fee2e2;
             color:#991b1b;
@@ -110,11 +96,9 @@
             border-radius:12px;
             margin-bottom:20px;
         }
-
         .search-wrapper{
             position:relative;
         }
-
         #search_results{
             position:absolute;
             top:100%;
@@ -127,71 +111,48 @@
             z-index:999;
             box-shadow:0 4px 12px rgba(0,0,0,0.1);
         }
-
         .search-item{
             padding:12px;
             cursor:pointer;
             border-bottom:1px solid #eee;
         }
-
         .search-item:hover{
             background:#f3f4f6;
         }
-
     </style>
-
 </head>
-
-<body>
-
+<body id="body">
 <div class="topbar">
-
     <div>
-
         <h1>Панель секретаря</h1>
-
         <p style="margin-top:-10px;color:#6b7280;">
             {{ session["user"] }}
         </p>
-
     </div>
-
     <a href="/logout" class="logout">
         Выйти
     </a>
-
 </div>
-
-
 {% if message %}
 <div class="message">
     {{ message }}
 </div>
 {% endif %}
-
 {% if achievement %}
 <div class="message">
     {{ achievement }}
 </div>
 {% endif %}
-
 {% if error %}
 <div class="error">
     {{ error }}
 </div>
 {% endif %}
-
-
 <div class="card">
-
     <h2>Выдача продукции</h2>
-
     <form method="POST">
-
         <div class="search-wrapper">
-
             <label>Студент</label>
-
             <input
                 type="text"
                 id="student_search"
@@ -199,730 +160,290 @@
                 autocomplete="off"
                 required
             >
-
             <input
                 type="hidden"
                 id="barcode"
                 name="barcode"
             >
-
             <div id="search_results"></div>
-
         </div>
-
-
-        <div
-            class="card"
-            id="live_limits"
-            style="display:none;"
-        >
-
+        <div class="card" id="live_limits" style="display:none;">
             <h2>Лимиты студента</h2>
-
             <table>
-
-                <tr>
-                    <td>Печать</td>
-                    <td id="limit_prints"></td>
-                </tr>
-
-                <tr>
-                    <td>Копии</td>
-                    <td id="limit_copies"></td>
-                </tr>
-
-                <tr>
-                    <td>Тетради</td>
-                    <td id="limit_notebooks"></td>
-                </tr>
-
-                <tr>
-                    <td>Линейки</td>
-                    <td id="limit_rulers"></td>
-                </tr>
-
-                <tr>
-                    <td>Корректоры</td>
-                    <td id="limit_correctors"></td>
-                </tr>
-
-                <tr>
-                    <td>Карандаши</td>
-                    <td id="limit_pencils"></td>
-                </tr>
-
-                <tr>
-                    <td>Ластики / Точилки</td>
-                    <td id="limit_erasers"></td>
-                </tr>
-
-                <tr>
-                    <td>Миллиметровки</td>
-                    <td id="limit_millimeters"></td>
-                </tr>
-
+                <tr><td>Печать</td><td id="limit_prints"></td></tr>
+                <tr><td>Копии</td><td id="limit_copies"></td></tr>
+                <tr><td>Тетради</td><td id="limit_notebooks"></td></tr>
+                <tr><td>Линейки</td><td id="limit_rulers"></td></tr>
+                <tr><td>Корректоры</td><td id="limit_correctors"></td></tr>
+                <tr><td>Карандаши</td><td id="limit_pencils"></td></tr>
+                <tr><td>Ластики / Точилки</td><td id="limit_erasers"></td></tr>
+                <tr><td>Миллиметровки</td><td id="limit_millimeters"></td></tr>
             </table>
-
         </div>
-
-
         <label>Печать</label>
         <input type="number" name="print_count" min="0">
-
         <label>Копии</label>
         <input type="number" name="copy_count" min="0">
-
         <label>Тетради</label>
         <input type="number" name="notebook_count" min="0">
-
         <label>Линейки</label>
         <input type="number" name="ruler_count" min="0">
-
         <label>Корректоры</label>
         <input type="number" name="corrector_count" min="0">
-
         <label>Карандаши</label>
         <input type="number" name="pencil_count" min="0">
-
         <label>Ластики / Точилки</label>
         <input type="number" name="eraser_sharpener_count" min="0">
-
         <label>Миллиметровки</label>
         <input type="number" name="millimeter_count" min="0">
-
         <button type="submit">
             Сохранить
         </button>
-
     </form>
-
 </div>
-
-
 <div class="card">
-
     <h2>Последние действия</h2>
-
-    <div style="
-
-        max-height:500px;
-
-        overflow-y:auto;
-
-        border-radius:12px;
-
-    ">
-
-    <table>
-
-        <thead>
-
-            <tr>
-                <th>Студент</th>
-                <th>Секретарь</th>
-                <th>Баркод</th>
-                <th>Действие</th>
-                <th>Дата</th>
-                <th>Отмена</th>
-            </tr>
-
-        </thead>
-
-        <tbody>
-
-        {% for entry in entries %}
-
-            <tr>
-
-                <td>{{ entry.student_name }}</td>
-
-                <td>{{ entry.secretary }}</td>
-
-                <td>{{ entry.student_barcode }}</td>
-
-                <td>{{ entry.action_text }}</td>
-
-                <td>{{ entry.created_at }}</td>
-
-                <td>
-
-                    <form
-                        method="POST"
-                        action="/undo/{{ entry.id }}"
-                    >
-
-                        <button
-                            type="submit"
-                            class="danger-btn"
-                        >
-                            Отменить
-                        </button>
-
-                    </form>
-
-                </td>
-
-            </tr>
-
-        {% endfor %}
-
-        </tbody>
+    <div style="max-height:500px;overflow-y:auto;border-radius:12px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Студент</th>
+                    <th>Секретарь</th>
+                    <th>Баркод</th>
+                    <th>Действие</th>
+                    <th>Дата</th>
+                    <th>Отмена</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.student_name }}</td>
+                    <td>{{ entry.secretary }}</td>
+                    <td>{{ entry.student_barcode }}</td>
+                    <td>{{ entry.action_text }}</td>
+                    <td>{{ entry.created_at }}</td>
+                    <td>
+                        <form method="POST" action="/undo/{{ entry.id }}">
+                            <button type="submit" class="danger-btn">
+                                Отменить
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
-    </table>
-
 </div>
-
-
 <script>
-
+const body = document.getElementById("body");
 const searchInput =
     document.getElementById("student_search");
-
 const resultsBox =
     document.getElementById("search_results");
-
 const barcodeInput =
     document.getElementById("barcode");
-
-
-// Поиск студентов
+// ПОИСК СТУДЕНТОВ
 searchInput.addEventListener("input", async function(){
-
     const query = this.value.trim();
-
-    // barcode со сканера
-    if(/^\d+$/.test(query)){
-
+    // BARCODE
+    if(/^[0-9]+$/.test(query)){
         barcodeInput.value = query;
         resultsBox.innerHTML = "";
-
         return;
     }
-
-    // Пасхалка
-    if(query.toLowerCase() === "/tiger"){
-
+    // ПАСХАЛКИ
+    const cmd = query.toLowerCase();
+    if(cmd === "/tiger"){
         alert("🐯 Тигр найден");
-
-        searchInput.value = "";
-
+        this.value = "";
         return;
     }
-
-    // Минимум 2 символа
+    if(cmd === "/matrix"){
+        body.style.background = "black";
+        body.style.color = "#00ff00";
+        document.querySelectorAll(".card").forEach(card => {
+            card.style.background = "#111";
+            card.style.color = "#00ff00";
+            card.style.border = "1px solid #00ff00";
+        });
+        alert("🟢 MATRIX MODE");
+        this.value = "";
+        return;
+    }
+    if(cmd === "/boss"){
+        body.style.background = "#fff7ed";
+        alert("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ");
+        this.value = "";
+        return;
+    }
+    if(cmd === "/supreme"){
+        body.style.background =
+            "linear-gradient(to bottom,#fef3c7,#fde68a)";
+        alert("👑 SUPREME MODE");
+        this.value = "";
+        return;
+    }
+    if(cmd === "/party"){
+        const emojis = ["🎉","✨","🐯","🎊"];
+        for(let i = 0; i < 80; i++){
+            const div = document.createElement("div");
+            div.innerText =
+                emojis[Math.floor(Math.random()*emojis.length)];
+            div.style.position = "fixed";
+            div.style.left = Math.random()*100 + "vw";
+            div.style.top = "-50px";
+            div.style.fontSize = "30px";
+            div.style.zIndex = "99999";
+            div.style.transition = "5s linear";
+            document.body.appendChild(div);
+            setTimeout(() => {
+                div.style.top = "110vh";
+            },100);
+            setTimeout(() => {
+                div.remove();
+            },6000);
+        }
+        this.value = "";
+        return;
+    }
+    // ПОИСК ПО ФИО
     if(query.length < 2){
-
         resultsBox.innerHTML = "";
-
         return;
     }
-
     try{
-
         const response = await fetch(
             `/search_students?q=${encodeURIComponent(query)}`
         );
-
         const students = await response.json();
-
         resultsBox.innerHTML = "";
-
         students.forEach(student => {
-
             const div = document.createElement("div");
-
             div.className = "search-item";
-
             div.innerHTML = `
                 <b>${student.full_name}</b><br>
                 <small>${student.barcode}</small>
             `;
-
             div.onclick = async () => {
-
                 searchInput.value = student.full_name;
-
                 barcodeInput.value = student.barcode;
-
                 resultsBox.innerHTML = "";
-
-                // Получение лимитов
                 const limitsResponse =
                     await fetch(`/student_limits/${student.barcode}`);
-
                 const data =
                     await limitsResponse.json();
-
                 document.getElementById("live_limits")
                     .style.display = "block";
-
-                document.getElementById("limit_prints")
-                    .innerText = data.prints;
-
-                document.getElementById("limit_copies")
-                    .innerText = data.copies;
-
-                document.getElementById("limit_notebooks")
-                    .innerText = data.notebooks;
-
-                document.getElementById("limit_rulers")
-                    .innerText = data.rulers;
-
-                document.getElementById("limit_correctors")
-                    .innerText = data.correctors;
-
-                document.getElementById("limit_pencils")
-                    .innerText = data.pencils;
-
-                document.getElementById("limit_erasers")
-                    .innerText = data.erasers;
-
-                document.getElementById("limit_millimeters")
-                    .innerText = data.millimeters;
-
+                document.getElementById("limit_prints").innerText = data.prints;
+                document.getElementById("limit_copies").innerText = data.copies;
+                document.getElementById("limit_notebooks").innerText = data.notebooks;
+                document.getElementById("limit_rulers").innerText = data.rulers;
+                document.getElementById("limit_correctors").innerText = data.correctors;
+                document.getElementById("limit_pencils").innerText = data.pencils;
+                document.getElementById("limit_erasers").innerText = data.erasers;
+                document.getElementById("limit_millimeters").innerText = data.millimeters;
                 const firstInput =
                     document.querySelector(
                         'input[name="print_count"]'
                     );
-
                 if(firstInput){
-
                     firstInput.focus();
                 }
             };
-
             resultsBox.appendChild(div);
-
         });
-
     }catch(error){
-
         console.log(error);
     }
-
 });
-
-
-// Enter после сканера
+// ENTER ПОСЛЕ СКАНЕРА
 searchInput.addEventListener("keydown", function(event){
-
     if(event.key === "Enter"){
-
         event.preventDefault();
-
         if(!barcodeInput.value){
-
-            barcodeInput.value =
-                searchInput.value.trim();
+            barcodeInput.value = searchInput.value.trim();
         }
-
         const firstInput =
             document.querySelector(
                 'input[name="print_count"]'
             );
-
         if(firstInput){
-
             firstInput.focus();
             firstInput.select();
         }
     }
-
 });
-
-
-// Пасхалки по месяцам
+// СЕЗОННЫЕ ТЕМЫ
 const now = new Date();
-
 const month = now.getMonth() + 1;
-
 if(month === 12){
-
-    document.body.style.background =
-        "linear-gradient(to bottom, #dbeafe, #ffffff)";
+    body.style.background =
+        "linear-gradient(to bottom,#dbeafe,#ffffff)";
 }
-
 if(month === 9){
-
-    document.body.style.background =
-        "linear-gradient(to bottom, #fff7ed, #ffffff)";
+    body.style.background =
+        "linear-gradient(to bottom,#fff7ed,#ffffff)";
 }
-
-
-// Anti sleep
+// ANTI SLEEP
 setInterval(() => {
-
     fetch("/ping")
         .catch(() => {});
-
 }, 240000);
-
-</script>
-<script>
-
-const body = document.getElementById("body");
-
-searchInput.addEventListener("input", function(){
-
-    const query = this.value.trim().toLowerCase();
-
-    // MATRIX MODE
-
-    if(query === "/matrix"){
-
-        body.style.background = "black";
-
-        body.style.color = "#00ff00";
-
-        document.querySelectorAll(".card").forEach(card => {
-
-            card.style.background = "#111";
-
-            card.style.color = "#00ff00";
-
-            card.style.border = "1px solid #00ff00";
-
-        });
-
-        alert("🟢 MATRIX MODE ACTIVATED");
-
-        searchInput.value = "";
-
-        return;
-
-    }
-
-    // PARTY MODE
-
-    if(query === "/party"){
-
-        const emojis = ["🎉","🎊","✨","🐯"];
-
-        for(let i = 0; i < 80; i++){
-
-            const div = document.createElement("div");
-
-            div.innerText =
-
-                emojis[Math.floor(Math.random()*emojis.length)];
-
-            div.style.position = "fixed";
-
-            div.style.left = Math.random()*100 + "vw";
-
-            div.style.top = "-50px";
-
-            div.style.fontSize = "30px";
-
-            div.style.zIndex = "9999";
-
-            div.style.transition = "5s linear";
-
-            document.body.appendChild(div);
-
-            setTimeout(() => {
-
-                div.style.top = "110vh";
-
-            }, 100);
-
-            setTimeout(() => {
-
-                div.remove();
-
-            }, 6000);
-
-        }
-
-        alert("🎉 PARTY MODE");
-
-        searchInput.value = "";
-
-        return;
-
-    }
-
-    // BOSS MODE
-
-    if(query === "/boss"){
-
-        alert("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ");
-
-        body.style.background = "#fff7ed";
-
-        searchInput.value = "";
-
-        return;
-
-    }
-
-    // SUPREME MODE
-
-    if(query === "/supreme"){
-
-        body.style.background =
-
-            "linear-gradient(to bottom, #fef3c7, #fde68a)";
-
-        document.querySelectorAll(".card").forEach(card => {
-
-            card.style.background = "#fffbea";
-
-            card.style.border = "2px solid gold";
-
-        });
-
-        alert("👑 SUPREME MODE");
-
-        searchInput.value = "";
-
-        return;
-
-    }
-
-});
-
 </script>
 {% if session["user"] == "Исаакян Дарья Эдуардовна" %}
-
 <div id="cat_box" style="
-
     position:fixed;
-
     bottom:20px;
-
     right:20px;
-
     width:260px;
-
     background:white;
-
     border-radius:20px;
-
     overflow:hidden;
-
     box-shadow:0 6px 18px rgba(0,0,0,0.18);
-
     z-index:99999;
-
-    transition:0.3s;
-
 ">
-
     <img
-
         id="cat_img"
-
         src="https://media.tenor.com/9PTGVf4BLwYAAAAC/cat-computer.gif"
-
         style="
-
             width:100%;
-
             height:220px;
-
             object-fit:cover;
-
         "
-
     >
-
     <div id="cat_text" style="
-
         padding:14px;
-
         text-align:center;
-
         font-weight:bold;
-
-        font-size:15px;
-
     ">
-
         🐱 Котик наблюдает...
-
     </div>
-
     <button
-
         id="pet_btn"
-
         style="
-
             width:100%;
-
             border:none;
-
             background:#2563eb;
-
             color:white;
-
             padding:12px;
-
             cursor:pointer;
-
-            font-weight:bold;
-
         "
-
     >
-
         Погладить котика 🐾
-
     </button>
-
 </div>
-
 <script>
-
-const catBox = document.getElementById("cat_box");
-
-const catText = document.getElementById("cat_text");
-
-const catImg = document.getElementById("cat_img");
-
-const petBtn = document.getElementById("pet_btn");
-
-const normalPhrases = [
-
-    "🐱 Всё под контролем",
-
-    "🐱 Принтер пока жив",
-
-    "🐱 Тигры одобряют",
-
-    "🐱 Хорошая выдача",
-
-    "🐱 Не забудь чай",
-
-    "🐱 Мяу",
-
-    "🐱 Секретарь легенда",
-
-    "🐱 Я слежу за копиями"
-
-];
-
-const angryPhrases = [
-
-    "😾 ОПЯТЬ МНОГО ПЕЧАТИ",
-
-    "😾 Принтеру плохо",
-
-    "😾 Кто сделал 200 копий?",
-
-    "😾 Это suspicious"
-
-];
-
-const happyGifs = [
-
-    "https://media.tenor.com/JIX9pEh5KGMAAAAC/cat-computer.gif",
-
-    "https://media.tenor.com/bCfpwMjfAi0AAAAC/cat-typing.gif",
-
-    "https://media.tenor.com/3ZZ8h0-q-WYAAAAC/cute-cat.gif"
-
-];
-
-const angryGifs = [
-
-    "https://media.tenor.com/mCiM7CmGGI4AAAAC/angry-cat-cat.gif",
-
-    "https://media.tenor.com/LmMBK9kpghAAAAAC/cat-mad.gif"
-
-];
-
-// Случайные фразы
-
-setInterval(() => {
-
-    catText.innerText =
-
-        normalPhrases[
-
-            Math.floor(Math.random()*normalPhrases.length)
-
-        ];
-
-}, 7000);
-
-// Погладить кота
-
-petBtn.addEventListener("click", () => {
-
-    catText.innerText = "😺 МУРРРР";
-
-    catBox.style.transform = "scale(1.05)";
-
-    setTimeout(() => {
-
-        catBox.style.transform = "scale(1)";
-
-    }, 300);
-
+const catText =
+    document.getElementById("cat_text");
+const catImg =
+    document.getElementById("cat_img");
+document.getElementById("pet_btn")
+.addEventListener("click", () => {
+    catText.innerText = "😺 МУРРР";
 });
-
-// Реакция на большие значения
-
-document.querySelectorAll("input[type='number']")
-
-.forEach(input => {
-
-    input.addEventListener("input", () => {
-
-        const value = parseInt(input.value || 0);
-
-        if(value >= 15){
-
-            catText.innerText =
-
-                angryPhrases[
-
-                    Math.floor(Math.random()*angryPhrases.length)
-
-                ];
-
-            catImg.src =
-
-                angryGifs[
-
-                    Math.floor(Math.random()*angryGifs.length)
-
-                ];
-
-        }else{
-
-            catImg.src =
-
-                happyGifs[
-
-                    Math.floor(Math.random()*happyGifs.length)
-
-                ];
-
-        }
-
-    });
-
-});
-
-// Редкая пасхалка
-
-setInterval(() => {
-
-    const chance = Math.random();
-
-    if(chance < 0.05){
-
-        alert("🐱 Котик принёс удачу");
-
-    }
-
-}, 30000);
-
 </script>
-
 {% endif %}
 </body>
 </html>
