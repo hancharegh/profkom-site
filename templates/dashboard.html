@@ -469,30 +469,34 @@ function changeCatGif(){
 }
 
 </script>
-    {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
+   {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
 
-<div class="card" style="text-align:center;">
+<div style="text-align:center; margin-top:20px;">
 
     <img
         id="otterGif"
-        src="https://media.tenor.com/6c6kQ7Q6wXAAAAAC/otter.gif"
+        src="https://i.gifer.com/origin/8f/8f0d9b0b7f4c0f7d5b6c4d6df2d5a6d4.gif"
         style="
-            width:260px;
+            width:180px;
             border-radius:18px;
             margin-bottom:15px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.15);
         "
     >
 
-    <h2 style="color:#0ea5e9;">
-        🦦 ВЫДРРР
-    </h2>
+    <br>
 
     <button
         type="button"
         onclick="changeOtterGif()"
         style="
             background:#0ea5e9;
-            margin-top:10px;
+            color:white;
+            border:none;
+            padding:12px 20px;
+            border-radius:12px;
+            cursor:pointer;
+            font-weight:bold;
         "
     >
         Погладить выдру 🦦
@@ -504,19 +508,27 @@ function changeCatGif(){
 
 const otterGifs = [
 
-    "https://media.tenor.com/6c6kQ7Q6wXAAAAAC/otter.gif",
-    "https://media.tenor.com/jpI0_S8b2b0AAAAC/otter-cute.gif",
-    "https://media.tenor.com/HN5ovTjmrw8AAAAC/otter-swim.gif",
-    "https://media.tenor.com/Ki2h0mY8n3YAAAAC/sea-otter.gif",
-    "https://media.tenor.com/3X2f7VY8l8EAAAAC/otter-animal.gif",
-    "https://media.tenor.com/fM9z7jK7lS8AAAAC/otter-cute-otter.gif"
+    "https://i.gifer.com/origin/8f/8f0d9b0b7f4c0f7d5b6c4d6df2d5a6d4.gif",
+    "https://i.gifer.com/origin/27/27bfcf8df8d33df1a3f6c7f5d4f2fa8f.gif",
+    "https://i.gifer.com/origin/47/47d663a4a4bb2c6f6a61d97521116db0.gif",
+    "https://i.gifer.com/origin/91/91f0c25cbf2c7f2e9f6cb8cb0b77c9bb.gif"
 
 ];
 
+let lastOtterGif = "";
+
 function changeOtterGif(){
 
-    const randomGif =
-        otterGifs[Math.floor(Math.random() * otterGifs.length)];
+    let randomGif = "";
+
+    do{
+
+        randomGif =
+            otterGifs[Math.floor(Math.random() * otterGifs.length)];
+
+    }while(randomGif === lastOtterGif);
+
+    lastOtterGif = randomGif;
 
     document.getElementById("otterGif").src = randomGif;
 }
