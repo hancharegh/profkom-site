@@ -148,77 +148,7 @@
     {{ error }}
 </div>
 {% endif %}
-    {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
-
-<div style="
-    text-align:center;
-    margin-bottom:25px;
-">
-
-    <img
-        id="otterGif"
-        src="https://media.tenor.com/mz6aSgQ0zwsAAAAC/otter-cute.gif"
-        style="
-            width:220px;
-            height:220px;
-            object-fit:cover;
-            border-radius:20px;
-            display:block;
-            margin:0 auto 15px auto;
-            box-shadow:0 4px 14px rgba(0,0,0,0.15);
-        "
-    >
-
-    <button
-        type="button"
-        onclick="changeOtterGif()"
-        style="
-            background:#0ea5e9;
-            color:white;
-            border:none;
-            padding:14px 24px;
-            border-radius:14px;
-            cursor:pointer;
-            font-weight:bold;
-            font-size:16px;
-        "
-    >
-        Погладить выдру 🦦
-    </button>
-
-</div>
-
-<script>
-
-const otterGifs = [
-
-    "https://media.tenor.com/mz6aSgQ0zwsAAAAC/otter-cute.gif",
-    "https://media.tenor.com/1cL8vXh4sGQAAAAC/otter.gif",
-    "https://media.tenor.com/yE9zCKxYz8AAAAAC/sea-otter.gif",
-    "https://media.tenor.com/GGq8s6iQW9UAAAAC/otter-water.gif"
-
-];
-
-let lastOtterGif = "";
-
-function changeOtterGif(){
-
-    let randomGif = "";
-
-    do{
-
-        randomGif =
-            otterGifs[Math.floor(Math.random() * otterGifs.length)];
-
-    }while(randomGif === lastOtterGif);
-
-    lastOtterGif = randomGif;
-
-    document.getElementById("otterGif").src = randomGif;
-}
-
-</script>
-
+    
 {% endif %}
 <div class="card">
     <h2>Выдача продукции</h2>
