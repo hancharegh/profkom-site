@@ -691,6 +691,33 @@ def delete_secretary(user_id):
 
 
 # ======================================================
+# CHANGE SECRETARY PASSWORD
+# ======================================================
+
+@app.route("/change_secretary_password/<int:user_id>", methods=["POST"])
+@role_required("chairman")
+def change_secretary_password(user_id):
+
+    password = request.form["password"]
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE users
+        SET password=%s
+        WHERE id=%s AND role='secretary'
+    """, (generate_password_hash(password), user_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash("Пароль секретаря изменён")
+    return redirect("/chairman")
+
+
+# ======================================================
 # CHANGE PASSWORD
 # ИСПРАВЛЕНО: было session["name"], должно быть session["user"]
 # ======================================================
