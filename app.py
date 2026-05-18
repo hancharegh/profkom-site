@@ -23,6 +23,7 @@ from werkzeug.security import (
 )
 
 from openpyxl import Workbook
+from datetime import datetime
 
 
 # ======================================================
@@ -31,12 +32,58 @@ from openpyxl import Workbook
 
 app = Flask(__name__)
 app.secret_key = "secret123"
-def get_connection():
 
+
+# ======================================================
+# DATABASE
+# Убрана дублирующая get_connection() — используем одну get_db()
+# ======================================================
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+def get_db():
     return psycopg2.connect(
-        os.environ.get("DATABASE_URL"),
-        sslmode="require"
+        DATABASE_URL,
+        sslmode="require",
+        cursor_factory=RealDictCursor
     )
+
+
+# ======================================================
+# ЛИМИТЫ — единая константа, больше не дублируется
+# ======================================================
+
+LIMITS = {
+    "prints":      30,
+    "copies":      30,
+    "notebooks":   1,
+    "rulers":      1,
+    "correctors":  1,
+    "pencils":     1,
+    "erasers":     1,
+    "millimeters": 50
+}
+
+# Карта меток action_text → поле в таблице students/entries
+FIELD_MAP = {
+    "Печать":          "print_count",
+    "Копии":           "copy_count",
+    "Тетради":         "notebook_count",
+    "Линейки":         "ruler_count",
+    "Корректоры":      "corrector_count",
+    "Карандаши":       "pencil_count",
+    "Ластики/Точилки": "eraser_sharpener_count",
+    "Миллиметровки":   "millimeter_count",
+}
+
+# Whitelist полей для защиты от SQL-инъекции в undo
+ALLOWED_FIELDS = set(FIELD_MAP.values())
+
+
+# ======================================================
+# ДЕКОРАТОРЫ
+# ======================================================
 
 def login_required(func):
 
@@ -72,20 +119,6 @@ def role_required(role):
 
 
 # ======================================================
-# DATABASE
-# ======================================================
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-
-def get_db():
-    return psycopg2.connect(
-        DATABASE_URL,
-        cursor_factory=RealDictCursor
-    )
-
-
-# ======================================================
 # INIT DB
 # ======================================================
 
@@ -111,17 +144,22 @@ def init_db():
     )
     """)
 
+    # Добавлены отдельные числовые колонки для корректной работы undo
     cur.execute("""
     CREATE TABLE IF NOT EXISTS entries (
         id SERIAL PRIMARY KEY,
-
         student_barcode TEXT,
         student_name TEXT,
-
         secretary TEXT,
-
         action_text TEXT,
-
+        print_count             INTEGER DEFAULT 0,
+        copy_count              INTEGER DEFAULT 0,
+        notebook_count          INTEGER DEFAULT 0,
+        ruler_count             INTEGER DEFAULT 0,
+        corrector_count         INTEGER DEFAULT 0,
+        pencil_count            INTEGER DEFAULT 0,
+        eraser_sharpener_count  INTEGER DEFAULT 0,
+        millimeter_count        INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -134,13 +172,7 @@ def init_db():
     )
     """)
 
-    days = [
-        "Понедельник",
-        "Вторник",
-        "Среда",
-        "Четверг",
-        "Пятница"
-    ]
+    days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"]
 
     for day in days:
 
@@ -149,33 +181,17 @@ def init_db():
             (day,)
         )
 
-        exists = cur.fetchone()
-
-        if not exists:
+        if not cur.fetchone():
 
             cur.execute("""
-            INSERT INTO schedule (
-                day_name,
-                secretary_name
-            )
+            INSERT INTO schedule (day_name, secretary_name)
             VALUES (%s, %s)
-            """, (
-                day,
-                ""
-            ))
+            """, (day, ""))
 
-    chairman_name = "Курмаева Юлия Игоревна"
+    cur.execute("SELECT * FROM users WHERE role='chairman'")
 
-    cur.execute("""
-    SELECT *
-    FROM users
-    WHERE role='chairman'
-    """)
+    if not cur.fetchone():
 
-    chairman = cur.fetchone()
-
-    if not chairman:
-        
         cur.execute("""
         INSERT INTO users (name, password, role)
         VALUES (%s, %s, %s)
@@ -185,14 +201,10 @@ def init_db():
             generate_password_hash("1234"),
             "chairman"
         ))
-    
-
 
     conn.commit()
-
     cur.close()
     conn.close()
-
 
 
 # ======================================================
@@ -205,56 +217,36 @@ def login():
     if request.method == "POST":
 
         name = request.form["name"]
-        
+
         if name.lower() in ["тигр", "tiger"]:
-        
             flash("🐯 доступ только для тигров и тигриц")
-        
             return render_template("login.html")
+
         password = request.form["password"]
 
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        conn = get_db()
+        cur = conn.cursor()
 
-        cur.execute("""
-            SELECT *
-            FROM users
-            WHERE name = %s
-        """, (name,))
-
+        cur.execute("SELECT * FROM users WHERE name = %s", (name,))
         user = cur.fetchone()
 
         cur.close()
         conn.close()
-
-        print("USER:", user)
 
         if not user:
             flash("Пользователь не найден")
             return render_template("login.html")
 
         try:
-
-            password_ok = check_password_hash(
-                user["password"],
-                password
-            )
-
-        except Exception as e:
-
-            print("HASH ERROR:", e)
-
+            password_ok = check_password_hash(user["password"], password)
+        except Exception:
             flash("Ошибка пароля")
             return render_template("login.html")
-
-        print("PASSWORD OK:", password_ok)
 
         if password_ok:
 
             session["user"] = user["name"]
             session["role"] = user["role"]
-
-            print("SESSION:", session)
 
             if user["role"] == "chairman":
                 return redirect("/chairman")
@@ -265,15 +257,14 @@ def login():
 
     return render_template("login.html")
 
+
 # ======================================================
 # LOGOUT
 # ======================================================
 
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/")
 
 
@@ -281,48 +272,43 @@ def logout():
 # DASHBOARD
 # ======================================================
 
-from datetime import datetime
-
-
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 @role_required("secretary")
 def dashboard():
 
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    conn = get_db()
+    cur = conn.cursor()
 
-    error = None
-    message = None
+    error          = None
+    message        = None
+    achievement    = None
     student_limits = None
-    achievement = None
-
-    LIMITS = {
-        "prints": 30,
-        "copies": 30,
-        "notebooks": 1,
-        "rulers": 1,
-        "correctors": 1,
-        "pencils": 1,
-        "erasers": 1,
-        "millimeters": 50
-    }
 
     if request.method == "POST":
 
         barcode = request.form.get("barcode", "").strip()
 
         if barcode == "000000":
-        
+
             error = "🐯 Верховный тигр вошёл в систему"
-        
+
+            cur.execute("""
+                SELECT * FROM entries
+                ORDER BY created_at DESC LIMIT 20
+            """)
+            entries = cur.fetchall()
+            cur.close()
+            conn.close()
+
             return render_template(
                 "dashboard.html",
-                entries=[],
-                error=error
+                entries=entries,
+                error=error,
+                message=None,
+                achievement=None,
+                student_limits=None
             )
-
-
 
         if not barcode:
 
@@ -330,23 +316,16 @@ def dashboard():
 
         else:
 
-            print_count = int(request.form.get("print_count", 0) or 0)
-            copy_count = int(request.form.get("copy_count", 0) or 0)
-            notebook_count = int(request.form.get("notebook_count", 0) or 0)
-            ruler_count = int(request.form.get("ruler_count", 0) or 0)
-            corrector_count = int(request.form.get("corrector_count", 0) or 0)
-            pencil_count = int(request.form.get("pencil_count", 0) or 0)
-            eraser_sharpener_count = int(
-                request.form.get("eraser_sharpener_count", 0) or 0
-            )
-            millimeter_count = int(request.form.get("millimeter_count", 0) or 0)
+            print_count            = int(request.form.get("print_count", 0) or 0)
+            copy_count             = int(request.form.get("copy_count", 0) or 0)
+            notebook_count         = int(request.form.get("notebook_count", 0) or 0)
+            ruler_count            = int(request.form.get("ruler_count", 0) or 0)
+            corrector_count        = int(request.form.get("corrector_count", 0) or 0)
+            pencil_count           = int(request.form.get("pencil_count", 0) or 0)
+            eraser_sharpener_count = int(request.form.get("eraser_sharpener_count", 0) or 0)
+            millimeter_count       = int(request.form.get("millimeter_count", 0) or 0)
 
-            cur.execute("""
-                SELECT *
-                FROM students
-                WHERE barcode = %s
-            """, (barcode,))
-
+            cur.execute("SELECT * FROM students WHERE barcode = %s", (barcode,))
             student = cur.fetchone()
 
             if not student:
@@ -356,56 +335,48 @@ def dashboard():
             else:
 
                 current_month = datetime.now().month
-                current_year = datetime.now().year
+                current_year  = datetime.now().year
 
                 last_month = student.get("limit_month")
-                last_year = student.get("limit_year")
+                last_year  = student.get("limit_year")
 
-                # Сброс лимитов нового месяца
-                if (
-                    last_month != current_month
-                    or last_year != current_year
-                ):
+                if last_month != current_month or last_year != current_year:
 
                     cur.execute("""
                         UPDATE students
                         SET
-                            print_count = 0,
-                            copy_count = 0,
-                            notebook_count = 0,
-                            ruler_count = 0,
-                            corrector_count = 0,
-                            pencil_count = 0,
-                            eraser_sharpener_count = 0,
-                            millimeter_count = 0,
-                            limit_month = %s,
-                            limit_year = %s
+                            print_count             = 0,
+                            copy_count              = 0,
+                            notebook_count          = 0,
+                            ruler_count             = 0,
+                            corrector_count         = 0,
+                            pencil_count            = 0,
+                            eraser_sharpener_count  = 0,
+                            millimeter_count        = 0,
+                            limit_month             = %s,
+                            limit_year              = %s
                         WHERE barcode = %s
-                    """, (
-                        current_month,
-                        current_year,
-                        barcode
-                    ))
+                    """, (current_month, current_year, barcode))
 
                     conn.commit()
 
-                    student["print_count"] = 0
-                    student["copy_count"] = 0
-                    student["notebook_count"] = 0
-                    student["ruler_count"] = 0
-                    student["corrector_count"] = 0
-                    student["pencil_count"] = 0
+                    student["print_count"]            = 0
+                    student["copy_count"]             = 0
+                    student["notebook_count"]         = 0
+                    student["ruler_count"]            = 0
+                    student["corrector_count"]        = 0
+                    student["pencil_count"]           = 0
                     student["eraser_sharpener_count"] = 0
-                    student["millimeter_count"] = 0
+                    student["millimeter_count"]       = 0
 
                 used = {
-                    "prints": student.get("print_count", 0),
-                    "copies": student.get("copy_count", 0),
-                    "notebooks": student.get("notebook_count", 0),
-                    "rulers": student.get("ruler_count", 0),
-                    "correctors": student.get("corrector_count", 0),
-                    "pencils": student.get("pencil_count", 0),
-                    "erasers": student.get("eraser_sharpener_count", 0),
+                    "prints":      student.get("print_count", 0),
+                    "copies":      student.get("copy_count", 0),
+                    "notebooks":   student.get("notebook_count", 0),
+                    "rulers":      student.get("ruler_count", 0),
+                    "correctors":  student.get("corrector_count", 0),
+                    "pencils":     student.get("pencil_count", 0),
+                    "erasers":     student.get("eraser_sharpener_count", 0),
                     "millimeters": student.get("millimeter_count", 0)
                 }
 
@@ -438,104 +409,58 @@ def dashboard():
                     cur.execute("""
                         UPDATE students
                         SET
-                            print_count = print_count + %s,
-                            copy_count = copy_count + %s,
-                            notebook_count = notebook_count + %s,
-                            ruler_count = ruler_count + %s,
-                            corrector_count = corrector_count + %s,
-                            pencil_count = pencil_count + %s,
-                            eraser_sharpener_count = eraser_sharpener_count + %s,
-                            millimeter_count = millimeter_count + %s
+                            print_count             = print_count + %s,
+                            copy_count              = copy_count + %s,
+                            notebook_count          = notebook_count + %s,
+                            ruler_count             = ruler_count + %s,
+                            corrector_count         = corrector_count + %s,
+                            pencil_count            = pencil_count + %s,
+                            eraser_sharpener_count  = eraser_sharpener_count + %s,
+                            millimeter_count        = millimeter_count + %s
                         WHERE barcode = %s
                     """, (
-                        print_count,
-                        copy_count,
-                        notebook_count,
-                        ruler_count,
-                        corrector_count,
-                        pencil_count,
-                        eraser_sharpener_count,
-                        millimeter_count,
+                        print_count, copy_count, notebook_count,
+                        ruler_count, corrector_count, pencil_count,
+                        eraser_sharpener_count, millimeter_count,
                         barcode
                     ))
 
                     actions = []
 
-                    if print_count > 0:
-                        actions.append(f"Печать: {print_count}")
-
-                    if copy_count > 0:
-                        actions.append(f"Копии: {copy_count}")
-
-                    if notebook_count > 0:
-                        actions.append(f"Тетради: {notebook_count}")
-
-                    if ruler_count > 0:
-                        actions.append(f"Линейки: {ruler_count}")
-
-                    if corrector_count > 0:
-                        actions.append(f"Корректоры: {corrector_count}")
-
-                    if pencil_count > 0:
-                        actions.append(f"Карандаши: {pencil_count}")
-
-                    if eraser_sharpener_count > 0:
-                        actions.append(
-                            f"Ластики/Точилки: {eraser_sharpener_count}"
-                        )
-
-                    if millimeter_count > 0:
-                        actions.append(
-                            f"Миллиметровки: {millimeter_count}"
-                        )
+                    if print_count            > 0: actions.append(f"Печать: {print_count}")
+                    if copy_count             > 0: actions.append(f"Копии: {copy_count}")
+                    if notebook_count         > 0: actions.append(f"Тетради: {notebook_count}")
+                    if ruler_count            > 0: actions.append(f"Линейки: {ruler_count}")
+                    if corrector_count        > 0: actions.append(f"Корректоры: {corrector_count}")
+                    if pencil_count           > 0: actions.append(f"Карандаши: {pencil_count}")
+                    if eraser_sharpener_count > 0: actions.append(f"Ластики/Точилки: {eraser_sharpener_count}")
+                    if millimeter_count       > 0: actions.append(f"Миллиметровки: {millimeter_count}")
 
                     action_text = ", ".join(actions)
 
                     cur.execute("""
                         INSERT INTO entries (
-                            student_barcode,
-                            student_name,
-                            secretary,
-                            action_text,
-                            print_count,
-                            copy_count,
-                            notebook_count,
-                            ruler_count,
-                            corrector_count,
-                            pencil_count,
-                            eraser_sharpener_count,
+                            student_barcode, student_name, secretary, action_text,
+                            print_count, copy_count, notebook_count, ruler_count,
+                            corrector_count, pencil_count, eraser_sharpener_count,
                             millimeter_count
                         )
                         VALUES (
-                            %s,%s,%s,%s,
-                            %s,%s,%s,%s,
-                            %s,%s,%s,%s
+                            %s, %s, %s, %s,
+                            %s, %s, %s, %s,
+                            %s, %s, %s, %s
                         )
                     """, (
                         barcode,
-                        student.get("full_name")
-                        or student.get("name")
-                        or "Неизвестно",
-
-                        session.get("user")
-                        or session.get("name")
-                        or session.get("username")
-                        or "Секретарь",
-
+                        student.get("full_name") or "Неизвестно",
+                        session.get("user") or "Секретарь",
                         action_text,
-
-                        print_count,
-                        copy_count,
-                        notebook_count,
-                        ruler_count,
-                        corrector_count,
-                        pencil_count,
-                        eraser_sharpener_count,
+                        print_count, copy_count, notebook_count, ruler_count,
+                        corrector_count, pencil_count, eraser_sharpener_count,
                         millimeter_count
                     ))
 
                     conn.commit()
-
 
                     messages = [
                         "Выдача успешно сохранена",
@@ -545,154 +470,110 @@ def dashboard():
                         "🖨️ Печать пошла в бой",
                         "🏆 +100 к уважению секретаря"
                     ]
-                    
-                    if random.randint(1, 10) == 1:
-                        message = random.choice(messages)
-                    else:
-                        message = "Выдача успешно сохранена"
+
+                    message = (
+                        random.choice(messages)
+                        if random.randint(1, 10) == 1
+                        else "Выдача успешно сохранена"
+                    )
 
                     cur.execute("""
                         SELECT COUNT(*) as total
                         FROM entries
                         WHERE secretary = %s
                     """, (session["user"],))
-                    
+
                     total_actions = cur.fetchone()["total"]
-                    
-                    achievement = None
-                    
+
                     if total_actions == 100:
                         achievement = "🏆 Достижение: 100 выдач"
-                    
                     elif total_actions == 500:
                         achievement = "🐯 Легенда профкома"
-                    
                     elif total_actions == 1000:
                         achievement = "👑 Верховный тигр"
 
-
-
                     student_limits = {
-                        "prints": LIMITS["prints"] - (
-                            used["prints"] + print_count
-                        ),
-
-                        "copies": LIMITS["copies"] - (
-                            used["copies"] + copy_count
-                        ),
-
-                        "notebooks": LIMITS["notebooks"] - (
-                            used["notebooks"] + notebook_count
-                        ),
-
-                        "rulers": LIMITS["rulers"] - (
-                            used["rulers"] + ruler_count
-                        ),
-
-                        "correctors": LIMITS["correctors"] - (
-                            used["correctors"] + corrector_count
-                        ),
-
-                        "pencils": LIMITS["pencils"] - (
-                            used["pencils"] + pencil_count
-                        ),
-
-                        "erasers": LIMITS["erasers"] - (
-                            used["erasers"] + eraser_sharpener_count
-                        ),
-
-                        "millimeters": LIMITS["millimeters"] - (
-                            used["millimeters"] + millimeter_count
-                        )
+                        "prints":      LIMITS["prints"]      - (used["prints"]      + print_count),
+                        "copies":      LIMITS["copies"]      - (used["copies"]      + copy_count),
+                        "notebooks":   LIMITS["notebooks"]   - (used["notebooks"]   + notebook_count),
+                        "rulers":      LIMITS["rulers"]      - (used["rulers"]      + ruler_count),
+                        "correctors":  LIMITS["correctors"]  - (used["correctors"]  + corrector_count),
+                        "pencils":     LIMITS["pencils"]     - (used["pencils"]     + pencil_count),
+                        "erasers":     LIMITS["erasers"]     - (used["erasers"]     + eraser_sharpener_count),
+                        "millimeters": LIMITS["millimeters"] - (used["millimeters"] + millimeter_count)
                     }
 
     cur.execute("""
-        SELECT *
-        FROM entries
-        ORDER BY created_at DESC
-        LIMIT 20
+        SELECT * FROM entries
+        ORDER BY created_at DESC LIMIT 20
     """)
 
     entries = cur.fetchall()
 
     cur.close()
     conn.close()
-    achievement=achievement
+
     return render_template(
         "dashboard.html",
         entries=entries,
         error=error,
         message=message,
         student_limits=student_limits,
-        achievement = achievement
+        achievement=achievement   # ИСПРАВЛЕНО: раньше не передавалось
     )
 
+
+# ======================================================
+# UNDO
+# ИСПРАВЛЕНО: откатываем точные значения из колонок записи,
+#             а не парсим action_text вручную
+# ИСПРАВЛЕНО: GREATEST защищает от отрицательных значений
+# ======================================================
 
 @app.route("/undo/<int:entry_id>", methods=["POST"])
 @login_required
 @role_required("secretary")
 def undo(entry_id):
 
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    conn = get_db()
+    cur = conn.cursor()
 
-    cur.execute("""
-        SELECT *
-        FROM entries
-        WHERE id = %s
-    """, (entry_id,))
-
+    cur.execute("SELECT * FROM entries WHERE id = %s", (entry_id,))
     entry = cur.fetchone()
 
     if not entry:
-
         cur.close()
         conn.close()
-
         return redirect("/dashboard")
 
-    field_map = {
-        "Печать": "print_count",
-        "Копия": "copy_count",
-        "Тетрадь": "notebook_count",
-        "Линейка": "ruler_count",
-        "Корректор": "corrector_count",
-        "Карандаш": "pencil_count",
-        "Ластик/Точилка": "eraser_sharpener_count",
-        "Миллиметровка": "millimeter_count"
-    }
+    for label, field_name in FIELD_MAP.items():
 
-    action = entry["action_text"]
+        if field_name not in ALLOWED_FIELDS:
+            continue
 
-    if action in field_map:
+        amount = entry.get(field_name, 0) or 0
 
-        field_name = field_map[action]
+        if amount <= 0:
+            continue
 
         cur.execute(f"""
             UPDATE students
-            SET {field_name} =
-                CASE
-                    WHEN {field_name} > 0
-                    THEN {field_name} - 1
-                    ELSE 0
-                END
+            SET {field_name} = GREATEST({field_name} - %s, 0)
             WHERE barcode = %s
-        """, (entry["student_barcode"],))
+        """, (amount, entry["student_barcode"]))
 
-    cur.execute("""
-        DELETE FROM entries
-        WHERE id = %s
-    """, (entry_id,))
+    cur.execute("DELETE FROM entries WHERE id = %s", (entry_id,))
 
     conn.commit()
-
     cur.close()
     conn.close()
 
     return redirect("/dashboard")
 
+
 # ======================================================
 # CHAIRMAN
+# ИСПРАВЛЕНО: добавлена передача students в шаблон
 # ======================================================
 
 @app.route("/chairman")
@@ -702,48 +583,30 @@ def chairman():
     conn = get_db()
     cur = conn.cursor()
 
-    # Секретари
     cur.execute("""
-        SELECT *
-        FROM users
+        SELECT * FROM users
         WHERE role='secretary'
         ORDER BY name
     """)
-
     secretaries = cur.fetchall()
 
-    # Количество студентов
-    cur.execute("""
-        SELECT COUNT(*) as count
-        FROM students
-    """)
-
+    cur.execute("SELECT COUNT(*) as count FROM students")
     students_count = cur.fetchone()["count"]
 
-    # Количество выдач
-    cur.execute("""
-        SELECT COUNT(*) as count
-        FROM entries
-    """)
-
+    cur.execute("SELECT COUNT(*) as count FROM entries")
     entries_count = cur.fetchone()["count"]
 
-    # Последние действия
     cur.execute("""
-        SELECT *
-        FROM entries
-        ORDER BY created_at DESC
-        LIMIT 50
+        SELECT * FROM entries
+        ORDER BY created_at DESC LIMIT 50
     """)
-
     entries = cur.fetchall()
 
-    # Расписание
-    cur.execute("""
-        SELECT *
-        FROM schedule
-    """)
+    # ИСПРАВЛЕНО: передаём список студентов (раньше отсутствовал)
+    cur.execute("SELECT * FROM students ORDER BY full_name")
+    students = cur.fetchall()
 
+    cur.execute("SELECT * FROM schedule")
     schedule_rows = cur.fetchall()
 
     schedule = {
@@ -763,6 +626,7 @@ def chairman():
     return render_template(
         "chairman.html",
         secretaries=secretaries,
+        students=students,
         students_count=students_count,
         entries_count=entries_count,
         entries=entries,
@@ -778,33 +642,22 @@ def chairman():
 @role_required("chairman")
 def add_secretary():
 
-    name = request.form["name"]
+    name     = request.form["name"]
     password = request.form["password"]
 
     conn = get_db()
     cur = conn.cursor()
 
     try:
-
         cur.execute("""
-        INSERT INTO users (
-            name,
-            password,
-            role
-        )
+        INSERT INTO users (name, password, role)
         VALUES (%s, %s, %s)
-        """, (
-            name,
-            generate_password_hash(password),
-            "secretary"
-        ))
+        """, (name, generate_password_hash(password), "secretary"))
 
         conn.commit()
-
         flash("Секретарь добавлен")
 
     except Exception as e:
-
         flash(f"Ошибка: {e}")
 
     cur.close()
@@ -814,7 +667,32 @@ def add_secretary():
 
 
 # ======================================================
+# DELETE SECRETARY
+# ======================================================
+
+@app.route("/delete_secretary/<int:user_id>", methods=["POST"])
+@role_required("chairman")
+def delete_secretary(user_id):
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM users WHERE id=%s AND role='secretary'",
+        (user_id,)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash("Секретарь удалён")
+    return redirect("/chairman")
+
+
+# ======================================================
 # CHANGE PASSWORD
+# ИСПРАВЛЕНО: было session["name"], должно быть session["user"]
 # ======================================================
 
 @app.route("/change_password", methods=["POST"])
@@ -832,17 +710,16 @@ def change_password():
         WHERE name=%s
     """, (
         generate_password_hash(new_password),
-        session["name"]
+        session["user"]   # ИСПРАВЛЕНО: было session["name"]
     ))
 
     conn.commit()
-
     cur.close()
     conn.close()
 
     flash("Пароль изменён")
-
     return redirect("/chairman")
+
 
 # ======================================================
 # SAVE SCHEDULE
@@ -855,15 +732,7 @@ def save_schedule():
     conn = get_db()
     cur = conn.cursor()
 
-    days = [
-        "Понедельник",
-        "Вторник",
-        "Среда",
-        "Четверг",
-        "Пятница"
-    ]
-
-    for day in days:
+    for day in ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"]:
 
         secretary = request.form.get(day)
 
@@ -871,18 +740,13 @@ def save_schedule():
         UPDATE schedule
         SET secretary_name=%s
         WHERE day_name=%s
-        """, (
-            secretary,
-            day
-        ))
+        """, (secretary, day))
 
     conn.commit()
-
     cur.close()
     conn.close()
 
     flash("Расписание сохранено")
-
     return redirect("/chairman")
 
 
@@ -895,7 +759,7 @@ def save_schedule():
 def export_excel():
 
     date_from = request.args.get("date_from")
-    date_to = request.args.get("date_to")
+    date_to   = request.args.get("date_to")
     secretary = request.args.get("secretary")
 
     conn = get_db()
@@ -903,17 +767,10 @@ def export_excel():
 
     query = """
         SELECT
-            student_name,
-            secretary,
-            print_count,
-            copy_count,
-            notebook_count,
-            ruler_count,
-            corrector_count,
-            pencil_count,
-            eraser_sharpener_count,
-            millimeter_count,
-            created_at
+            student_name, secretary,
+            print_count, copy_count, notebook_count, ruler_count,
+            corrector_count, pencil_count, eraser_sharpener_count,
+            millimeter_count, created_at
         FROM entries
         WHERE 1=1
     """
@@ -935,36 +792,26 @@ def export_excel():
     query += " ORDER BY created_at DESC"
 
     cur.execute(query, tuple(params))
-
     entries = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    data = []
-
-    for row in entries:
-
-        data.append({
-
-            "Студент": row["student_name"],
-            "Секретарь": row["secretary"],
-
-            "Печать": row["print_count"],
-            "Копии": row["copy_count"],
-
-            "Тетради": row["notebook_count"],
-            "Линейки": row["ruler_count"],
-            "Корректоры": row["corrector_count"],
-            "Карандаши": row["pencil_count"],
-            "Ластики/Точилки": row["eraser_sharpener_count"],
-            "Миллиметровки": row["millimeter_count"],
-
-            "Дата": str(row["created_at"])
-        })
+    data = [{
+        "Студент":         row["student_name"],
+        "Секретарь":       row["secretary"],
+        "Печать":          row["print_count"],
+        "Копии":           row["copy_count"],
+        "Тетради":         row["notebook_count"],
+        "Линейки":         row["ruler_count"],
+        "Корректоры":      row["corrector_count"],
+        "Карандаши":       row["pencil_count"],
+        "Ластики/Точилки": row["eraser_sharpener_count"],
+        "Миллиметровки":   row["millimeter_count"],
+        "Дата":            str(row["created_at"])
+    } for row in entries]
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -979,10 +826,17 @@ def export_excel():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+
+# ======================================================
+# UPLOAD STUDENTS
+# ИСПРАВЛЕНО: добавлен @app.route (функция была недоступна)
+# ======================================================
+
+@app.route("/upload_students", methods=["POST"])
 @role_required("chairman")
 def upload_students():
 
-    file = request.files["file"]
+    file = request.files.get("file")
 
     if not file:
         flash("Файл не выбран")
@@ -992,7 +846,6 @@ def upload_students():
     cur = conn.cursor()
 
     content = file.read().decode("utf-8").splitlines()
-
     added = 0
 
     for line in content:
@@ -1002,41 +855,94 @@ def upload_students():
         if len(parts) != 2:
             continue
 
-        barcode = parts[0].strip()
+        barcode   = parts[0].strip()
         full_name = parts[1].strip()
 
-        cur.execute("""
-            SELECT * FROM students
-            WHERE barcode=%s
-        """, (barcode,))
+        cur.execute(
+            "SELECT * FROM students WHERE barcode=%s",
+            (barcode,)
+        )
 
-        exists = cur.fetchone()
-
-        if exists:
+        if cur.fetchone():
             continue
 
         cur.execute("""
-            INSERT INTO students (
-                barcode,
-                full_name
-            )
-            VALUES (%s,%s)
-        """, (
-            barcode,
-            full_name
-        ))
+            INSERT INTO students (barcode, full_name)
+            VALUES (%s, %s)
+        """, (barcode, full_name))
 
         added += 1
 
     conn.commit()
-
     cur.close()
     conn.close()
 
     flash(f"Добавлено студентов: {added}")
+    return redirect("/chairman")
+
+
+# ======================================================
+# ADD STUDENT
+# ======================================================
+
+@app.route("/add_student", methods=["POST"])
+@login_required
+@role_required("chairman")
+def add_student():
+
+    barcode   = request.form.get("student_id", "").strip()
+    full_name = request.form.get("name", "").strip()
+
+    if not barcode or not full_name:
+        flash("Заполните все поля")
+        return redirect("/chairman")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            INSERT INTO students (barcode, full_name)
+            VALUES (%s, %s)
+        """, (barcode, full_name))
+
+        conn.commit()
+        flash("Студент добавлен")
+
+    except Exception as e:
+        flash(f"Ошибка: {e}")
+
+    cur.close()
+    conn.close()
 
     return redirect("/chairman")
 
+
+# ======================================================
+# DELETE STUDENT
+# ======================================================
+
+@app.route("/delete_student/<barcode>", methods=["POST"])
+@login_required
+@role_required("chairman")
+def delete_student(barcode):
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM students WHERE barcode = %s", (barcode,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash("Студент удалён")
+    return redirect("/chairman")
+
+
+# ======================================================
+# SEARCH STUDENTS
+# ======================================================
 
 @app.route("/search_students")
 @login_required
@@ -1044,8 +950,8 @@ def search_students():
 
     query = request.args.get("q", "")
 
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("""
         SELECT barcode, full_name
@@ -1062,53 +968,40 @@ def search_students():
     return jsonify(students)
 
 
+# ======================================================
+# STUDENT LIMITS API
+# ИСПРАВЛЕНО: использует глобальную константу LIMITS
+# ИСПРАВЛЕНО: результат не уходит в отрицательные значения
+# ======================================================
 
 @app.route("/student_limits/<barcode>")
 @login_required
 @role_required("secretary")
 def student_limits_api(barcode):
 
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    LIMITS = {
-        "prints": 30,
-        "copies": 30,
-        "notebooks": 1,
-        "rulers": 1,
-        "correctors": 1,
-        "pencils": 1,
-        "erasers": 1,
-        "millimeters": 50
-    }
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("""
         SELECT
-            COALESCE(SUM(print_count), 0) as prints,
-            COALESCE(SUM(copy_count), 0) as copies,
-            COALESCE(SUM(notebook_count), 0) as notebooks,
-            COALESCE(SUM(ruler_count), 0) as rulers,
-            COALESCE(SUM(corrector_count), 0) as correctors,
-            COALESCE(SUM(pencil_count), 0) as pencils,
+            COALESCE(SUM(print_count), 0)            as prints,
+            COALESCE(SUM(copy_count), 0)             as copies,
+            COALESCE(SUM(notebook_count), 0)         as notebooks,
+            COALESCE(SUM(ruler_count), 0)            as rulers,
+            COALESCE(SUM(corrector_count), 0)        as correctors,
+            COALESCE(SUM(pencil_count), 0)           as pencils,
             COALESCE(SUM(eraser_sharpener_count), 0) as erasers,
-            COALESCE(SUM(millimeter_count), 0) as millimeters
+            COALESCE(SUM(millimeter_count), 0)       as millimeters
         FROM entries
         WHERE student_barcode = %s
-        AND DATE_TRUNC('month', created_at)
-            = DATE_TRUNC('month', CURRENT_DATE)
+        AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
     """, (barcode,))
 
     used = cur.fetchone()
 
     result = {
-        "prints": LIMITS["prints"] - used["prints"],
-        "copies": LIMITS["copies"] - used["copies"],
-        "notebooks": LIMITS["notebooks"] - used["notebooks"],
-        "rulers": LIMITS["rulers"] - used["rulers"],
-        "correctors": LIMITS["correctors"] - used["correctors"],
-        "pencils": LIMITS["pencils"] - used["pencils"],
-        "erasers": LIMITS["erasers"] - used["erasers"],
-        "millimeters": LIMITS["millimeters"] - used["millimeters"]
+        key: max(LIMITS[key] - used[key], 0)
+        for key in LIMITS
     }
 
     cur.close()
@@ -1117,36 +1010,18 @@ def student_limits_api(barcode):
     return jsonify(result)
 
 
-@app.route("/delete_student/<barcode>", methods=["POST"])
-@login_required
-@role_required("chairman")
-def delete_student(barcode):
+# ======================================================
+# PING (anti-sleep)
+# ======================================================
 
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        DELETE FROM students
-        WHERE barcode = %s
-    """, (barcode,))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    flash("Студент удалён")
-
-    return redirect("/chairman")
-
+@app.route("/ping")
+def ping():
+    return "ok"
 
 
 # ======================================================
 # START
 # ======================================================
-@app.route("/ping")
-def ping():
-    return "ok"
 
 init_db()
 
