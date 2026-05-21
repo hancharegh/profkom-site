@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Профбюро {{ bureau_num }}</title>
+    <style>
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+            transition: 0.3s;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .logout {
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        /* Плашка бюро */
+        .bureau-indicator {
+            background: #fef9c3;
+            color: #854d0e;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+
+        h1, h2 { margin-top: 0; }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        input:focus { outline: none; border-color: #d97706; }
+
+        button {
+            background: #d97706;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        button:hover  { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-danger  { background: #ef4444; }
+        .btn-gray    { background: #6b7280; }
+        .btn-green   { background: #16a34a; }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        th {
+            background: #fef9c3;
+            padding: 14px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 14px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* Уведомления */
+        #notifications .message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #notifications .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .search-wrapper { position: relative; }
+
+        #search_results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .search-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-item:hover { background: #f3f4f6; }
+
+        @keyframes rowIn {
+            from { opacity: 0; background: #fef9c3; }
+            to   { opacity: 1; background: transparent; }
+        }
+
+        .new-row td { animation: rowIn 0.6s ease; }
+        .removing   { opacity: 0; transition: opacity 0.3s ease; }
+
+        /* Форма добавления студента */
+        .add-student-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .add-student-form input {
+            margin: 0;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* CONFIRM */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-overlay.open { display: flex; }
+
+        .confirm-box {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 360px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .confirm-box p {
+            font-size: 16px;
+            margin: 0 0 20px;
+            color: #374151;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+    </style>
+</head>
+<body id="body">
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div>
+        <h1 style="margin:0;">Профбюро {{ bureau_num }}</h1>
+        <p style="margin:4px 0 0; color:#6b7280; font-size:14px;">{{ session["user"] }}</p>
+    </div>
+    <a href="/logout" class="logout">Выйти</a>
+</div>
+
+<div class="bureau-indicator">🏛️ Профбюро № {{ bureau_num }}</div>
+
+<!-- Уведомления -->
+<div id="notifications"></div>
+
+<!-- ВЫДАЧА -->
+<div class="card">
+    <h2>Выдача продукции</h2>
+
+    <div class="search-wrapper">
+        <label>Студент (только бюро {{ bureau_num }})</label>
+        <input
+            type="text"
+            id="student_search"
+            placeholder="Сканируйте barcode или введите ФИО"
+            autocomplete="off"
+        >
+        <input type="hidden" id="barcode">
+        <div id="search_results"></div>
+    </div>
+
+    <!-- Лимиты выбранного студента -->
+    <div class="card" id="live_limits" style="display:none; border:1px solid #fef9c3;">
+        <h2>Лимиты студента</h2>
+        <table>
+            <tr><td>Печать</td>           <td id="limit_prints"></td></tr>
+            <tr><td>Копии</td>            <td id="limit_copies"></td></tr>
+            <tr><td>Тетради</td>          <td id="limit_notebooks"></td></tr>
+            <tr><td>Линейки</td>          <td id="limit_rulers"></td></tr>
+            <tr><td>Корректоры</td>       <td id="limit_correctors"></td></tr>
+            <tr><td>Карандаши</td>        <td id="limit_pencils"></td></tr>
+            <tr><td>Ластики / Точилки</td><td id="limit_erasers"></td></tr>
+            <tr><td>Миллиметровки</td>    <td id="limit_millimeters"></td></tr>
+        </table>
+    </div>
+
+    <label>Печать</label>
+    <input type="number" id="print_count" min="0" value="0">
+    <label>Копии</label>
+    <input type="number" id="copy_count" min="0" value="0">
+    <label>Тетради</label>
+    <input type="number" id="notebook_count" min="0" value="0">
+    <label>Линейки</label>
+    <input type="number" id="ruler_count" min="0" value="0">
+    <label>Корректоры</label>
+    <input type="number" id="corrector_count" min="0" value="0">
+    <label>Карандаши</label>
+    <input type="number" id="pencil_count" min="0" value="0">
+    <label>Ластики / Точилки</label>
+    <input type="number" id="eraser_sharpener_count" min="0" value="0">
+    <label>Миллиметровки</label>
+    <input type="number" id="millimeter_count" min="0" value="0">
+
+    <button id="submit_btn" onclick="submitIssue()">Сохранить</button>
+</div>
+
+<!-- СТУДЕНТЫ БЮРО -->
+<div class="card">
+    <h2>Студенты бюро {{ bureau_num }}</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Баркод</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="bureau-students-tbody">
+        {% for student in bureau_students %}
+        <tr id="stu-row-{{ student.barcode }}">
+            <td>{{ student.full_name }}</td>
+            <td>{{ student.barcode }}</td>
+            <td>
+                <button
+                    class="btn-danger"
+                    style="font-size:13px; padding:7px 14px;"
+                    onclick="confirmAction(
+                        'Удалить студента {{ student.full_name }}?',
+                        () => deleteStudent('{{ student.barcode }}')
+                    )"
+                >
+                    Удалить
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Добавить студента в бюро -->
+    <div class="add-student-form">
+
+        <div style="flex:1; min-width:80px;">
+            <label style="margin-top:0;">Баркод</label>
+            <input type="text" id="new-barcode" placeholder="Баркод" style="margin:0;">
+        </div>
+
+        <div style="flex:2; min-width:160px;">
+            <label style="margin-top:0;">ФИО</label>
+            <input type="text" id="new-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
+        </div>
+
+        <button class="btn-green" onclick="addStudent()" style="height:46px; margin-bottom:0;">
+            Добавить
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
+<div class="card">
+    <h2>Последние действия</h2>
+    <div style="max-height:400px; overflow-y:auto; border-radius:12px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Студент</th>
+                    <th>Действие</th>
+                    <th>Дата</th>
+                    <th>Отмена</th>
+                </tr>
+            </thead>
+            <tbody id="entries_tbody">
+            {% for entry in entries %}
+            <tr id="row-{{ entry.id }}">
+                <td>{{ entry.student_name }}</td>
+                <td>{{ entry.action_text }}</td>
+                <td>{{ entry.created_at }}</td>
+                <td>
+                    <button
+                        class="btn-danger"
+                        style="font-size:13px; padding:7px 14px;"
+                        onclick="undoEntry({{ entry.id }}, this)"
+                    >
+                        Отменить
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <p id="confirm-text"></p>
+        <div class="confirm-buttons">
+            <button class="btn-danger" id="confirm-ok-btn">Подтвердить</button>
+            <button class="btn-gray" onclick="closeConfirm()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+const notifications = document.getElementById("notifications");
+const searchInput   = document.getElementById("student_search");
+const resultsBox    = document.getElementById("search_results");
+const barcodeInput  = document.getElementById("barcode");
+
+// ---- УВЕДОМЛЕНИЯ ----
+function showNotification(text, type = "message") {
+    const div = document.createElement("div");
+    div.className = type === "error" ? "error" : "message";
+    div.textContent = text;
+    notifications.innerHTML = "";
+    notifications.appendChild(div);
+    setTimeout(() => div.remove(), 4000);
+}
+
+// ---- ЛИМИТЫ ----
+function updateLimits(limits) {
+    document.getElementById("live_limits").style.display = "block";
+    document.getElementById("limit_prints").innerText      = limits.prints;
+    document.getElementById("limit_copies").innerText      = limits.copies;
+    document.getElementById("limit_notebooks").innerText   = limits.notebooks;
+    document.getElementById("limit_rulers").innerText      = limits.rulers;
+    document.getElementById("limit_correctors").innerText  = limits.correctors;
+    document.getElementById("limit_pencils").innerText     = limits.pencils;
+    document.getElementById("limit_erasers").innerText     = limits.erasers;
+    document.getElementById("limit_millimeters").innerText = limits.millimeters;
+}
+
+// ---- СБРОС ФОРМЫ ----
+function resetForm() {
+    barcodeInput.value   = "";
+    searchInput.value    = "";
+    document.getElementById("print_count").value            = 0;
+    document.getElementById("copy_count").value             = 0;
+    document.getElementById("notebook_count").value         = 0;
+    document.getElementById("ruler_count").value            = 0;
+    document.getElementById("corrector_count").value        = 0;
+    document.getElementById("pencil_count").value           = 0;
+    document.getElementById("eraser_sharpener_count").value = 0;
+    document.getElementById("millimeter_count").value       = 0;
+    document.getElementById("live_limits").style.display    = "none";
+    searchInput.focus();
+}
+
+// ---- ДОБАВИТЬ СТРОКУ В ТАБЛИЦУ ВЫДАЧ ----
+function prependEntry(e) {
+    const tbody = document.getElementById("entries_tbody");
+    const tr    = document.createElement("tr");
+    tr.id       = `row-${e.id}`;
+    tr.className = "new-row";
+    tr.innerHTML = `
+        <td>${e.student_name}</td>
+        <td>${e.action_text}</td>
+        <td>${e.created_at}</td>
+        <td>
+            <button class="btn-danger" style="font-size:13px; padding:7px 14px;"
+                    onclick="undoEntry(${e.id}, this)">
+                Отменить
+            </button>
+        </td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+    while (tbody.rows.length > 20) tbody.removeChild(tbody.lastChild);
+}
+
+// ---- ВЫДАЧА (AJAX) ----
+async function submitIssue() {
+
+    const barcode = barcodeInput.value.trim();
+    if (!barcode) {
+        showNotification("Выберите студента", "error");
+        return;
+    }
+
+    const btn = document.getElementById("submit_btn");
+    btn.disabled    = true;
+    btn.textContent = "Сохранение...";
+
+    const payload = {
+        barcode,
+        print_count:            parseInt(document.getElementById("print_count").value)            || 0,
+        copy_count:             parseInt(document.getElementById("copy_count").value)             || 0,
+        notebook_count:         parseInt(document.getElementById("notebook_count").value)         || 0,
+        ruler_count:            parseInt(document.getElementById("ruler_count").value)            || 0,
+        corrector_count:        parseInt(document.getElementById("corrector_count").value)        || 0,
+        pencil_count:           parseInt(document.getElementById("pencil_count").value)           || 0,
+        eraser_sharpener_count: parseInt(document.getElementById("eraser_sharpener_count").value) || 0,
+        millimeter_count:       parseInt(document.getElementById("millimeter_count").value)       || 0,
+    };
+
+    try {
+        const res  = await fetch("/issue_bureau", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            showNotification(data.error, "error");
+        } else {
+            showNotification(data.message);
+            if (data.achievement) showNotification(data.achievement);
+            updateLimits(data.limits);
+            prependEntry(data.entry);
+            resetForm();
+        }
+    } catch (err) {
+        showNotification("Ошибка соединения", "error");
+    }
+
+    btn.disabled    = false;
+    btn.textContent = "Сохранить";
+}
+
+// ---- ОТМЕНА ВЫДАЧИ (AJAX) ----
+async function undoEntry(entryId, btn) {
+
+    btn.disabled    = true;
+    btn.textContent = "...";
+
+    try {
+        const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
+        const data = await res.json();
+
+        if (data.ok) {
+            const row = document.getElementById(`row-${entryId}`);
+            if (row) {
+                row.classList.add("removing");
+                setTimeout(() => row.remove(), 300);
+            }
+        } else {
+            showNotification(data.error || "Ошибка", "error");
+            btn.disabled    = false;
+            btn.textContent = "Отменить";
+        }
+    } catch (err) {
+        showNotification("Ошибка соединения", "error");
+        btn.disabled    = false;
+        btn.textContent = "Отменить";
+    }
+}
+
+// ---- ПОИСК СТУДЕНТОВ (только своё бюро) ----
+searchInput.addEventListener("input", async function() {
+
+    const query = this.value.trim();
+
+    if (/^[0-9]+$/.test(query)) {
+        barcodeInput.value   = query;
+        resultsBox.innerHTML = "";
+        return;
+    }
+
+    if (query.length < 2) {
+        resultsBox.innerHTML = "";
+        return;
+    }
+
+    try {
+        const res      = await fetch(`/search_students?q=${encodeURIComponent(query)}`);
+        const students = await res.json();
+
+        resultsBox.innerHTML = "";
+
+        students.forEach(student => {
+            const div = document.createElement("div");
+            div.className = "search-item";
+            div.innerHTML = `<b>${student.full_name}</b><br><small>${student.barcode}</small>`;
+
+            div.onclick = async () => {
+                searchInput.value    = student.full_name;
+                barcodeInput.value   = student.barcode;
+                resultsBox.innerHTML = "";
+
+                const limRes = await fetch(`/student_limits/${student.barcode}`);
+                updateLimits(await limRes.json());
+
+                document.getElementById("print_count").focus();
+            };
+
+            resultsBox.appendChild(div);
+        });
+    } catch (e) {
+        console.log(e);
+    }
+});
+
+// ENTER после сканера
+searchInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        if (!barcodeInput.value) barcodeInput.value = searchInput.value.trim();
+        const first = document.getElementById("print_count");
+        if (first) { first.focus(); first.select(); }
+    }
+});
+
+// ---- ДОБАВИТЬ СТУДЕНТА В БЮРО (AJAX) ----
+async function addStudent() {
+
+    const barcode  = document.getElementById("new-barcode").value.trim();
+    const fullName = document.getElementById("new-name").value.trim();
+
+    if (!barcode || !fullName) {
+        showNotification("Заполните все поля", "error");
+        return;
+    }
+
+    const res  = await fetch("/add_student", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ barcode, name: fullName })
+        // bureau берётся из сессии на сервере
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+
+        const tbody = document.getElementById("bureau-students-tbody");
+        const tr    = document.createElement("tr");
+        tr.id       = `stu-row-${barcode}`;
+        tr.className = "new-row";
+        tr.innerHTML = `
+            <td>${fullName}</td>
+            <td>${barcode}</td>
+            <td>
+                <button class="btn-danger" style="font-size:13px; padding:7px 14px;"
+                    onclick="confirmAction(
+                        'Удалить студента ${fullName}?',
+                        () => deleteStudent('${barcode}')
+                    )">
+                    Удалить
+                </button>
+            </td>
+        `;
+        tbody.insertBefore(tr, tbody.firstChild);
+
+        document.getElementById("new-barcode").value = "";
+        document.getElementById("new-name").value    = "";
+
+        showNotification("Студент добавлен");
+
+    } else {
+        showNotification(data.error || "Ошибка", "error");
+    }
+}
+
+// ---- УДАЛИТЬ СТУДЕНТА ИЗ БЮРО (AJAX) ----
+async function deleteStudent(barcode) {
+
+    const res  = await fetch(`/delete_student/${barcode}`, { method: "POST" });
+    const data = await res.json();
+
+    if (data.ok) {
+        const row = document.getElementById(`stu-row-${barcode}`);
+        if (row) {
+            row.classList.add("removing");
+            setTimeout(() => row.remove(), 300);
+        }
+        showNotification("Студент удалён");
+    } else {
+        showNotification(data.error || "Ошибка", "error");
+    }
+}
+
+// ---- CONFIRM ----
+function confirmAction(text, callback) {
+    document.getElementById("confirm-text").textContent = text;
+    document.getElementById("confirm-overlay").classList.add("open");
+    document.getElementById("confirm-ok-btn").onclick = () => {
+        closeConfirm();
+        callback();
+    };
+}
+
+function closeConfirm() {
+    document.getElementById("confirm-overlay").classList.remove("open");
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeConfirm();
+});
+
+// ---- ANTI SLEEP ----
+setInterval(() => fetch("/ping").catch(() => {}), 240000);
+
+</script>
+</body>
+</html>
