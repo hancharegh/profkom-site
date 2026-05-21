@@ -123,16 +123,30 @@ def init_db():
         id       SERIAL PRIMARY KEY,
         name     TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        role     TEXT NOT NULL DEFAULT 'secretary'
+        role     TEXT NOT NULL DEFAULT 'secretary',
+        bureau   INTEGER DEFAULT NULL
     )
+    """)
+
+    # Добавляем колонку bureau если её ещё нет (для существующих БД)
+    cur.execute("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS bureau INTEGER DEFAULT NULL
     """)
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS students (
         id        SERIAL PRIMARY KEY,
         barcode   TEXT UNIQUE NOT NULL,
-        full_name TEXT NOT NULL
+        full_name TEXT NOT NULL,
+        bureau    INTEGER DEFAULT NULL
     )
+    """)
+
+    # Добавляем колонку bureau если её ещё нет (для существующих БД)
+    cur.execute("""
+        ALTER TABLE students
+        ADD COLUMN IF NOT EXISTS bureau INTEGER DEFAULT NULL
     """)
 
     cur.execute("""
@@ -191,19 +205,19 @@ def init_db():
 
 
 # ======================================================
-# ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ — данные для панелей управления
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # ======================================================
 
 def get_admin_data():
-    """Возвращает общий набор данных для chairman и vice_chairman."""
+    """Данные для панелей chairman и vice_chairman."""
 
     conn = get_db()
     cur  = conn.cursor()
 
     cur.execute("""
         SELECT * FROM users
-        WHERE role IN ('secretary', 'vice_chairman')
-        ORDER BY name
+        WHERE role IN ('secretary', 'vice_chairman', 'bureau')
+        ORDER BY role, name
     """)
     secretaries = cur.fetchall()
 
@@ -216,7 +230,7 @@ def get_admin_data():
     cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
     entries = cur.fetchall()
 
-    cur.execute("SELECT * FROM students ORDER BY full_name")
+    cur.execute("SELECT * FROM students ORDER BY bureau NULLS LAST, full_name")
     students = cur.fetchall()
 
     cur.execute("SELECT * FROM schedule")
@@ -246,139 +260,21 @@ def get_admin_data():
     )
 
 
-# ======================================================
-# LOGIN
-# ======================================================
+def do_issue(barcode, counts, secretary_name):
+    """
+    Общая логика выдачи для secretary и bureau.
+    counts — dict с ключами print_count, copy_count, ...
+    Возвращает jsonify-ответ.
+    """
 
-@app.route("/", methods=["GET", "POST"])
-def login():
-
-    if request.method == "POST":
-
-        name = request.form["name"]
-
-        if name.lower() in ["тигр", "tiger"]:
-            flash("🐯 доступ только для тигров и тигриц")
-            return render_template("login.html")
-
-        password = request.form["password"]
-
-        conn = get_db()
-        cur  = conn.cursor()
-
-        cur.execute("SELECT * FROM users WHERE name = %s", (name,))
-        user = cur.fetchone()
-
-        cur.close()
-        conn.close()
-
-        if not user:
-            flash("Пользователь не найден")
-            return render_template("login.html")
-
-        try:
-            password_ok = check_password_hash(user["password"], password)
-        except Exception:
-            flash("Ошибка пароля")
-            return render_template("login.html")
-
-        if password_ok:
-
-            session["user"] = user["name"]
-            session["role"] = user["role"]
-
-            if user["role"] == "chairman":
-                return redirect("/chairman")
-
-            if user["role"] == "vice_chairman":
-                return redirect("/vice_chairman")
-
-            return redirect("/dashboard")
-
-        flash("Неверный пароль")
-
-    return render_template("login.html")
-
-
-# ======================================================
-# LOGOUT
-# ======================================================
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
-
-# ======================================================
-# DASHBOARD (секретарь)
-# ======================================================
-
-@app.route("/dashboard")
-@login_required
-@role_required("secretary")
-def dashboard():
-
-    conn = get_db()
-    cur  = conn.cursor()
-
-    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 20")
-    entries = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("dashboard.html", entries=entries)
-
-
-# ======================================================
-# CHAIRMAN
-# ======================================================
-
-@app.route("/chairman")
-@login_required
-@role_required("chairman")
-def chairman():
-    return render_template("chairman.html", **get_admin_data())
-
-
-# ======================================================
-# VICE CHAIRMAN
-# ======================================================
-
-@app.route("/vice_chairman")
-@login_required
-@role_required("vice_chairman")
-def vice_chairman():
-    return render_template("vice_chairman.html", **get_admin_data())
-
-
-# ======================================================
-# ВЫДАЧА — AJAX endpoint
-# ======================================================
-
-@app.route("/issue", methods=["POST"])
-@login_required
-@role_required("secretary")
-def issue():
-
-    data    = request.get_json()
-    barcode = (data.get("barcode") or "").strip()
-
-    if barcode == "000000":
-        return jsonify(ok=False, error="🐯 Верховный тигр вошёл в систему")
-
-    if not barcode:
-        return jsonify(ok=False, error="Введите barcode")
-
-    print_count            = int(data.get("print_count")            or 0)
-    copy_count             = int(data.get("copy_count")             or 0)
-    notebook_count         = int(data.get("notebook_count")         or 0)
-    ruler_count            = int(data.get("ruler_count")            or 0)
-    corrector_count        = int(data.get("corrector_count")        or 0)
-    pencil_count           = int(data.get("pencil_count")           or 0)
-    eraser_sharpener_count = int(data.get("eraser_sharpener_count") or 0)
-    millimeter_count       = int(data.get("millimeter_count")       or 0)
+    print_count            = int(counts.get("print_count")            or 0)
+    copy_count             = int(counts.get("copy_count")             or 0)
+    notebook_count         = int(counts.get("notebook_count")         or 0)
+    ruler_count            = int(counts.get("ruler_count")            or 0)
+    corrector_count        = int(counts.get("corrector_count")        or 0)
+    pencil_count           = int(counts.get("pencil_count")           or 0)
+    eraser_sharpener_count = int(counts.get("eraser_sharpener_count") or 0)
+    millimeter_count       = int(counts.get("millimeter_count")       or 0)
 
     conn = get_db()
     cur  = conn.cursor()
@@ -390,6 +286,16 @@ def issue():
         cur.close()
         conn.close()
         return jsonify(ok=False, error="Студент не найден")
+
+    # Проверка принадлежности к бюро
+    user_role   = session.get("role")
+    user_bureau = session.get("bureau")
+
+    if user_role == "bureau":
+        if student.get("bureau") != user_bureau:
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Студент не принадлежит вашему бюро")
 
     # Сброс лимитов при смене месяца
     current_month = datetime.now().month
@@ -471,7 +377,6 @@ def issue():
     ))
 
     actions = []
-
     if print_count            > 0: actions.append(f"Печать: {print_count}")
     if copy_count             > 0: actions.append(f"Копии: {copy_count}")
     if notebook_count         > 0: actions.append(f"Тетради: {notebook_count}")
@@ -495,7 +400,7 @@ def issue():
     """, (
         barcode,
         student.get("full_name") or "Неизвестно",
-        session.get("user")      or "Секретарь",
+        secretary_name,
         action_text,
         print_count, copy_count, notebook_count, ruler_count,
         corrector_count, pencil_count, eraser_sharpener_count,
@@ -522,7 +427,7 @@ def issue():
 
     cur.execute(
         "SELECT COUNT(*) as total FROM entries WHERE secretary = %s",
-        (session["user"],)
+        (secretary_name,)
     )
     total_actions = cur.fetchone()["total"]
 
@@ -556,7 +461,7 @@ def issue():
         entry       = {
             "id":              new_entry["id"],
             "student_name":    student.get("full_name") or "Неизвестно",
-            "secretary":       session.get("user")      or "Секретарь",
+            "secretary":       secretary_name,
             "student_barcode": barcode,
             "action_text":     action_text,
             "created_at":      str(new_entry["created_at"])
@@ -565,12 +470,211 @@ def issue():
 
 
 # ======================================================
-# UNDO — AJAX endpoint
+# LOGIN
+# ======================================================
+
+@app.route("/", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        name = request.form["name"]
+
+        if name.lower() in ["тигр", "tiger"]:
+            flash("🐯 доступ только для тигров и тигриц")
+            return render_template("login.html")
+
+        password = request.form["password"]
+
+        conn = get_db()
+        cur  = conn.cursor()
+
+        cur.execute("SELECT * FROM users WHERE name = %s", (name,))
+        user = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        if not user:
+            flash("Пользователь не найден")
+            return render_template("login.html")
+
+        try:
+            password_ok = check_password_hash(user["password"], password)
+        except Exception:
+            flash("Ошибка пароля")
+            return render_template("login.html")
+
+        if password_ok:
+
+            session["user"]   = user["name"]
+            session["role"]   = user["role"]
+            session["bureau"] = user.get("bureau")
+
+            if user["role"] == "chairman":
+                return redirect("/chairman")
+
+            if user["role"] == "vice_chairman":
+                return redirect("/vice_chairman")
+
+            if user["role"] == "bureau":
+                return redirect("/bureau")
+
+            return redirect("/dashboard")
+
+        flash("Неверный пароль")
+
+    return render_template("login.html")
+
+
+# ======================================================
+# LOGOUT
+# ======================================================
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+
+# ======================================================
+# DASHBOARD (обычный секретарь — только студенты без бюро)
+# ======================================================
+
+@app.route("/dashboard")
+@login_required
+@role_required("secretary")
+def dashboard():
+
+    conn = get_db()
+    cur  = conn.cursor()
+
+    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 20")
+    entries = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("dashboard.html", entries=entries)
+
+
+# ======================================================
+# BUREAU DASHBOARD (панель профбюро)
+# ======================================================
+
+@app.route("/bureau")
+@login_required
+@role_required("bureau")
+def bureau_page():
+
+    bureau_num = session.get("bureau")
+
+    conn = get_db()
+    cur  = conn.cursor()
+
+    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 20")
+    entries = cur.fetchall()
+
+    cur.execute(
+        "SELECT * FROM students WHERE bureau = %s ORDER BY full_name",
+        (bureau_num,)
+    )
+    bureau_students = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "bureau.html",
+        entries        = entries,
+        bureau_students = bureau_students,
+        bureau_num     = bureau_num
+    )
+
+
+# ======================================================
+# CHAIRMAN
+# ======================================================
+
+@app.route("/chairman")
+@login_required
+@role_required("chairman")
+def chairman():
+    return render_template("chairman.html", **get_admin_data())
+
+
+# ======================================================
+# VICE CHAIRMAN
+# ======================================================
+
+@app.route("/vice_chairman")
+@login_required
+@role_required("vice_chairman")
+def vice_chairman():
+    return render_template("vice_chairman.html", **get_admin_data())
+
+
+# ======================================================
+# ВЫДАЧА — secretary (только студенты без бюро)
+# ======================================================
+
+@app.route("/issue", methods=["POST"])
+@login_required
+@role_required("secretary")
+def issue():
+
+    data    = request.get_json()
+    barcode = (data.get("barcode") or "").strip()
+
+    if barcode == "000000":
+        return jsonify(ok=False, error="🐯 Верховный тигр вошёл в систему")
+
+    if not barcode:
+        return jsonify(ok=False, error="Введите barcode")
+
+    # Секретарь работает только со студентами без бюро
+    conn = get_db()
+    cur  = conn.cursor()
+
+    cur.execute(
+        "SELECT bureau FROM students WHERE barcode = %s",
+        (barcode,)
+    )
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row and row["bureau"] is not None:
+        return jsonify(ok=False, error="Этот студент относится к профбюро")
+
+    return do_issue(barcode, data, session.get("user") or "Секретарь")
+
+
+# ======================================================
+# ВЫДАЧА — bureau (только студенты своего бюро)
+# ======================================================
+
+@app.route("/issue_bureau", methods=["POST"])
+@login_required
+@role_required("bureau")
+def issue_bureau():
+
+    data    = request.get_json()
+    barcode = (data.get("barcode") or "").strip()
+
+    if not barcode:
+        return jsonify(ok=False, error="Введите barcode")
+
+    return do_issue(barcode, data, session.get("user") or "Профбюро")
+
+
+# ======================================================
+# UNDO — secretary и bureau
 # ======================================================
 
 @app.route("/undo/<int:entry_id>", methods=["POST"])
 @login_required
-@role_required("secretary")
+@role_required("secretary", "bureau")
 def undo(entry_id):
 
     conn = get_db()
@@ -583,6 +687,13 @@ def undo(entry_id):
         cur.close()
         conn.close()
         return jsonify(ok=False, error="Запись не найдена")
+
+    # bureau может отменять только свои записи
+    if session.get("role") == "bureau":
+        if entry.get("secretary") != session.get("user"):
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Нет доступа")
 
     for label, field_name in FIELD_MAP.items():
 
@@ -611,8 +722,8 @@ def undo(entry_id):
 
 # ======================================================
 # ADD USER
-# chairman     — может добавлять secretary и vice_chairman
-# vice_chairman — может добавлять только secretary
+# chairman     — secretary, vice_chairman, bureau
+# vice_chairman — secretary, bureau
 # ======================================================
 
 @app.route("/add_secretary", methods=["POST"])
@@ -623,26 +734,34 @@ def add_secretary():
     name     = request.form["name"]
     password = request.form["password"]
     role     = request.form.get("role", "secretary")
+    bureau   = request.form.get("bureau") or None
 
     back = "/chairman" if session["role"] == "chairman" else "/vice_chairman"
 
-    # Никто не может создать chairman через форму
     if role == "chairman":
         flash("Нельзя создать ещё одного председателя")
         return redirect(back)
 
-    # vice_chairman может добавлять только secretary
-    if session["role"] == "vice_chairman" and role != "secretary":
+    if session["role"] == "vice_chairman" and role == "vice_chairman":
         flash("Недостаточно прав для назначения этой роли")
         return redirect(back)
+
+    # Для роли bureau нужно указать номер бюро
+    if role == "bureau" and not bureau:
+        flash("Укажите номер бюро")
+        return redirect(back)
+
+    # Для не-bureau обнуляем bureau
+    if role != "bureau":
+        bureau = None
 
     conn = get_db()
     cur  = conn.cursor()
 
     try:
         cur.execute(
-            "INSERT INTO users (name, password, role) VALUES (%s, %s, %s)",
-            (name, generate_password_hash(password), role)
+            "INSERT INTO users (name, password, role, bureau) VALUES (%s, %s, %s, %s)",
+            (name, generate_password_hash(password), role, bureau)
         )
         conn.commit()
         flash("Пользователь добавлен")
@@ -658,8 +777,6 @@ def add_secretary():
 
 # ======================================================
 # DELETE USER — AJAX
-# chairman     — может удалять secretary и vice_chairman
-# vice_chairman — может удалять только secretary
 # ======================================================
 
 @app.route("/delete_secretary/<int:user_id>", methods=["POST"])
@@ -697,9 +814,7 @@ def delete_secretary(user_id):
 
 
 # ======================================================
-# CHANGE SECRETARY PASSWORD — AJAX
-# chairman     — может менять пароль secretary и vice_chairman
-# vice_chairman — может менять пароль только secretary
+# CHANGE PASSWORD — AJAX
 # ======================================================
 
 @app.route("/change_secretary_password/<int:user_id>", methods=["POST"])
@@ -880,11 +995,13 @@ def export_excel():
 
 # ======================================================
 # ADD STUDENT — AJAX
+# chairman и vice_chairman могут указать bureau
+# bureau может добавлять только в своё бюро
 # ======================================================
 
 @app.route("/add_student", methods=["POST"])
 @login_required
-@role_required("chairman", "vice_chairman")
+@role_required("chairman", "vice_chairman", "bureau")
 def add_student():
 
     data      = request.get_json()
@@ -894,13 +1011,24 @@ def add_student():
     if not barcode or not full_name:
         return jsonify(ok=False, error="Заполните все поля")
 
+    # Для bureau — номер бюро берётся из сессии, нельзя переопределить
+    if session.get("role") == "bureau":
+        bureau = session.get("bureau")
+    else:
+        bureau = data.get("bureau") or None
+        if bureau is not None:
+            try:
+                bureau = int(bureau)
+            except (ValueError, TypeError):
+                bureau = None
+
     conn = get_db()
     cur  = conn.cursor()
 
     try:
         cur.execute(
-            "INSERT INTO students (barcode, full_name) VALUES (%s, %s)",
-            (barcode, full_name)
+            "INSERT INTO students (barcode, full_name, bureau) VALUES (%s, %s, %s)",
+            (barcode, full_name, bureau)
         )
         conn.commit()
 
@@ -912,23 +1040,37 @@ def add_student():
     cur.close()
     conn.close()
 
-    return jsonify(ok=True, barcode=barcode, full_name=full_name)
+    return jsonify(ok=True, barcode=barcode, full_name=full_name, bureau=bureau)
 
 
 # ======================================================
 # DELETE STUDENT — AJAX
+# bureau может удалять только своих студентов
 # ======================================================
 
 @app.route("/delete_student/<barcode>", methods=["POST"])
 @login_required
-@role_required("chairman", "vice_chairman")
+@role_required("chairman", "vice_chairman", "bureau")
 def delete_student(barcode):
 
     conn = get_db()
     cur  = conn.cursor()
 
-    cur.execute("DELETE FROM students WHERE barcode = %s", (barcode,))
+    # bureau может удалять только студентов своего бюро
+    if session.get("role") == "bureau":
 
+        cur.execute(
+            "SELECT bureau FROM students WHERE barcode = %s",
+            (barcode,)
+        )
+        row = cur.fetchone()
+
+        if not row or row["bureau"] != session.get("bureau"):
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Нет доступа")
+
+    cur.execute("DELETE FROM students WHERE barcode = %s", (barcode,))
     conn.commit()
     cur.close()
     conn.close()
@@ -938,6 +1080,7 @@ def delete_student(barcode):
 
 # ======================================================
 # UPLOAD STUDENTS
+# Формат: баркод;ФИО;номер_бюро (третья колонка необязательна)
 # ======================================================
 
 @app.route("/upload_students", methods=["POST"])
@@ -960,10 +1103,19 @@ def upload_students():
 
         parts = line.split(";")
 
-        if len(parts) != 2:
+        if len(parts) < 2:
             continue
 
-        barcode, full_name = parts[0].strip(), parts[1].strip()
+        barcode   = parts[0].strip()
+        full_name = parts[1].strip()
+
+        # Третья колонка — номер бюро (необязательна)
+        bureau = None
+        if len(parts) >= 3 and parts[2].strip():
+            try:
+                bureau = int(parts[2].strip())
+            except ValueError:
+                bureau = None
 
         cur.execute("SELECT * FROM students WHERE barcode = %s", (barcode,))
 
@@ -971,8 +1123,8 @@ def upload_students():
             continue
 
         cur.execute(
-            "INSERT INTO students (barcode, full_name) VALUES (%s, %s)",
-            (barcode, full_name)
+            "INSERT INTO students (barcode, full_name, bureau) VALUES (%s, %s, %s)",
+            (barcode, full_name, bureau)
         )
         added += 1
 
@@ -987,6 +1139,9 @@ def upload_students():
 
 # ======================================================
 # SEARCH STUDENTS
+# secretary — только без бюро
+# bureau    — только своё бюро
+# admin     — все
 # ======================================================
 
 @app.route("/search_students")
@@ -994,19 +1149,35 @@ def upload_students():
 def search_students():
 
     query = request.args.get("q", "")
+    role  = session.get("role")
 
     conn = get_db()
     cur  = conn.cursor()
 
-    cur.execute("""
-        SELECT barcode, full_name
-        FROM students
-        WHERE LOWER(full_name) LIKE LOWER(%s)
-        LIMIT 10
-    """, (f"%{query}%",))
+    if role == "secretary":
+        cur.execute("""
+            SELECT barcode, full_name FROM students
+            WHERE bureau IS NULL
+            AND LOWER(full_name) LIKE LOWER(%s)
+            LIMIT 10
+        """, (f"%{query}%",))
+
+    elif role == "bureau":
+        cur.execute("""
+            SELECT barcode, full_name FROM students
+            WHERE bureau = %s
+            AND LOWER(full_name) LIKE LOWER(%s)
+            LIMIT 10
+        """, (session.get("bureau"), f"%{query}%"))
+
+    else:
+        cur.execute("""
+            SELECT barcode, full_name FROM students
+            WHERE LOWER(full_name) LIKE LOWER(%s)
+            LIMIT 10
+        """, (f"%{query}%",))
 
     students = cur.fetchall()
-
     cur.close()
     conn.close()
 
@@ -1019,7 +1190,7 @@ def search_students():
 
 @app.route("/student_limits/<barcode>")
 @login_required
-@role_required("secretary")
+@role_required("secretary", "bureau")
 def student_limits_api(barcode):
 
     conn = get_db()
@@ -1041,7 +1212,6 @@ def student_limits_api(barcode):
     """, (barcode,))
 
     used = cur.fetchone()
-
     cur.close()
     conn.close()
 
@@ -1049,7 +1219,7 @@ def student_limits_api(barcode):
 
 
 # ======================================================
-# PING (anti-sleep)
+# PING
 # ======================================================
 
 @app.route("/ping")
