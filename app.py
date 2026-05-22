@@ -109,8 +109,7 @@ def role_required(*roles):
 # Формат: {bureau}{порядковый номер с ведущими нулями}
 # Например, бюро 4, первый студент → "4001"
 # Находим минимальный свободный номер в бюро.
-# При удалении студента его номер освобождается автоматически
-# (просто ищем минимальный, которого нет в таблице).
+# При удалении студента его номер освобождается автоматически.
 # ======================================================
 
 def generate_student_id(cur, bureau: int) -> str:
@@ -119,7 +118,6 @@ def generate_student_id(cur, bureau: int) -> str:
     и возвращает строку вида "4003".
     """
 
-    # Получаем все существующие порядковые номера для этого бюро
     cur.execute("""
         SELECT student_id FROM students
         WHERE bureau = %s
@@ -128,24 +126,20 @@ def generate_student_id(cur, bureau: int) -> str:
 
     rows = cur.fetchall()
 
-    # Извлекаем порядковую часть (цифры после первой)
     existing = set()
 
     for row in rows:
         sid = row["student_id"]
         try:
-            # Убираем первую цифру (номер бюро) и берём остаток
             seq = int(sid[1:])
             existing.add(seq)
         except (ValueError, IndexError):
             pass
 
-    # Ищем минимальный свободный номер начиная с 1
     seq = 1
     while seq in existing:
         seq += 1
 
-    # Форматируем: бюро + трёхзначный номер (001, 002, ...)
     return f"{bureau}{seq:03d}"
 
 
@@ -173,7 +167,6 @@ def init_db():
         ADD COLUMN IF NOT EXISTS bureau INTEGER DEFAULT NULL
     """)
 
-    # students: student_id вместо barcode
     cur.execute("""
     CREATE TABLE IF NOT EXISTS students (
         id                     SERIAL PRIMARY KEY,
@@ -326,7 +319,6 @@ def do_issue(student_id, counts, secretary_name):
         conn.close()
         return jsonify(ok=False, error="Студент не найден")
 
-    # Проверка принадлежности бюро
     user_role   = session.get("role")
     user_bureau = session.get("bureau")
 
@@ -336,7 +328,6 @@ def do_issue(student_id, counts, secretary_name):
             conn.close()
             return jsonify(ok=False, error="Студент не принадлежит вашему бюро")
 
-    # Секретарь не работает со студентами бюро
     if user_role == "secretary":
         cur.close()
         conn.close()
@@ -576,9 +567,6 @@ def logout():
 
 # ======================================================
 # DASHBOARD — обычный секретарь
-# Секретари не работают со студентами бюро.
-# У них своя база (студенты без бюро) — в данной системе
-# это отдельная логика, dashboard оставлен для совместимости.
 # ======================================================
 
 @app.route("/dashboard")
@@ -989,8 +977,6 @@ def export_excel():
 
 # ======================================================
 # ADD STUDENT — AJAX
-# Генерирует student_id автоматически.
-# bureau-пользователь всегда добавляет в своё бюро.
 # ======================================================
 
 @app.route("/add_student", methods=["POST"])
@@ -1018,7 +1004,6 @@ def add_student():
     conn = get_db()
     cur  = conn.cursor()
 
-    # Генерируем минимальный свободный ID
     student_id = generate_student_id(cur, bureau)
 
     try:
@@ -1041,7 +1026,6 @@ def add_student():
 
 # ======================================================
 # DELETE STUDENT — AJAX
-# ID освобождается автоматически (просто удаляем запись).
 # ======================================================
 
 @app.route("/delete_student/<student_id>", methods=["POST"])
@@ -1075,15 +1059,14 @@ def delete_student(student_id):
 # ======================================================
 # UPLOAD STUDENTS
 #
-# Поддерживаются два формата:
-#   1. ФИО;номер_бюро     (предпочтительный)
-#   2. ФИО                (только если загружает bureau — бюро из сессии)
+# Поддерживаемые форматы:
+#   1. ФИО;номер_бюро   (предпочтительный, для chairman/vice)
+#   2. ФИО              (для bureau — бюро берётся из сессии)
 #
-# При загрузке chairman/vice_chairman второй формат
-# требует номер бюро — иначе строка пропускается.
+# Кодировка определяется автоматически:
+#   utf-8-sig → utf-8 → cp1251 → cp1252 → latin-1
 #
-# Повторяющиеся ФИО в том же бюро пропускаются.
-# Уже существующие студенты не затрагиваются.
+# Дубликаты по ФИО + бюро пропускаются.
 # ======================================================
 
 @app.route("/upload_students", methods=["POST"])
@@ -1093,34 +1076,51 @@ def upload_students():
 
     file = request.files.get("file")
     role = session.get("role")
-    back = "/chairman" if role == "chairman" else "/vice_chairman" if role == "vice_chairman" else "/bureau"
+    back = (
+        "/chairman"      if role == "chairman"      else
+        "/vice_chairman" if role == "vice_chairman" else
+        "/bureau"
+    )
 
     if not file:
         flash("Файл не выбран")
         return redirect(back)
 
-    conn  = get_db()
-    cur   = conn.cursor()
-    added = 0
+    # Автоопределение кодировки
+    raw     = file.read()
+    content = None
+
+    for encoding in ("utf-8-sig", "utf-8", "cp1251", "cp1252", "latin-1"):
+        try:
+            content = raw.decode(encoding)
+            break
+        except (UnicodeDecodeError, LookupError):
+            continue
+
+    if content is None:
+        flash("Не удалось определить кодировку файла. Сохраните его в UTF-8.")
+        return redirect(back)
+
+    conn    = get_db()
+    cur     = conn.cursor()
+    added   = 0
     skipped = 0
 
-    for line in file.read().decode("utf-8").splitlines():
+    for line in content.splitlines():
 
         line = line.strip()
 
         if not line:
             continue
 
-        parts = [p.strip() for p in line.split(";")]
-
+        parts     = [p.strip() for p in line.split(";")]
         full_name = parts[0] if parts else ""
 
         if not full_name:
             continue
 
-        # Определяем бюро
+        # Определяем номер бюро
         if role == "bureau":
-            # bureau всегда загружает в своё бюро, игнорируем вторую колонку
             bureau = session.get("bureau")
 
         elif len(parts) >= 2 and parts[1]:
@@ -1139,7 +1139,7 @@ def upload_students():
             skipped += 1
             continue
 
-        # Проверяем дубликат по ФИО + бюро
+        # Проверка дубликата по ФИО + бюро
         cur.execute(
             "SELECT id FROM students WHERE full_name = %s AND bureau = %s",
             (full_name, bureau)
@@ -1149,14 +1149,18 @@ def upload_students():
             skipped += 1
             continue
 
-        # Генерируем ID
+        # Генерация ID и вставка
         student_id = generate_student_id(cur, bureau)
 
-        cur.execute(
-            "INSERT INTO students (student_id, full_name, bureau) VALUES (%s, %s, %s)",
-            (student_id, full_name, bureau)
-        )
-        added += 1
+        try:
+            cur.execute(
+                "INSERT INTO students (student_id, full_name, bureau) VALUES (%s, %s, %s)",
+                (student_id, full_name, bureau)
+            )
+            added += 1
+        except Exception:
+            skipped += 1
+            continue
 
     conn.commit()
     cur.close()
@@ -1169,8 +1173,6 @@ def upload_students():
 
 # ======================================================
 # SEARCH STUDENTS
-# bureau  — только своё бюро, поиск по ФИО или ID
-# admin   — все студенты
 # ======================================================
 
 @app.route("/search_students")
