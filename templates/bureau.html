@@ -32,7 +32,6 @@
             font-weight: bold;
         }
 
-        /* Плашка бюро */
         .bureau-indicator {
             background: #fef9c3;
             color: #854d0e;
@@ -71,7 +70,10 @@
             font-size: 15px;
         }
 
-        input:focus { outline: none; border-color: #d97706; }
+        input:focus {
+            outline: none;
+            border-color: #d97706;
+        }
 
         button {
             background: #d97706;
@@ -84,12 +86,12 @@
             font-size: 14px;
         }
 
-        button:hover  { opacity: 0.9; }
+        button:hover   { opacity: 0.9; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .btn-danger  { background: #ef4444; }
-        .btn-gray    { background: #6b7280; }
-        .btn-green   { background: #16a34a; }
+        .btn-danger { background: #ef4444; }
+        .btn-gray   { background: #6b7280; }
+        .btn-green  { background: #16a34a; }
 
         table { width: 100%; border-collapse: collapse; }
 
@@ -104,6 +106,19 @@
         td {
             padding: 14px;
             border-top: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+
+        /* ID бейдж */
+        .id-badge {
+            display: inline-block;
+            background: #fef9c3;
+            color: #854d0e;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            font-family: monospace;
         }
 
         /* Уведомления */
@@ -161,8 +176,7 @@
         .new-row td { animation: rowIn 0.6s ease; }
         .removing   { opacity: 0; transition: opacity 0.3s ease; }
 
-        /* Форма добавления студента */
-        .add-student-form {
+        .add-form {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
@@ -172,10 +186,37 @@
             border-top: 1px solid #e5e7eb;
         }
 
-        .add-student-form input {
+        .add-form input {
             margin: 0;
             flex: 1;
-            min-width: 120px;
+            min-width: 180px;
+        }
+
+        /* Загрузка CSV */
+        .upload-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .upload-section label {
+            margin: 0;
+            font-weight: normal;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* Поиск в таблице студентов */
+        .table-search {
+            margin-bottom: 14px;
+        }
+
+        .table-search input {
+            margin: 0;
         }
 
         /* CONFIRM */
@@ -236,14 +277,14 @@
     <h2>Выдача продукции</h2>
 
     <div class="search-wrapper">
-        <label>Студент (только бюро {{ bureau_num }})</label>
+        <label>Студент — поиск по ФИО или ID</label>
         <input
             type="text"
             id="student_search"
-            placeholder="Сканируйте barcode или введите ФИО"
+            placeholder="Начните вводить ФИО или ID (например, {{ bureau_num }}001)"
             autocomplete="off"
         >
-        <input type="hidden" id="barcode">
+        <input type="hidden" id="student_id_input">
         <div id="search_results"></div>
     </div>
 
@@ -251,14 +292,14 @@
     <div class="card" id="live_limits" style="display:none; border:1px solid #fef9c3;">
         <h2>Лимиты студента</h2>
         <table>
-            <tr><td>Печать</td>           <td id="limit_prints"></td></tr>
-            <tr><td>Копии</td>            <td id="limit_copies"></td></tr>
-            <tr><td>Тетради</td>          <td id="limit_notebooks"></td></tr>
-            <tr><td>Линейки</td>          <td id="limit_rulers"></td></tr>
-            <tr><td>Корректоры</td>       <td id="limit_correctors"></td></tr>
-            <tr><td>Карандаши</td>        <td id="limit_pencils"></td></tr>
-            <tr><td>Ластики / Точилки</td><td id="limit_erasers"></td></tr>
-            <tr><td>Миллиметровки</td>    <td id="limit_millimeters"></td></tr>
+            <tr><td>Печать</td>            <td id="limit_prints"></td></tr>
+            <tr><td>Копии</td>             <td id="limit_copies"></td></tr>
+            <tr><td>Тетради</td>           <td id="limit_notebooks"></td></tr>
+            <tr><td>Линейки</td>           <td id="limit_rulers"></td></tr>
+            <tr><td>Корректоры</td>        <td id="limit_correctors"></td></tr>
+            <tr><td>Карандаши</td>         <td id="limit_pencils"></td></tr>
+            <tr><td>Ластики / Точилки</td> <td id="limit_erasers"></td></tr>
+            <tr><td>Миллиметровки</td>     <td id="limit_millimeters"></td></tr>
         </table>
     </div>
 
@@ -286,53 +327,84 @@
 <div class="card">
     <h2>Студенты бюро {{ bureau_num }}</h2>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ФИО</th>
-                <th>Баркод</th>
-                <th></th>
+    <!-- Поиск по таблице -->
+    <div class="table-search">
+        <input
+            type="text"
+            id="table-search"
+            placeholder="🔍 Поиск по ФИО или ID..."
+            oninput="filterTable()"
+        >
+    </div>
+
+    <div style="max-height:400px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ФИО</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="bureau-students-tbody">
+            {% for student in bureau_students %}
+            <tr
+                id="stu-row-{{ student.student_id }}"
+                class="student-table-row"
+                data-name="{{ student.full_name | lower }}"
+                data-id="{{ student.student_id | lower }}"
+            >
+                <td><span class="id-badge">{{ student.student_id }}</span></td>
+                <td>{{ student.full_name }}</td>
+                <td>
+                    <button
+                        class="btn-danger"
+                        style="font-size:13px; padding:7px 14px;"
+                        onclick="confirmAction(
+                            'Удалить студента {{ student.full_name }}?',
+                            () => deleteStudent('{{ student.student_id }}')
+                        )"
+                    >
+                        Удалить
+                    </button>
+                </td>
             </tr>
-        </thead>
-        <tbody id="bureau-students-tbody">
-        {% for student in bureau_students %}
-        <tr id="stu-row-{{ student.barcode }}">
-            <td>{{ student.full_name }}</td>
-            <td>{{ student.barcode }}</td>
-            <td>
-                <button
-                    class="btn-danger"
-                    style="font-size:13px; padding:7px 14px;"
-                    onclick="confirmAction(
-                        'Удалить студента {{ student.full_name }}?',
-                        () => deleteStudent('{{ student.barcode }}')
-                    )"
-                >
-                    Удалить
-                </button>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    <!-- Добавить студента в бюро -->
-    <div class="add-student-form">
+    <p style="color:#6b7280; font-size:13px; margin:10px 0 0;">
+        Показано: <span id="table-count">{{ bureau_students|length }}</span>
+    </p>
 
-        <div style="flex:1; min-width:80px;">
-            <label style="margin-top:0;">Баркод</label>
-            <input type="text" id="new-barcode" placeholder="Баркод" style="margin:0;">
-        </div>
-
-        <div style="flex:2; min-width:160px;">
-            <label style="margin-top:0;">ФИО</label>
+    <!-- Добавить студента вручную -->
+    <div class="add-form">
+        <div style="flex:1; min-width:200px;">
+            <label style="margin-top:0;">ФИО нового студента</label>
             <input type="text" id="new-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
         </div>
-
         <button class="btn-green" onclick="addStudent()" style="height:46px; margin-bottom:0;">
             Добавить
         </button>
+    </div>
 
+    <!-- Загрузка из CSV -->
+    <div class="upload-section">
+        <label>📄 Загрузить из CSV:</label>
+        <form method="POST" action="/upload_students" enctype="multipart/form-data"
+              style="display:flex; gap:10px; align-items:center;">
+            <input
+                type="file"
+                name="file"
+                accept=".csv,.txt"
+                style="width:auto; margin:0; padding:8px;"
+            >
+            <button type="submit" style="padding:10px 16px;">Загрузить</button>
+        </form>
+        <span style="color:#9ca3af; font-size:12px;">
+            Формат: одно ФИО на строку
+        </span>
     </div>
 
 </div>
@@ -344,6 +416,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Студент</th>
                     <th>Действие</th>
                     <th>Дата</th>
@@ -353,9 +426,12 @@
             <tbody id="entries_tbody">
             {% for entry in entries %}
             <tr id="row-{{ entry.id }}">
+                <td><span class="id-badge">{{ entry.student_id }}</span></td>
                 <td>{{ entry.student_name }}</td>
                 <td>{{ entry.action_text }}</td>
-                <td>{{ entry.created_at }}</td>
+                <td style="white-space:nowrap; color:#6b7280; font-size:13px;">
+                    {{ entry.created_at }}
+                </td>
                 <td>
                     <button
                         class="btn-danger"
@@ -386,37 +462,37 @@
 
 <script>
 
-const notifications = document.getElementById("notifications");
-const searchInput   = document.getElementById("student_search");
-const resultsBox    = document.getElementById("search_results");
-const barcodeInput  = document.getElementById("barcode");
+const notifications    = document.getElementById("notifications");
+const searchInput      = document.getElementById("student_search");
+const resultsBox       = document.getElementById("search_results");
+const studentIdInput   = document.getElementById("student_id_input");
 
 // ---- УВЕДОМЛЕНИЯ ----
 function showNotification(text, type = "message") {
     const div = document.createElement("div");
-    div.className = type === "error" ? "error" : "message";
+    div.className   = type === "error" ? "error" : "message";
     div.textContent = text;
     notifications.innerHTML = "";
     notifications.appendChild(div);
     setTimeout(() => div.remove(), 4000);
 }
 
-// ---- ЛИМИТЫ ----
+// ---- ОБНОВЛЕНИЕ ЛИМИТОВ ----
 function updateLimits(limits) {
-    document.getElementById("live_limits").style.display = "block";
-    document.getElementById("limit_prints").innerText      = limits.prints;
-    document.getElementById("limit_copies").innerText      = limits.copies;
-    document.getElementById("limit_notebooks").innerText   = limits.notebooks;
-    document.getElementById("limit_rulers").innerText      = limits.rulers;
-    document.getElementById("limit_correctors").innerText  = limits.correctors;
-    document.getElementById("limit_pencils").innerText     = limits.pencils;
-    document.getElementById("limit_erasers").innerText     = limits.erasers;
-    document.getElementById("limit_millimeters").innerText = limits.millimeters;
+    document.getElementById("live_limits").style.display        = "block";
+    document.getElementById("limit_prints").innerText           = limits.prints;
+    document.getElementById("limit_copies").innerText           = limits.copies;
+    document.getElementById("limit_notebooks").innerText        = limits.notebooks;
+    document.getElementById("limit_rulers").innerText           = limits.rulers;
+    document.getElementById("limit_correctors").innerText       = limits.correctors;
+    document.getElementById("limit_pencils").innerText          = limits.pencils;
+    document.getElementById("limit_erasers").innerText          = limits.erasers;
+    document.getElementById("limit_millimeters").innerText      = limits.millimeters;
 }
 
-// ---- СБРОС ФОРМЫ ----
+// ---- СБРОС ФОРМЫ ВЫДАЧИ ----
 function resetForm() {
-    barcodeInput.value   = "";
+    studentIdInput.value = "";
     searchInput.value    = "";
     document.getElementById("print_count").value            = 0;
     document.getElementById("copy_count").value             = 0;
@@ -437,9 +513,10 @@ function prependEntry(e) {
     tr.id       = `row-${e.id}`;
     tr.className = "new-row";
     tr.innerHTML = `
+        <td><span class="id-badge">${e.student_id}</span></td>
         <td>${e.student_name}</td>
         <td>${e.action_text}</td>
-        <td>${e.created_at}</td>
+        <td style="white-space:nowrap; color:#6b7280; font-size:13px;">${e.created_at}</td>
         <td>
             <button class="btn-danger" style="font-size:13px; padding:7px 14px;"
                     onclick="undoEntry(${e.id}, this)">
@@ -454,8 +531,9 @@ function prependEntry(e) {
 // ---- ВЫДАЧА (AJAX) ----
 async function submitIssue() {
 
-    const barcode = barcodeInput.value.trim();
-    if (!barcode) {
+    const student_id = studentIdInput.value.trim();
+
+    if (!student_id) {
         showNotification("Выберите студента", "error");
         return;
     }
@@ -465,7 +543,7 @@ async function submitIssue() {
     btn.textContent = "Сохранение...";
 
     const payload = {
-        barcode,
+        student_id,
         print_count:            parseInt(document.getElementById("print_count").value)            || 0,
         copy_count:             parseInt(document.getElementById("copy_count").value)             || 0,
         notebook_count:         parseInt(document.getElementById("notebook_count").value)         || 0,
@@ -529,18 +607,12 @@ async function undoEntry(entryId, btn) {
     }
 }
 
-// ---- ПОИСК СТУДЕНТОВ (только своё бюро) ----
+// ---- ПОИСК СТУДЕНТОВ ----
 searchInput.addEventListener("input", async function() {
 
     const query = this.value.trim();
 
-    if (/^[0-9]+$/.test(query)) {
-        barcodeInput.value   = query;
-        resultsBox.innerHTML = "";
-        return;
-    }
-
-    if (query.length < 2) {
+    if (query.length < 1) {
         resultsBox.innerHTML = "";
         return;
     }
@@ -554,19 +626,20 @@ searchInput.addEventListener("input", async function() {
         students.forEach(student => {
             const div = document.createElement("div");
             div.className = "search-item";
-            div.innerHTML = `<b>${student.full_name}</b><br><small>${student.barcode}</small>`;
-
+            div.innerHTML = `
+                <b>${student.full_name}</b>
+                <span class="id-badge" style="margin-left:8px;">${student.student_id}</span>
+            `;
             div.onclick = async () => {
                 searchInput.value    = student.full_name;
-                barcodeInput.value   = student.barcode;
+                studentIdInput.value = student.student_id;
                 resultsBox.innerHTML = "";
 
-                const limRes = await fetch(`/student_limits/${student.barcode}`);
+                const limRes = await fetch(`/student_limits/${student.student_id}`);
                 updateLimits(await limRes.json());
 
                 document.getElementById("print_count").focus();
             };
-
             resultsBox.appendChild(div);
         });
     } catch (e) {
@@ -574,31 +647,30 @@ searchInput.addEventListener("input", async function() {
     }
 });
 
-// ENTER после сканера
+// ENTER: если введён ID напрямую
 searchInput.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
         e.preventDefault();
-        if (!barcodeInput.value) barcodeInput.value = searchInput.value.trim();
+        if (!studentIdInput.value) studentIdInput.value = searchInput.value.trim();
         const first = document.getElementById("print_count");
         if (first) { first.focus(); first.select(); }
     }
 });
 
-// ---- ДОБАВИТЬ СТУДЕНТА В БЮРО (AJAX) ----
+// ---- ДОБАВИТЬ СТУДЕНТА (AJAX) ----
 async function addStudent() {
 
-    const barcode  = document.getElementById("new-barcode").value.trim();
     const fullName = document.getElementById("new-name").value.trim();
 
-    if (!barcode || !fullName) {
-        showNotification("Заполните все поля", "error");
+    if (!fullName) {
+        showNotification("Введите ФИО", "error");
         return;
     }
 
     const res  = await fetch("/add_student", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ barcode, name: fullName })
+        body:    JSON.stringify({ name: fullName })
         // bureau берётся из сессии на сервере
     });
     const data = await res.json();
@@ -607,49 +679,72 @@ async function addStudent() {
 
         const tbody = document.getElementById("bureau-students-tbody");
         const tr    = document.createElement("tr");
-        tr.id       = `stu-row-${barcode}`;
-        tr.className = "new-row";
+
+        tr.id        = `stu-row-${data.student_id}`;
+        tr.className = "student-table-row new-row";
+        tr.dataset.name = fullName.toLowerCase();
+        tr.dataset.id   = data.student_id.toLowerCase();
+
         tr.innerHTML = `
+            <td><span class="id-badge">${data.student_id}</span></td>
             <td>${fullName}</td>
-            <td>${barcode}</td>
             <td>
                 <button class="btn-danger" style="font-size:13px; padding:7px 14px;"
                     onclick="confirmAction(
                         'Удалить студента ${fullName}?',
-                        () => deleteStudent('${barcode}')
+                        () => deleteStudent('${data.student_id}')
                     )">
                     Удалить
                 </button>
             </td>
         `;
+
         tbody.insertBefore(tr, tbody.firstChild);
 
-        document.getElementById("new-barcode").value = "";
-        document.getElementById("new-name").value    = "";
+        const countEl = document.getElementById("table-count");
+        countEl.textContent = parseInt(countEl.textContent) + 1;
 
-        showNotification("Студент добавлен");
+        document.getElementById("new-name").value = "";
+
+        showNotification(`Добавлен: ${fullName} — ID ${data.student_id}`);
 
     } else {
         showNotification(data.error || "Ошибка", "error");
     }
 }
 
-// ---- УДАЛИТЬ СТУДЕНТА ИЗ БЮРО (AJAX) ----
-async function deleteStudent(barcode) {
+// ---- УДАЛИТЬ СТУДЕНТА (AJAX) ----
+async function deleteStudent(studentId) {
 
-    const res  = await fetch(`/delete_student/${barcode}`, { method: "POST" });
+    const res  = await fetch(`/delete_student/${studentId}`, { method: "POST" });
     const data = await res.json();
 
     if (data.ok) {
-        const row = document.getElementById(`stu-row-${barcode}`);
+        const row = document.getElementById(`stu-row-${studentId}`);
         if (row) {
             row.classList.add("removing");
             setTimeout(() => row.remove(), 300);
         }
-        showNotification("Студент удалён");
+        const countEl = document.getElementById("table-count");
+        countEl.textContent = Math.max(parseInt(countEl.textContent) - 1, 0);
+        showNotification("Студент удалён. ID освобождён.");
     } else {
         showNotification(data.error || "Ошибка", "error");
     }
+}
+
+// ---- ПОИСК ПО ТАБЛИЦЕ СТУДЕНТОВ ----
+function filterTable() {
+    const q       = document.getElementById("table-search").value.toLowerCase();
+    let   visible = 0;
+
+    document.querySelectorAll(".student-table-row").forEach(row => {
+        const match = row.dataset.name.includes(q) || row.dataset.id.includes(q);
+        row.style.display = match ? "" : "none";
+        if (match) visible++;
+    });
+
+    document.getElementById("table-count").textContent = visible;
 }
 
 // ---- CONFIRM ----
