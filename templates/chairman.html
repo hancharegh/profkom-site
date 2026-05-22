@@ -144,7 +144,7 @@
             flex-wrap: wrap;
         }
 
-        /* Бейджи ролей */
+        /* Бейджи */
         .role-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -157,7 +157,6 @@
         .role-vice      { background: #ede9fe; color: #6d28d9; }
         .role-bureau    { background: #fef9c3; color: #854d0e; }
 
-        /* Бейджи бюро в таблице студентов */
         .bureau-badge {
             display: inline-block;
             padding: 2px 8px;
@@ -168,12 +167,18 @@
             color: #854d0e;
         }
 
-        .bureau-none {
-            color: #9ca3af;
+        .id-badge {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #374151;
+            padding: 2px 10px;
+            border-radius: 20px;
             font-size: 12px;
+            font-weight: bold;
+            font-family: monospace;
         }
 
-        /* Поле номера бюро — скрыто по умолчанию */
+        /* Поле бюро — скрыто по умолчанию */
         #bureau-field { display: none; }
 
         /* MODAL */
@@ -195,7 +200,7 @@
             border-radius: 20px;
             padding: 30px;
             width: 100%;
-            max-width: 800px;
+            max-width: 820px;
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.2);
@@ -317,10 +322,22 @@
             margin-top: 8px;
         }
 
-        .pass-inline input {
-            margin: 0;
-            flex: 1;
-            min-width: 120px;
+        .pass-inline input { margin: 0; flex: 1; min-width: 120px; }
+
+        /* Загрузка CSV */
+        .upload-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .upload-hint {
+            color: #9ca3af;
+            font-size: 12px;
         }
 
     </style>
@@ -410,7 +427,7 @@
                 {% if secretary.bureau %}
                     <span class="bureau-badge">№{{ secretary.bureau }}</span>
                 {% else %}
-                    <span class="bureau-none">—</span>
+                    <span style="color:#9ca3af;">—</span>
                 {% endif %}
             </td>
 
@@ -538,14 +555,9 @@
             <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
         </div>
 
-        <!-- Добавить студента -->
+        <!-- Добавить студента вручную -->
         <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;
-                    margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #e5e7eb;">
-
-            <div style="flex:1; min-width:80px;">
-                <label style="margin-top:0;">Баркод</label>
-                <input type="text" id="new-student-barcode" placeholder="Баркод" style="margin:0;">
-            </div>
+                    margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #e5e7eb;">
 
             <div style="flex:2; min-width:160px;">
                 <label style="margin-top:0;">ФИО</label>
@@ -555,7 +567,7 @@
             <div style="flex:1; min-width:120px;">
                 <label style="margin-top:0;">Бюро</label>
                 <select id="new-student-bureau" style="margin:0;">
-                    <option value="">Без бюро</option>
+                    <option value="">— выберите —</option>
                     <option value="1">Бюро 1</option>
                     <option value="2">Бюро 2</option>
                     <option value="3">Бюро 3</option>
@@ -570,25 +582,38 @@
 
         </div>
 
+        <!-- Загрузка CSV -->
+        <div class="upload-section" style="margin-top:0; padding-top:0; border-top:none;
+                                            margin-bottom:16px; padding-bottom:16px;
+                                            border-bottom:1px solid #e5e7eb;">
+            <span style="font-weight:bold; font-size:14px;">📄 Загрузить из CSV:</span>
+            <form method="POST" action="/upload_students" enctype="multipart/form-data"
+                  style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input
+                    type="file"
+                    name="file"
+                    accept=".csv,.txt"
+                    style="width:auto; margin:0; padding:8px;"
+                >
+                <button type="submit" style="padding:10px 16px;">Загрузить</button>
+            </form>
+            <span class="upload-hint">Формат: ФИО;номер_бюро — по одному на строку</span>
+        </div>
+
         <!-- Фильтр по бюро -->
-        <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:13px; color:#6b7280;">Фильтр:</span>
             <button
                 class="btn-outline"
-                style="font-size:13px; padding:7px 14px;"
+                style="font-size:12px; padding:5px 12px;"
                 onclick="filterByBureau('')"
             >
                 Все
             </button>
-            <button
-                style="font-size:13px; padding:7px 14px; background:#f3f4f6; color:#374151; border:none;"
-                onclick="filterByBureau('none')"
-            >
-                Без бюро
-            </button>
             {% for i in range(1, 6) %}
             <button
                 class="role-badge role-bureau"
-                style="padding:7px 14px; cursor:pointer; border:none; font-size:13px;"
+                style="padding:5px 12px; cursor:pointer; border:none; font-size:12px;"
                 onclick="filterByBureau('{{ i }}')"
             >
                 Бюро {{ i }}
@@ -601,42 +626,36 @@
             <input
                 type="text"
                 id="student-search"
-                placeholder="🔍 Поиск по ФИО или баркоду..."
+                placeholder="🔍 Поиск по ФИО или ID..."
                 oninput="filterStudents()"
             >
         </div>
 
         <!-- Таблица -->
-        <div style="max-height:380px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb;">
+        <div style="max-height:360px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb;">
             <table>
                 <thead>
-                    <tr><th>ФИО</th><th>Баркод</th><th>Бюро</th><th></th></tr>
+                    <tr><th>ID</th><th>ФИО</th><th>Бюро</th><th></th></tr>
                 </thead>
                 <tbody id="students-tbody">
                 {% for student in students %}
                 <tr
                     class="student-row"
-                    id="stu-row-{{ student.barcode }}"
+                    id="stu-row-{{ student.student_id }}"
                     data-name="{{ student.full_name | lower }}"
-                    data-barcode="{{ student.barcode | lower }}"
-                    data-bureau="{{ student.bureau if student.bureau else 'none' }}"
+                    data-id="{{ student.student_id | lower }}"
+                    data-bureau="{{ student.bureau }}"
                 >
+                    <td><span class="id-badge">{{ student.student_id }}</span></td>
                     <td>{{ student.full_name }}</td>
-                    <td>{{ student.barcode }}</td>
-                    <td>
-                        {% if student.bureau %}
-                            <span class="bureau-badge">№{{ student.bureau }}</span>
-                        {% else %}
-                            <span class="bureau-none">—</span>
-                        {% endif %}
-                    </td>
+                    <td><span class="bureau-badge">№{{ student.bureau }}</span></td>
                     <td>
                         <button
                             class="btn-danger"
                             style="font-size:13px; padding:7px 14px;"
                             onclick="confirmAction(
                                 'Удалить студента {{ student.full_name }}?',
-                                () => deleteStudent('{{ student.barcode }}')
+                                () => deleteStudent('{{ student.student_id }}')
                             )"
                         >
                             Удалить
@@ -668,6 +687,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Студент</th>
                         <th>Секретарь</th>
                         <th>Действие</th>
@@ -677,6 +697,7 @@
                 <tbody>
                 {% for entry in entries %}
                 <tr>
+                    <td><span class="id-badge">{{ entry.student_id }}</span></td>
                     <td>{{ entry.student_name }}</td>
                     <td>{{ entry.secretary }}</td>
                     <td>{{ entry.action_text }}</td>
@@ -775,11 +796,10 @@
 
 <script>
 
-// ---- ПОКАЗ/СКРЫТИЕ ПОЛЯ НОМЕРА БЮРО ----
+// ---- ПОКАЗ/СКРЫТИЕ ПОЛЯ БЮРО ----
 function toggleBureauField() {
-    const role    = document.getElementById("role-select").value;
-    const field   = document.getElementById("bureau-field");
-    field.style.display = role === "bureau" ? "block" : "none";
+    const role  = document.getElementById("role-select").value;
+    document.getElementById("bureau-field").style.display = role === "bureau" ? "block" : "none";
 }
 
 // ---- TOAST ----
@@ -886,46 +906,46 @@ async function deleteSecretary(userId) {
 // ---- ADD STUDENT (AJAX) ----
 async function addStudent() {
 
-    const barcode  = document.getElementById("new-student-barcode").value.trim();
     const fullName = document.getElementById("new-student-name").value.trim();
-    const bureau   = document.getElementById("new-student-bureau").value || null;
+    const bureau   = document.getElementById("new-student-bureau").value;
 
-    if (!barcode || !fullName) {
-        showToast("Заполните все поля", "error");
+    if (!fullName) {
+        showToast("Введите ФИО", "error");
+        return;
+    }
+
+    if (!bureau) {
+        showToast("Выберите бюро", "error");
         return;
     }
 
     const res  = await fetch("/add_student", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ barcode, name: fullName, bureau })
+        body:    JSON.stringify({ name: fullName, bureau: bureau })
     });
     const data = await res.json();
 
     if (data.ok) {
 
-        const tbody     = document.getElementById("students-tbody");
-        const tr        = document.createElement("tr");
-        const bureauVal = data.bureau ? data.bureau.toString() : "none";
-        const bureauHtml = data.bureau
-            ? `<span class="bureau-badge">№${data.bureau}</span>`
-            : `<span class="bureau-none">—</span>`;
+        const tbody = document.getElementById("students-tbody");
+        const tr    = document.createElement("tr");
 
         tr.className        = "student-row new-row";
-        tr.id               = `stu-row-${barcode}`;
+        tr.id               = `stu-row-${data.student_id}`;
         tr.dataset.name     = fullName.toLowerCase();
-        tr.dataset.barcode  = barcode.toLowerCase();
-        tr.dataset.bureau   = bureauVal;
+        tr.dataset.id       = data.student_id.toLowerCase();
+        tr.dataset.bureau   = data.bureau.toString();
 
         tr.innerHTML = `
+            <td><span class="id-badge">${data.student_id}</span></td>
             <td>${fullName}</td>
-            <td>${barcode}</td>
-            <td>${bureauHtml}</td>
+            <td><span class="bureau-badge">№${data.bureau}</span></td>
             <td>
                 <button class="btn-danger" style="font-size:13px; padding:7px 14px;"
                     onclick="confirmAction(
                         'Удалить студента ${fullName}?',
-                        () => deleteStudent('${barcode}')
+                        () => deleteStudent('${data.student_id}')
                     )">
                     Удалить
                 </button>
@@ -940,11 +960,10 @@ async function addStudent() {
         const stat = document.getElementById("stat-students");
         stat.textContent = parseInt(stat.textContent) + 1;
 
-        document.getElementById("new-student-barcode").value = "";
-        document.getElementById("new-student-name").value    = "";
-        document.getElementById("new-student-bureau").value  = "";
+        document.getElementById("new-student-name").value   = "";
+        document.getElementById("new-student-bureau").value = "";
 
-        showToast("Студент добавлен");
+        showToast(`Добавлен: ${fullName} — ID ${data.student_id}`);
 
     } else {
         showToast(data.error || "Ошибка", "error");
@@ -952,13 +971,13 @@ async function addStudent() {
 }
 
 // ---- DELETE STUDENT (AJAX) ----
-async function deleteStudent(barcode) {
+async function deleteStudent(studentId) {
 
-    const res  = await fetch(`/delete_student/${barcode}`, { method: "POST" });
+    const res  = await fetch(`/delete_student/${studentId}`, { method: "POST" });
     const data = await res.json();
 
     if (data.ok) {
-        const row = document.getElementById(`stu-row-${barcode}`);
+        const row = document.getElementById(`stu-row-${studentId}`);
         if (row) {
             row.classList.add("removing");
             setTimeout(() => row.remove(), 300);
@@ -969,13 +988,13 @@ async function deleteStudent(barcode) {
         const stat = document.getElementById("stat-students");
         stat.textContent = Math.max(parseInt(stat.textContent) - 1, 0);
 
-        showToast("Студент удалён");
+        showToast("Студент удалён. ID освобождён.");
     } else {
         showToast(data.error || "Ошибка", "error");
     }
 }
 
-// ---- ФИЛЬТР ПО БЮРО ----
+// ---- ФИЛЬТР ПО БЮРО + ПОИСК ----
 let activeBureauFilter = "";
 
 function filterByBureau(val) {
@@ -994,12 +1013,8 @@ function applyFilters() {
 
     document.querySelectorAll(".student-row").forEach(row => {
 
-        const nameMatch   = row.dataset.name.includes(q) || row.dataset.barcode.includes(q);
-        const bureauMatch = bureau === ""
-            ? true
-            : bureau === "none"
-                ? row.dataset.bureau === "none"
-                : row.dataset.bureau === bureau;
+        const nameMatch   = row.dataset.name.includes(q) || row.dataset.id.includes(q);
+        const bureauMatch = bureau === "" ? true : row.dataset.bureau === bureau;
 
         const show = nameMatch && bureauMatch;
         row.style.display = show ? "" : "none";
