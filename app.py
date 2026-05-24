@@ -105,18 +105,12 @@ def role_required(*roles):
 
 # ======================================================
 # ГЕНЕРАЦИЯ ID СТУДЕНТА
-#
-# Формат: {bureau}{порядковый номер с ведущими нулями}
+# Формат: {bureau}{порядковый номер 001..}
 # Например, бюро 4, первый студент → "4001"
-# Находим минимальный свободный номер в бюро.
-# При удалении студента его номер освобождается автоматически.
+# Минимальный свободный номер ищется при каждом добавлении.
 # ======================================================
 
 def generate_student_id(cur, bureau: int) -> str:
-    """
-    Находит минимальный свободный порядковый номер для данного бюро
-    и возвращает строку вида "4003".
-    """
 
     cur.execute("""
         SELECT student_id FROM students
@@ -295,6 +289,8 @@ def get_admin_data():
 
 # ======================================================
 # ОБЩАЯ ЛОГИКА ВЫДАЧИ
+# Используется и secretary, и bureau.
+# bureau может выдавать ЛЮБОМУ студенту (не только своего бюро).
 # ======================================================
 
 def do_issue(student_id, counts, secretary_name):
@@ -318,20 +314,6 @@ def do_issue(student_id, counts, secretary_name):
         cur.close()
         conn.close()
         return jsonify(ok=False, error="Студент не найден")
-
-    user_role   = session.get("role")
-    user_bureau = session.get("bureau")
-
-    if user_role == "bureau":
-        if student.get("bureau") != user_bureau:
-            cur.close()
-            conn.close()
-            return jsonify(ok=False, error="Студент не принадлежит вашему бюро")
-
-    if user_role == "secretary":
-        cur.close()
-        conn.close()
-        return jsonify(ok=False, error="Этот студент относится к профбюро")
 
     # Сброс лимитов при смене месяца
     current_month = datetime.now().month
@@ -585,7 +567,27 @@ def dashboard():
 
 
 # ======================================================
+# ВЫДАЧА — secretary (AJAX)
+# ======================================================
+
+@app.route("/issue", methods=["POST"])
+@login_required
+@role_required("secretary")
+def issue():
+
+    data       = request.get_json()
+    student_id = (data.get("student_id") or "").strip()
+
+    if not student_id:
+        return jsonify(ok=False, error="Введите ID студента")
+
+    return do_issue(student_id, data, session.get("user") or "Секретарь")
+
+
+# ======================================================
 # BUREAU — панель профбюро
+# Выдача любому студенту, все последние действия,
+# список студентов только своего бюро.
 # ======================================================
 
 @app.route("/bureau")
@@ -598,50 +600,43 @@ def bureau_page():
     conn = get_db()
     cur  = conn.cursor()
 
-    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 20")
+    # Все последние действия (не только своего бюро)
+    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
     entries = cur.fetchall()
 
+    # Список студентов — только своё бюро
     cur.execute(
         "SELECT * FROM students WHERE bureau = %s ORDER BY student_id",
         (bureau_num,)
     )
     bureau_students = cur.fetchall()
 
+    # Счётчик студентов своего бюро
+    cur.execute(
+        "SELECT COUNT(*) as count FROM students WHERE bureau = %s",
+        (bureau_num,)
+    )
+    bureau_students_count = cur.fetchone()["count"]
+
+    # Всего выдач
+    cur.execute("SELECT COUNT(*) as count FROM entries")
+    entries_count = cur.fetchone()["count"]
+
     cur.close()
     conn.close()
 
     return render_template(
         "bureau.html",
-        entries         = entries,
-        bureau_students = bureau_students,
-        bureau_num      = bureau_num
+        entries               = entries,
+        bureau_students       = bureau_students,
+        bureau_num            = bureau_num,
+        bureau_students_count = bureau_students_count,
+        entries_count         = entries_count
     )
 
 
 # ======================================================
-# CHAIRMAN
-# ======================================================
-
-@app.route("/chairman")
-@login_required
-@role_required("chairman")
-def chairman():
-    return render_template("chairman.html", **get_admin_data())
-
-
-# ======================================================
-# VICE CHAIRMAN
-# ======================================================
-
-@app.route("/vice_chairman")
-@login_required
-@role_required("vice_chairman")
-def vice_chairman():
-    return render_template("vice_chairman.html", **get_admin_data())
-
-
-# ======================================================
-# ВЫДАЧА — bureau
+# ВЫДАЧА — bureau (AJAX), любому студенту
 # ======================================================
 
 @app.route("/issue_bureau", methods=["POST"])
@@ -678,12 +673,6 @@ def undo(entry_id):
         conn.close()
         return jsonify(ok=False, error="Запись не найдена")
 
-    if session.get("role") == "bureau":
-        if entry.get("secretary") != session.get("user"):
-            cur.close()
-            conn.close()
-            return jsonify(ok=False, error="Нет доступа")
-
     for label, field_name in FIELD_MAP.items():
 
         if field_name not in ALLOWED_FIELDS:
@@ -706,6 +695,28 @@ def undo(entry_id):
     conn.close()
 
     return jsonify(ok=True)
+
+
+# ======================================================
+# CHAIRMAN
+# ======================================================
+
+@app.route("/chairman")
+@login_required
+@role_required("chairman")
+def chairman():
+    return render_template("chairman.html", **get_admin_data())
+
+
+# ======================================================
+# VICE CHAIRMAN
+# ======================================================
+
+@app.route("/vice_chairman")
+@login_required
+@role_required("vice_chairman")
+def vice_chairman():
+    return render_template("vice_chairman.html", **get_admin_data())
 
 
 # ======================================================
@@ -1046,7 +1057,7 @@ def delete_student(student_id):
         if not row or row["bureau"] != session.get("bureau"):
             cur.close()
             conn.close()
-            return jsonify(ok=False, error="Нет доступа")
+            return jsonify(ok=False, error="Нет доступа — можно удалять только студентов своего бюро")
 
     cur.execute("DELETE FROM students WHERE student_id = %s", (student_id,))
     conn.commit()
@@ -1058,15 +1069,8 @@ def delete_student(student_id):
 
 # ======================================================
 # UPLOAD STUDENTS
-#
-# Поддерживаемые форматы:
-#   1. ФИО;номер_бюро   (предпочтительный, для chairman/vice)
-#   2. ФИО              (для bureau — бюро берётся из сессии)
-#
-# Кодировка определяется автоматически:
-#   utf-8-sig → utf-8 → cp1251 → cp1252 → latin-1
-#
-# Дубликаты по ФИО + бюро пропускаются.
+# Форматы: ФИО;номер_бюро или просто ФИО (для bureau)
+# Кодировка определяется автоматически.
 # ======================================================
 
 @app.route("/upload_students", methods=["POST"])
@@ -1086,7 +1090,6 @@ def upload_students():
         flash("Файл не выбран")
         return redirect(back)
 
-    # Автоопределение кодировки
     raw     = file.read()
     content = None
 
@@ -1098,7 +1101,7 @@ def upload_students():
             continue
 
     if content is None:
-        flash("Не удалось определить кодировку файла. Сохраните его в UTF-8.")
+        flash("Не удалось определить кодировку файла. Сохраните в UTF-8.")
         return redirect(back)
 
     conn    = get_db()
@@ -1119,7 +1122,6 @@ def upload_students():
         if not full_name:
             continue
 
-        # Определяем номер бюро
         if role == "bureau":
             bureau = session.get("bureau")
 
@@ -1135,11 +1137,9 @@ def upload_students():
                 continue
 
         else:
-            # Нет номера бюро — пропускаем
             skipped += 1
             continue
 
-        # Проверка дубликата по ФИО + бюро
         cur.execute(
             "SELECT id FROM students WHERE full_name = %s AND bureau = %s",
             (full_name, bureau)
@@ -1149,7 +1149,6 @@ def upload_students():
             skipped += 1
             continue
 
-        # Генерация ID и вставка
         student_id = generate_student_id(cur, bureau)
 
         try:
@@ -1173,6 +1172,7 @@ def upload_students():
 
 # ======================================================
 # SEARCH STUDENTS
+# bureau — ищет среди ВСЕХ студентов (для выдачи)
 # ======================================================
 
 @app.route("/search_students")
@@ -1180,33 +1180,52 @@ def upload_students():
 def search_students():
 
     query = request.args.get("q", "").strip()
-    role  = session.get("role")
 
     conn = get_db()
     cur  = conn.cursor()
 
-    if role == "bureau":
-        cur.execute("""
-            SELECT student_id, full_name FROM students
-            WHERE bureau = %s
-            AND (
-                LOWER(full_name) LIKE LOWER(%s)
-                OR student_id LIKE %s
-            )
-            ORDER BY student_id
-            LIMIT 10
-        """, (session.get("bureau"), f"%{query}%", f"%{query}%"))
+    cur.execute("""
+        SELECT student_id, full_name, bureau FROM students
+        WHERE (
+            LOWER(full_name) LIKE LOWER(%s)
+            OR student_id LIKE %s
+        )
+        ORDER BY bureau, student_id
+        LIMIT 15
+    """, (f"%{query}%", f"%{query}%"))
 
-    else:
-        cur.execute("""
-            SELECT student_id, full_name, bureau FROM students
-            WHERE (
-                LOWER(full_name) LIKE LOWER(%s)
-                OR student_id LIKE %s
-            )
-            ORDER BY bureau, student_id
-            LIMIT 10
-        """, (f"%{query}%", f"%{query}%"))
+    students = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return jsonify(students)
+
+
+# ======================================================
+# SEARCH OWN STUDENTS — только своё бюро (для списка)
+# ======================================================
+
+@app.route("/search_bureau_students")
+@login_required
+@role_required("bureau")
+def search_bureau_students():
+
+    query      = request.args.get("q", "").strip()
+    bureau_num = session.get("bureau")
+
+    conn = get_db()
+    cur  = conn.cursor()
+
+    cur.execute("""
+        SELECT student_id, full_name FROM students
+        WHERE bureau = %s
+        AND (
+            LOWER(full_name) LIKE LOWER(%s)
+            OR student_id LIKE %s
+        )
+        ORDER BY student_id
+        LIMIT 15
+    """, (bureau_num, f"%{query}%", f"%{query}%"))
 
     students = cur.fetchall()
     cur.close()
@@ -1221,7 +1240,7 @@ def search_students():
 
 @app.route("/student_limits/<student_id>")
 @login_required
-@role_required("bureau")
+@role_required("bureau", "secretary")
 def student_limits_api(student_id):
 
     conn = get_db()
