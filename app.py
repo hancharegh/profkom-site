@@ -448,11 +448,23 @@ def do_issue(student_id, counts, secretary_name):
 
     achievement = None
     if total_actions == 100:
-        achievement = "🏆 Достижение: 100 выдач"
+        achievement = "🏆 Достижение: 100 выдач!"
     elif total_actions == 500:
-        achievement = "🐯 Легенда профкома"
+        achievement = "🐯 Легенда профкома!"
     elif total_actions == 1000:
-        achievement = "👑 Верховный тигр"
+        achievement = "👑 Верховный тигр!"
+
+    # Юбилей — 10-я выдача конкретному студенту
+    cur.execute(
+        "SELECT COUNT(*) as cnt FROM entries WHERE student_id = %s",
+        (student_id,)
+    )
+    student_total = cur.fetchone()["cnt"]
+
+    if student_total == 10:
+        name_short  = (student.get("full_name") or "Студент").split()[0]
+        jubilee_msg = f"🎂 Тайная ачивка: Юбилей! {name_short} получает продукцию в 10-й раз!"
+        achievement = (achievement + "||" + jubilee_msg) if achievement else jubilee_msg
 
     new_limits = {
         "prints":      LIMITS["prints"]      - (used["prints"]      + print_count),
