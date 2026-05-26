@@ -309,7 +309,7 @@
                 <td>{{ entry.student_name }}</td>
                 <td>{{ entry.secretary }}</td>
                 <td>{{ entry.action_text }}</td>
-                <td style="white-space:nowrap; color:#6b7280; font-size:13px;">{{ entry.created_at }}</td>
+                <td style="white-space:nowrap; color:#6b7280; font-size:13px;" class="ts" data-ts="{{ entry.created_at }}">{{ entry.created_at }}</td>
                 <td>
                     <button class="danger-btn" style="font-size:13px; padding:7px 14px;"
                             onclick="undoEntry({{ entry.id }}, this)">
@@ -381,6 +381,22 @@ function changePetGif() {
 {% endif %}
 
 
+<!-- CONFIRM UNDO -->
+<div id="undo-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+     z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:28px;max-width:340px;width:90%;
+                text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <p style="font-size:16px;margin:0 0 20px;color:#374151;">
+            Отменить эту выдачу?
+        </p>
+        <div style="display:flex;gap:10px;justify-content:center;">
+            <button class="danger-btn" id="undo-ok-btn">Да, отменить</button>
+            <button style="background:#6b7280;" onclick="closeUndoConfirm()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
 
 const body           = document.getElementById("body");
@@ -388,6 +404,60 @@ const notifications  = document.getElementById("notifications");
 const searchInput    = document.getElementById("student_search");
 const resultsBox     = document.getElementById("search_results");
 const studentIdInput = document.getElementById("student_id_input");
+
+
+// ======================================================
+// ФОРМАТИРОВАНИЕ ВРЕМЕНИ (GMT+3)
+// ======================================================
+
+function formatTs(raw) {
+    if (!raw) return raw;
+    // Postgres возвращает "2025-05-26 14:32:11.123456" без timezone
+    // Добавляем +03:00 чтобы интерпретировать как Moscow time
+    const normalized = raw.replace(" ", "T").replace(/\.\d+$/, "") + "+03:00";
+    const d = new Date(normalized);
+    if (isNaN(d)) return raw;
+    return d.toLocaleString("ru-RU", {
+        timeZone:  "Europe/Moscow",
+        day:       "2-digit",
+        month:     "long",
+        hour:      "2-digit",
+        minute:    "2-digit"
+    });
+}
+
+// Форматируем все уже существующие строки при загрузке
+document.querySelectorAll(".ts").forEach(td => {
+    td.textContent = formatTs(td.dataset.ts);
+});
+
+// ======================================================
+// ПОДТВЕРЖДЕНИЕ ОТМЕНЫ
+// ======================================================
+
+let pendingUndoId  = null;
+let pendingUndoBtn = null;
+
+function openUndoConfirm(entryId, btn) {
+    pendingUndoId  = entryId;
+    pendingUndoBtn = btn;
+    const overlay  = document.getElementById("undo-overlay");
+    overlay.style.display = "flex";
+    document.getElementById("undo-ok-btn").onclick = () => {
+        closeUndoConfirm();
+        doUndo(pendingUndoId, pendingUndoBtn);
+    };
+}
+
+function closeUndoConfirm() {
+    document.getElementById("undo-overlay").style.display = "none";
+    pendingUndoId  = null;
+    pendingUndoBtn = null;
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeUndoConfirm();
+});
 
 // ======================================================
 // УВЕДОМЛЕНИЯ
@@ -453,7 +523,7 @@ function prependEntry(e) {
         <td>${e.student_name}</td>
         <td>${e.secretary}</td>
         <td>${e.action_text}</td>
-        <td style="white-space:nowrap;color:#6b7280;font-size:13px;">${e.created_at}</td>
+        <td style="white-space:nowrap;color:#6b7280;font-size:13px;">${formatTs(e.created_at)}</td>
         <td>
             <button class="danger-btn" style="font-size:13px;padding:7px 14px;"
                     onclick="undoEntry(${e.id},this)">Отменить</button>
@@ -632,7 +702,12 @@ async function submitIssue() {
 // ОТМЕНА ВЫДАЧИ (AJAX)
 // ======================================================
 
-async function undoEntry(entryId, btn) {
+// Публичная функция — сначала спрашиваем подтверждение
+function undoEntry(entryId, btn) {
+    openUndoConfirm(entryId, btn);
+}
+
+async function doUndo(entryId, btn) {
 
     btn.disabled    = true;
     btn.textContent = "...";
