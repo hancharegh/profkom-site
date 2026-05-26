@@ -8,6 +8,39 @@
 
         * { box-sizing: border-box; }
 
+        /* ====== ЦВЕТ БЮРО ====== */
+        {% if bureau_num == 1 %}
+        :root {
+            --accent: #dc2626; --light: #fee2e2; --mid: #fca5a5;
+            --dark:   #991b1b; --th:    #fef2f2; --focus: #ef4444;
+            --btn-pet: #dc2626;
+        }
+        {% elif bureau_num == 2 %}
+        :root {
+            --accent: #ea580c; --light: #ffedd5; --mid: #fdba74;
+            --dark:   #9a3412; --th:    #fff7ed; --focus: #f97316;
+            --btn-pet: #ea580c;
+        }
+        {% elif bureau_num == 3 %}
+        :root {
+            --accent: #ca8a04; --light: #fef9c3; --mid: #fde047;
+            --dark:   #854d0e; --th:    #fefce8; --focus: #eab308;
+            --btn-pet: #ca8a04;
+        }
+        {% elif bureau_num == 4 %}
+        :root {
+            --accent: #16a34a; --light: #dcfce7; --mid: #86efac;
+            --dark:   #166534; --th:    #f0fdf4; --focus: #22c55e;
+            --btn-pet: #16a34a;
+        }
+        {% else %}
+        :root {
+            --accent: #2563eb; --light: #dbeafe; --mid: #93c5fd;
+            --dark:   #1e40af; --th:    #eff6ff; --focus: #3b82f6;
+            --btn-pet: #2563eb;
+        }
+        {% endif %}
+
         body {
             margin: 0;
             padding: 30px;
@@ -34,14 +67,15 @@
         }
 
         .bureau-indicator {
-            background: #fef9c3;
-            color: #854d0e;
+            background: var(--light);
+            color: var(--dark);
             padding: 8px 16px;
             border-radius: 12px;
             font-size: 13px;
             font-weight: bold;
             display: inline-block;
             margin-bottom: 20px;
+            border: 1px solid var(--mid);
         }
 
         .card {
@@ -73,11 +107,11 @@
 
         input:focus {
             outline: none;
-            border-color: #d97706;
+            border-color: var(--focus);
         }
 
         button {
-            background: #d97706;
+            background: var(--accent);
             color: white;
             border: none;
             padding: 12px 20px;
@@ -87,17 +121,50 @@
             font-size: 14px;
         }
 
-        button:hover   { opacity: 0.9; }
+        button:hover    { opacity: 0.9; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .btn-danger { background: #ef4444; }
         .btn-gray   { background: #6b7280; }
         .btn-green  { background: #16a34a; }
 
+        /* GRID STATS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--accent);
+        }
+
+        .stat-card .label { color: #6b7280; font-size: 13px; }
+
+        .stat-card .stat {
+            font-size: 34px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-top: 6px;
+        }
+
+        /* КНОПКИ БЫСТРОГО ДОСТУПА */
+        .actions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
         table { width: 100%; border-collapse: collapse; }
 
         th {
-            background: #fef9c3;
+            background: var(--th);
             padding: 14px;
             text-align: left;
             position: sticky;
@@ -110,16 +177,18 @@
             vertical-align: middle;
         }
 
-        /* ID бейдж */
+        tr:hover td { background: #fafafa; }
+
         .id-badge {
             display: inline-block;
-            background: #fef9c3;
-            color: #854d0e;
+            background: var(--light);
+            color: var(--dark);
             padding: 2px 10px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: bold;
             font-family: monospace;
+            border: 1px solid var(--mid);
         }
 
         /* Уведомления */
@@ -128,7 +197,7 @@
             color: #166534;
             padding: 14px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             animation: fadeIn 0.3s ease;
         }
 
@@ -137,13 +206,31 @@
             color: #991b1b;
             padding: 14px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             animation: fadeIn 0.3s ease;
+        }
+
+        #notifications .achievement {
+            background: linear-gradient(135deg, #fef9c3, #fde68a);
+            color: #854d0e;
+            padding: 16px 20px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            animation: achieveIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 4px 20px rgba(234,179,8,0.3);
+            border: 2px solid #fbbf24;
         }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-6px); }
             to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes achieveIn {
+            from { opacity: 0; transform: scale(0.7); }
+            to   { opacity: 1; transform: scale(1); }
         }
 
         .search-wrapper { position: relative; }
@@ -165,12 +252,15 @@
             padding: 12px;
             cursor: pointer;
             border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .search-item:hover { background: #f3f4f6; }
 
         @keyframes rowIn {
-            from { opacity: 0; background: #fef9c3; }
+            from { opacity: 0; background: var(--light); }
             to   { opacity: 1; background: transparent; }
         }
 
@@ -193,32 +283,76 @@
             min-width: 180px;
         }
 
-        /* Загрузка CSV */
         .upload-section {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e5e7eb;
             display: flex;
             gap: 12px;
             align-items: center;
             flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
         }
 
-        .upload-section label {
-            margin: 0;
-            font-weight: normal;
-            color: #6b7280;
-            font-size: 14px;
+        .table-search { margin-bottom: 14px; }
+        .table-search input { margin: 0; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
-        /* Поиск в таблице студентов */
-        .table-search {
-            margin-bottom: 14px;
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 750px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: modalIn 0.2s ease;
         }
 
-        .table-search input {
-            margin: 0;
+        @keyframes modalIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
         }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 { margin: 0; }
+
+        .modal-close {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .modal-close:hover { background: #e5e7eb; }
 
         /* CONFIRM */
         .confirm-overlay {
@@ -237,7 +371,7 @@
             background: white;
             border-radius: 16px;
             padding: 28px;
-            max-width: 360px;
+            max-width: 340px;
             width: 90%;
             text-align: center;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
@@ -255,9 +389,48 @@
             justify-content: center;
         }
 
+        /* TOAST */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: toastIn 0.3s ease;
+            max-width: 320px;
+        }
+
+        .toast-success { background: #dcfce7; color: #166534; }
+        .toast-error   { background: #fee2e2; color: #991b1b; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Конфетти */
+        .confetti-piece {
+            position: fixed;
+            font-size: 28px;
+            z-index: 99999;
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body id="body">
+
+<div id="toast-container"></div>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -270,27 +443,44 @@
 
 <div class="bureau-indicator">🏛️ Профбюро № {{ bureau_num }}</div>
 
+<!-- STATS -->
+<div class="grid">
+    <div class="stat-card">
+        <div class="label">Студентов в бюро</div>
+        <div class="stat">{{ bureau_students_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Всего выдач</div>
+        <div class="stat">{{ entries_count }}</div>
+    </div>
+</div>
+
 <!-- Уведомления -->
 <div id="notifications"></div>
+
+<!-- КНОПКИ БЫСТРОГО ДОСТУПА -->
+<div class="actions-row">
+    <button onclick="openModal('modal-students')">👨‍🎓 Студенты бюро</button>
+    <button onclick="openModal('modal-entries')" class="btn-gray">📋 Все действия</button>
+</div>
 
 <!-- ВЫДАЧА -->
 <div class="card">
     <h2>Выдача продукции</h2>
 
     <div class="search-wrapper">
-        <label>Студент — поиск по ФИО или ID</label>
+        <label>Студент — поиск по ФИО или ID (все бюро)</label>
         <input
             type="text"
             id="student_search"
-            placeholder="Начните вводить ФИО или ID (например, {{ bureau_num }}001)"
+            placeholder="Введите ФИО или ID..."
             autocomplete="off"
         >
         <input type="hidden" id="student_id_input">
         <div id="search_results"></div>
     </div>
 
-    <!-- Лимиты выбранного студента -->
-    <div class="card" id="live_limits" style="display:none; border:1px solid #fef9c3;">
+    <div class="card" id="live_limits" style="display:none; border:2px solid var(--mid);">
         <h2>Лимиты студента</h2>
         <table>
             <tr><td>Печать</td>            <td id="limit_prints"></td></tr>
@@ -324,132 +514,141 @@
     <button id="submit_btn" onclick="submitIssue()">Сохранить</button>
 </div>
 
-<!-- СТУДЕНТЫ БЮРО -->
-<div class="card">
-    <h2>Студенты бюро {{ bureau_num }}</h2>
 
-    <!-- Поиск по таблице -->
-    <div class="table-search">
-        <input
-            type="text"
-            id="table-search"
-            placeholder="🔍 Поиск по ФИО или ID..."
-            oninput="filterTable()"
-        >
-    </div>
+<!-- =================== MODALS =================== -->
 
-    <div style="max-height:400px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb;">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>ФИО</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="bureau-students-tbody">
-            {% for student in bureau_students %}
-            <tr
-                id="stu-row-{{ student.student_id }}"
-                class="student-table-row"
-                data-name="{{ student.full_name | lower }}"
-                data-id="{{ student.student_id | lower }}"
-            >
-                <td><span class="id-badge">{{ student.student_id }}</span></td>
-                <td>{{ student.full_name }}</td>
-                <td>
-                    <button
-                        class="btn-danger"
-                        style="font-size:13px; padding:7px 14px;"
-                        onclick="confirmAction(
-                            'Удалить студента {{ student.full_name }}?',
-                            () => deleteStudent('{{ student.student_id }}')
-                        )"
-                    >
-                        Удалить
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <p style="color:#6b7280; font-size:13px; margin:10px 0 0;">
-        Показано: <span id="table-count">{{ bureau_students|length }}</span>
-    </p>
-
-    <!-- Добавить студента вручную -->
-    <div class="add-form">
-        <div style="flex:1; min-width:200px;">
-            <label style="margin-top:0;">ФИО нового студента</label>
-            <input type="text" id="new-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
+<!-- MODAL: СТУДЕНТЫ СВОЕГО БЮРО -->
+<div class="modal-overlay" id="modal-students">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>👨‍🎓 Студенты бюро {{ bureau_num }}</h2>
+            <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
         </div>
-        <button class="btn-green" onclick="addStudent()" style="height:46px; margin-bottom:0;">
-            Добавить
-        </button>
-    </div>
 
-    <!-- Загрузка из CSV -->
-    <div class="upload-section">
-        <label>📄 Загрузить из CSV:</label>
-        <form method="POST" action="/upload_students" enctype="multipart/form-data"
-              style="display:flex; gap:10px; align-items:center;">
+        <!-- Поиск -->
+        <div class="table-search">
             <input
-                type="file"
-                name="file"
-                accept=".csv,.txt"
-                style="width:auto; margin:0; padding:8px;"
+                type="text"
+                id="table-search"
+                placeholder="🔍 Поиск по ФИО или ID..."
+                oninput="filterTable()"
             >
-            <button type="submit" style="padding:10px 16px;">Загрузить</button>
-        </form>
-        <span style="color:#9ca3af; font-size:12px;">
-            Формат: одно ФИО на строку
-        </span>
-    </div>
+        </div>
 
-</div>
-
-<!-- ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
-<div class="card">
-    <h2>Последние действия</h2>
-    <div style="max-height:400px; overflow-y:auto; border-radius:12px;">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Студент</th>
-                    <th>Действие</th>
-                    <th>Дата</th>
-                    <th>Отмена</th>
+        <!-- Таблица -->
+        <div style="max-height:380px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb;">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>ФИО</th><th></th></tr>
+                </thead>
+                <tbody id="bureau-students-tbody">
+                {% for student in bureau_students %}
+                <tr
+                    id="stu-row-{{ student.student_id }}"
+                    class="student-table-row"
+                    data-name="{{ student.full_name | lower }}"
+                    data-id="{{ student.student_id | lower }}"
+                >
+                    <td><span class="id-badge">{{ student.student_id }}</span></td>
+                    <td>{{ student.full_name }}</td>
+                    <td>
+                        <button
+                            class="btn-danger"
+                            style="font-size:13px; padding:7px 14px;"
+                            onclick="confirmAction(
+                                'Удалить студента {{ student.full_name }}?',
+                                () => deleteStudent('{{ student.student_id }}')
+                            )"
+                        >
+                            Удалить
+                        </button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody id="entries_tbody">
-            {% for entry in entries %}
-            <tr id="row-{{ entry.id }}">
-                <td><span class="id-badge">{{ entry.student_id }}</span></td>
-                <td>{{ entry.student_name }}</td>
-                <td>{{ entry.action_text }}</td>
-                <td style="white-space:nowrap; color:#6b7280; font-size:13px;">
-                    {{ entry.created_at }}
-                </td>
-                <td>
-                    <button
-                        class="btn-danger"
-                        style="font-size:13px; padding:7px 14px;"
-                        onclick="undoEntry({{ entry.id }}, this)"
-                    >
-                        Отменить
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p style="color:#6b7280; font-size:13px; margin:10px 0 0;">
+            Показано: <span id="table-count">{{ bureau_students|length }}</span>
+        </p>
+
+        <!-- Добавить студента -->
+        <div class="add-form">
+            <div style="flex:1; min-width:200px;">
+                <label style="margin-top:0;">ФИО нового студента</label>
+                <input type="text" id="new-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
+            </div>
+            <button class="btn-green" onclick="addStudent()" style="height:46px; margin-bottom:0;">
+                Добавить
+            </button>
+        </div>
+
+        <!-- Загрузка CSV -->
+        <div class="upload-section">
+            <span style="font-weight:bold; font-size:14px;">📄 Загрузить из CSV:</span>
+            <form method="POST" action="/upload_students" enctype="multipart/form-data"
+                  style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input
+                    type="file"
+                    name="file"
+                    accept=".csv,.txt"
+                    style="width:auto; margin:0; padding:8px;"
+                >
+                <button type="submit" style="padding:10px 16px;">Загрузить</button>
+            </form>
+            <span style="color:#9ca3af; font-size:12px;">Формат: одно ФИО на строку</span>
+        </div>
+
     </div>
 </div>
 
-<!-- CONFIRM DIALOG -->
+<!-- MODAL: ВСЕ ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
+<div class="modal-overlay" id="modal-entries">
+    <div class="modal" style="max-width:900px;">
+        <div class="modal-header">
+            <h2>📋 Последние действия</h2>
+            <button class="modal-close" onclick="closeModal('modal-entries')">✕</button>
+        </div>
+        <div style="overflow-x:auto; max-height:600px; overflow-y:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Студент</th>
+                        <th>Секретарь</th>
+                        <th>Действие</th>
+                        <th>Дата</th>
+                        <th>Отмена</th>
+                    </tr>
+                </thead>
+                <tbody id="entries_tbody">
+                {% for entry in entries %}
+                <tr id="row-{{ entry.id }}">
+                    <td><span class="id-badge">{{ entry.student_id }}</span></td>
+                    <td>{{ entry.student_name }}</td>
+                    <td>{{ entry.secretary }}</td>
+                    <td>{{ entry.action_text }}</td>
+                    <td style="white-space:nowrap; color:#6b7280; font-size:13px;"
+                        class="ts" data-ts="{{ entry.created_at }}">{{ entry.created_at }}</td>
+                    <td>
+                        <button
+                            class="btn-danger"
+                            style="font-size:13px; padding:7px 14px;"
+                            onclick="undoEntry({{ entry.id }}, this)"
+                        >
+                            Отменить
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM УДАЛЕНИЯ -->
 <div class="confirm-overlay" id="confirm-overlay">
     <div class="confirm-box">
         <p id="confirm-text"></p>
@@ -460,76 +659,140 @@
     </div>
 </div>
 
+<!-- CONFIRM ОТМЕНЫ ВЫДАЧИ -->
+<div id="undo-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+     z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; padding:28px; max-width:340px; width:90%;
+                text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <p style="font-size:16px; margin:0 0 20px; color:#374151;">
+            Отменить эту выдачу?
+        </p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button class="btn-danger" id="undo-ok-btn">Да, отменить</button>
+            <button class="btn-gray" onclick="closeUndoConfirm()">Отмена</button>
+        </div>
+    </div>
+</div>
+
 
 <script>
 
-const notifications    = document.getElementById("notifications");
-const searchInput      = document.getElementById("student_search");
-const resultsBox       = document.getElementById("search_results");
-const studentIdInput   = document.getElementById("student_id_input");
+const notifications  = document.getElementById("notifications");
+const searchInput    = document.getElementById("student_search");
+const resultsBox     = document.getElementById("search_results");
+const studentIdInput = document.getElementById("student_id_input");
 
-// ---- УВЕДОМЛЕНИЯ ----
+// ======================================================
+// ФОРМАТИРОВАНИЕ ВРЕМЕНИ (UTC → GMT+3)
+// ======================================================
+
+function formatTs(raw) {
+    if (!raw) return raw;
+    const normalized = raw.replace(" ", "T").replace(/\\.\\d+$/, "") + "Z";
+    const d = new Date(normalized);
+    if (isNaN(d)) return raw;
+    const msk   = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+    const pad   = n => String(n).padStart(2, "0");
+    const day   = pad(msk.getUTCDate());
+    const month = ["янв","фев","мар","апр","май","июн",
+                   "июл","авг","сен","окт","ноя","дек"][msk.getUTCMonth()];
+    const hh    = pad(msk.getUTCHours());
+    const mm    = pad(msk.getUTCMinutes());
+    return `${day} ${month}, ${hh}:${mm}`;
+}
+
+document.querySelectorAll(".ts").forEach(td => {
+    td.textContent = formatTs(td.dataset.ts);
+});
+
+// ======================================================
+// УВЕДОМЛЕНИЯ
+// ======================================================
+
 function showNotification(text, type = "message") {
     const div = document.createElement("div");
-    div.className   = type === "error" ? "error" : "message";
+    div.className   = type;
     div.textContent = text;
-    notifications.innerHTML = "";
     notifications.appendChild(div);
-    setTimeout(() => div.remove(), 4000);
+    const delay = type === "achievement" ? 6000 : 4000;
+    setTimeout(() => {
+        div.style.opacity    = "0";
+        div.style.transition = "opacity 0.5s";
+        setTimeout(() => div.remove(), 500);
+    }, delay);
 }
 
-// ---- ОБНОВЛЕНИЕ ЛИМИТОВ ----
+function showToast(text, type = "success") {
+    const el = document.createElement("div");
+    el.className   = `toast toast-${type}`;
+    el.textContent = text;
+    document.getElementById("toast-container").appendChild(el);
+    setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; }, 3000);
+    setTimeout(() => el.remove(), 3400);
+}
+
+// ======================================================
+// ЛИМИТЫ
+// ======================================================
+
 function updateLimits(limits) {
-    document.getElementById("live_limits").style.display        = "block";
-    document.getElementById("limit_prints").innerText           = limits.prints;
-    document.getElementById("limit_copies").innerText           = limits.copies;
-    document.getElementById("limit_notebooks").innerText        = limits.notebooks;
-    document.getElementById("limit_rulers").innerText           = limits.rulers;
-    document.getElementById("limit_correctors").innerText       = limits.correctors;
-    document.getElementById("limit_pencils").innerText          = limits.pencils;
-    document.getElementById("limit_erasers").innerText          = limits.erasers;
-    document.getElementById("limit_millimeters").innerText      = limits.millimeters;
+    document.getElementById("live_limits").style.display   = "block";
+    document.getElementById("limit_prints").innerText      = limits.prints;
+    document.getElementById("limit_copies").innerText      = limits.copies;
+    document.getElementById("limit_notebooks").innerText   = limits.notebooks;
+    document.getElementById("limit_rulers").innerText      = limits.rulers;
+    document.getElementById("limit_correctors").innerText  = limits.correctors;
+    document.getElementById("limit_pencils").innerText     = limits.pencils;
+    document.getElementById("limit_erasers").innerText     = limits.erasers;
+    document.getElementById("limit_millimeters").innerText = limits.millimeters;
 }
 
-// ---- СБРОС ФОРМЫ ВЫДАЧИ ----
+// ======================================================
+// СБРОС ФОРМЫ
+// ======================================================
+
 function resetForm() {
     studentIdInput.value = "";
     searchInput.value    = "";
-    document.getElementById("print_count").value            = 0;
-    document.getElementById("copy_count").value             = 0;
-    document.getElementById("notebook_count").value         = 0;
-    document.getElementById("ruler_count").value            = 0;
-    document.getElementById("corrector_count").value        = 0;
-    document.getElementById("pencil_count").value           = 0;
-    document.getElementById("eraser_sharpener_count").value = 0;
-    document.getElementById("millimeter_count").value       = 0;
-    document.getElementById("live_limits").style.display    = "none";
+    ["print_count","copy_count","notebook_count","ruler_count",
+     "corrector_count","pencil_count","eraser_sharpener_count",
+     "millimeter_count"].forEach(id => {
+        document.getElementById(id).value = 0;
+    });
+    document.getElementById("live_limits").style.display = "none";
     searchInput.focus();
 }
 
-// ---- ДОБАВИТЬ СТРОКУ В ТАБЛИЦУ ВЫДАЧ ----
+// ======================================================
+// ДОБАВИТЬ СТРОКУ В ТАБЛИЦУ ВЫДАЧ
+// ======================================================
+
 function prependEntry(e) {
     const tbody = document.getElementById("entries_tbody");
     const tr    = document.createElement("tr");
-    tr.id       = `row-${e.id}`;
+    tr.id        = `row-${e.id}`;
     tr.className = "new-row";
     tr.innerHTML = `
         <td><span class="id-badge">${e.student_id}</span></td>
         <td>${e.student_name}</td>
+        <td>${e.secretary}</td>
         <td>${e.action_text}</td>
-        <td style="white-space:nowrap; color:#6b7280; font-size:13px;">${e.created_at}</td>
+        <td style="white-space:nowrap; color:#6b7280; font-size:13px;">
+            ${formatTs(e.created_at)}
+        </td>
         <td>
             <button class="btn-danger" style="font-size:13px; padding:7px 14px;"
-                    onclick="undoEntry(${e.id}, this)">
-                Отменить
-            </button>
+                    onclick="undoEntry(${e.id}, this)">Отменить</button>
         </td>
     `;
     tbody.insertBefore(tr, tbody.firstChild);
-    while (tbody.rows.length > 20) tbody.removeChild(tbody.lastChild);
+    while (tbody.rows.length > 50) tbody.removeChild(tbody.lastChild);
 }
 
-// ---- ВЫДАЧА (AJAX) ----
+// ======================================================
+// ВЫДАЧА (AJAX)
+// ======================================================
+
 async function submitIssue() {
 
     const student_id = studentIdInput.value.trim();
@@ -566,8 +829,13 @@ async function submitIssue() {
         if (!data.ok) {
             showNotification(data.error, "error");
         } else {
-            showNotification(data.message);
-            if (data.achievement) showNotification(data.achievement);
+            showNotification(data.message, "message");
+            if (data.achievement) {
+                // achievement может содержать несколько через ||
+                data.achievement.split("||").forEach(a => {
+                    showNotification(a.trim(), "achievement");
+                });
+            }
             updateLimits(data.limits);
             prependEntry(data.entry);
             resetForm();
@@ -580,11 +848,34 @@ async function submitIssue() {
     btn.textContent = "Сохранить";
 }
 
-// ---- ОТМЕНА ВЫДАЧИ (AJAX) ----
-async function undoEntry(entryId, btn) {
+// ======================================================
+// ПОДТВЕРЖДЕНИЕ ОТМЕНЫ ВЫДАЧИ
+// ======================================================
 
-    btn.disabled    = true;
-    btn.textContent = "...";
+let pendingUndoId  = null;
+let pendingUndoBtn = null;
+
+function undoEntry(entryId, btn) {
+    pendingUndoId  = entryId;
+    pendingUndoBtn = btn;
+    document.getElementById("undo-overlay").style.display = "flex";
+    document.getElementById("undo-ok-btn").onclick = () => {
+        const id  = pendingUndoId;
+        const b   = pendingUndoBtn;
+        closeUndoConfirm();
+        doUndo(id, b);
+    };
+}
+
+function closeUndoConfirm() {
+    document.getElementById("undo-overlay").style.display = "none";
+    pendingUndoId  = null;
+    pendingUndoBtn = null;
+}
+
+async function doUndo(entryId, btn) {
+
+    if (btn) { btn.disabled = true; btn.textContent = "..."; }
 
     try {
         const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
@@ -598,17 +889,18 @@ async function undoEntry(entryId, btn) {
             }
         } else {
             showNotification(data.error || "Ошибка", "error");
-            btn.disabled    = false;
-            btn.textContent = "Отменить";
+            if (btn) { btn.disabled = false; btn.textContent = "Отменить"; }
         }
     } catch (err) {
         showNotification("Ошибка соединения", "error");
-        btn.disabled    = false;
-        btn.textContent = "Отменить";
+        if (btn) { btn.disabled = false; btn.textContent = "Отменить"; }
     }
 }
 
-// ---- ПОИСК СТУДЕНТОВ ----
+// ======================================================
+// ПОИСК СТУДЕНТОВ (все бюро, для выдачи)
+// ======================================================
+
 searchInput.addEventListener("input", async function() {
 
     const query = this.value.trim();
@@ -628,8 +920,8 @@ searchInput.addEventListener("input", async function() {
             const div = document.createElement("div");
             div.className = "search-item";
             div.innerHTML = `
-                <b>${student.full_name}</b>
-                <span class="id-badge" style="margin-left:8px;">${student.student_id}</span>
+                <span class="id-badge">${student.student_id}</span>
+                <span>${student.full_name}</span>
             `;
             div.onclick = async () => {
                 searchInput.value    = student.full_name;
@@ -648,7 +940,6 @@ searchInput.addEventListener("input", async function() {
     }
 });
 
-// ENTER: если введён ID напрямую
 searchInput.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
         e.preventDefault();
@@ -658,13 +949,16 @@ searchInput.addEventListener("keydown", function(e) {
     }
 });
 
-// ---- ДОБАВИТЬ СТУДЕНТА (AJAX) ----
+// ======================================================
+// ДОБАВИТЬ СТУДЕНТА В БЮРО (AJAX)
+// ======================================================
+
 async function addStudent() {
 
     const fullName = document.getElementById("new-name").value.trim();
 
     if (!fullName) {
-        showNotification("Введите ФИО", "error");
+        showToast("Введите ФИО", "error");
         return;
     }
 
@@ -672,20 +966,16 @@ async function addStudent() {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ name: fullName })
-        // bureau берётся из сессии на сервере
     });
     const data = await res.json();
 
     if (data.ok) {
-
         const tbody = document.getElementById("bureau-students-tbody");
         const tr    = document.createElement("tr");
-
         tr.id        = `stu-row-${data.student_id}`;
         tr.className = "student-table-row new-row";
         tr.dataset.name = fullName.toLowerCase();
         tr.dataset.id   = data.student_id.toLowerCase();
-
         tr.innerHTML = `
             <td><span class="id-badge">${data.student_id}</span></td>
             <td>${fullName}</td>
@@ -694,27 +984,26 @@ async function addStudent() {
                     onclick="confirmAction(
                         'Удалить студента ${fullName}?',
                         () => deleteStudent('${data.student_id}')
-                    )">
-                    Удалить
-                </button>
+                    )">Удалить</button>
             </td>
         `;
-
         tbody.insertBefore(tr, tbody.firstChild);
 
         const countEl = document.getElementById("table-count");
         countEl.textContent = parseInt(countEl.textContent) + 1;
 
         document.getElementById("new-name").value = "";
-
-        showNotification(`Добавлен: ${fullName} — ID ${data.student_id}`);
+        showToast(`Добавлен: ${fullName} — ID ${data.student_id}`);
 
     } else {
-        showNotification(data.error || "Ошибка", "error");
+        showToast(data.error || "Ошибка", "error");
     }
 }
 
-// ---- УДАЛИТЬ СТУДЕНТА (AJAX) ----
+// ======================================================
+// УДАЛИТЬ СТУДЕНТА (AJAX)
+// ======================================================
+
 async function deleteStudent(studentId) {
 
     const res  = await fetch(`/delete_student/${studentId}`, { method: "POST" });
@@ -728,27 +1017,31 @@ async function deleteStudent(studentId) {
         }
         const countEl = document.getElementById("table-count");
         countEl.textContent = Math.max(parseInt(countEl.textContent) - 1, 0);
-        showNotification("Студент удалён. ID освобождён.");
+        showToast("Студент удалён. ID освобождён.");
     } else {
-        showNotification(data.error || "Ошибка", "error");
+        showToast(data.error || "Ошибка", "error");
     }
 }
 
-// ---- ПОИСК ПО ТАБЛИЦЕ СТУДЕНТОВ ----
+// ======================================================
+// ПОИСК ПО ТАБЛИЦЕ СТУДЕНТОВ
+// ======================================================
+
 function filterTable() {
     const q       = document.getElementById("table-search").value.toLowerCase();
     let   visible = 0;
-
     document.querySelectorAll(".student-table-row").forEach(row => {
         const match = row.dataset.name.includes(q) || row.dataset.id.includes(q);
         row.style.display = match ? "" : "none";
         if (match) visible++;
     });
-
     document.getElementById("table-count").textContent = visible;
 }
 
-// ---- CONFIRM ----
+// ======================================================
+// CONFIRM (удаление студента)
+// ======================================================
+
 function confirmAction(text, callback) {
     document.getElementById("confirm-text").textContent = text;
     document.getElementById("confirm-overlay").classList.add("open");
@@ -762,11 +1055,38 @@ function closeConfirm() {
     document.getElementById("confirm-overlay").classList.remove("open");
 }
 
-document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeConfirm();
+// ======================================================
+// MODALS
+// ======================================================
+
+function openModal(id) {
+    document.getElementById(id).classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove("open");
+    document.body.style.overflow = "";
+}
+
+document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", function(e) {
+        if (e.target === this) closeModal(this.id);
+    });
 });
 
-// ---- ANTI SLEEP ----
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".modal-overlay.open").forEach(m => closeModal(m.id));
+        closeConfirm();
+        closeUndoConfirm();
+    }
+});
+
+// ======================================================
+// ANTI SLEEP
+// ======================================================
+
 setInterval(() => fetch("/ping").catch(() => {}), 240000);
 
 </script>
