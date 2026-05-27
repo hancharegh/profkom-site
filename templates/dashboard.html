@@ -10,135 +10,276 @@
 
         body {
             margin: 0;
-            padding: 30px;
+            padding: 0;
             font-family: Arial, sans-serif;
-            background: #f4f7fb;
+            background: #f0f2f8;
             color: #111827;
             transition: background 0.5s;
         }
 
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .logout {
+        /* ====== SIDEBAR ====== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 240px;
             background: #111827;
             color: white;
-            text-decoration: none;
-            padding: 12px 18px;
-            border-radius: 12px;
-            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+            z-index: 100;
         }
 
+        .sidebar-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-logo .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .sidebar-logo .subtitle {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .sidebar-user {
+            padding: 0 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-user .name {
+            font-size: 13px;
+            color: #d1d5db;
+            line-height: 1.4;
+        }
+
+        .sidebar-user .role-badge {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 24px;
+        }
+
+        .sidebar-bottom a {
+            display: block;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 13px;
+            padding: 8px 0;
+        }
+
+        .sidebar-bottom a:hover { color: white; }
+
+        /* ====== MAIN CONTENT ====== */
+        .main {
+            margin-left: 240px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        /* ====== CARDS ====== */
         .card {
             background: white;
             padding: 25px;
             border-radius: 18px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            margin-bottom: 25px;
-            transition: 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
         }
 
-        h1, h2 { margin-top: 0; }
+        h2 {
+            margin: 0 0 20px;
+            font-size: 17px;
+            color: #111827;
+        }
 
         label {
             display: block;
-            margin-top: 12px;
-            margin-bottom: 6px;
+            margin-top: 10px;
+            margin-bottom: 5px;
             font-weight: bold;
+            font-size: 14px;
+            color: #374151;
         }
 
-        input {
+        input[type="text"],
+        input[type="number"] {
             width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #d1d5db;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            font-size: 15px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 12px;
+            font-size: 14px;
+            background: #f9fafb;
+            transition: border-color 0.2s, background 0.2s;
         }
 
         input:focus {
             outline: none;
             border-color: #2563eb;
+            background: white;
         }
+
+        /* Сетка числовых полей */
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 0 16px;
+        }
+
+        .fields-grid .field-group { margin-bottom: 4px; }
+        .fields-grid input { margin-bottom: 0; }
 
         button {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
+            padding: 12px 22px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
             font-size: 14px;
+            transition: opacity 0.2s, transform 0.1s;
         }
 
-        button:hover    { opacity: 0.9; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:hover    { opacity: 0.88; transform: translateY(-1px); }
+        button:active   { transform: translateY(0); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .danger-btn { background: #ef4444; }
+        .btn-danger { background: #ef4444; }
+        .btn-gray   { background: #6b7280; }
 
+        /* ====== ТАБЛИЦА ====== */
         table { width: 100%; border-collapse: collapse; }
 
         th {
-            background: #eef2ff;
-            padding: 14px;
+            background: #f8faff;
+            padding: 12px 14px;
             text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 2px solid #e5e7eb;
             position: sticky;
             top: 0;
         }
 
         td {
-            padding: 14px;
-            border-top: 1px solid #e5e7eb;
+            padding: 13px 14px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
             vertical-align: middle;
         }
 
+        tr:hover td { background: #fafbff; }
+
         .id-badge {
             display: inline-block;
-            background: #f3f4f6;
-            color: #374151;
-            padding: 2px 10px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             font-family: monospace;
         }
 
-        /* Уведомления */
+        /* ====== ПОИСК ====== */
+        .search-wrapper { position: relative; margin-bottom: 4px; }
+
+        #search_results {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 999;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .search-item {
+            padding: 12px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .search-item:last-child { border-bottom: none; }
+        .search-item:hover { background: #f0f4ff; }
+
+        /* ====== ЛИМИТЫ ====== */
+        #live_limits {
+            background: #f8faff;
+            border: 2px solid #bfdbfe;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin: 12px 0 16px;
+        }
+
+        #live_limits h2 { font-size: 14px; margin-bottom: 10px; color: #1d4ed8; }
+
+        #live_limits table { font-size: 13px; }
+        #live_limits td { padding: 5px 8px; border: none; }
+
+        /* ====== УВЕДОМЛЕНИЯ ====== */
+        #notifications { margin-bottom: 4px; }
+
         #notifications .message {
             background: #dcfce7;
             color: #166534;
-            padding: 14px;
+            padding: 13px 16px;
             border-radius: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
             animation: fadeIn 0.3s ease;
+            border-left: 4px solid #22c55e;
         }
 
         #notifications .error {
             background: #fee2e2;
             color: #991b1b;
-            padding: 14px;
+            padding: 13px 16px;
             border-radius: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
             animation: fadeIn 0.3s ease;
+            border-left: 4px solid #ef4444;
         }
 
-        /* Ачивка — особый стиль */
         #notifications .achievement {
             background: linear-gradient(135deg, #fef9c3, #fde68a);
             color: #854d0e;
             padding: 16px 20px;
             border-radius: 14px;
-            margin-bottom: 12px;
-            font-size: 16px;
+            margin-bottom: 10px;
+            font-size: 15px;
             font-weight: bold;
             animation: achieveIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
-            box-shadow: 0 4px 20px rgba(234,179,8,0.3);
+            box-shadow: 0 4px 20px rgba(234,179,8,0.25);
             border: 2px solid #fbbf24;
         }
 
@@ -148,186 +289,246 @@
         }
 
         @keyframes achieveIn {
-            from { opacity: 0; transform: scale(0.7) translateY(-10px); }
-            to   { opacity: 1; transform: scale(1)   translateY(0); }
+            from { opacity: 0; transform: scale(0.75); }
+            to   { opacity: 1; transform: scale(1); }
         }
 
-        .search-wrapper { position: relative; }
-
-        #search_results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            overflow: hidden;
-            z-index: 999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .search-item {
-            padding: 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .search-item:hover { background: #f3f4f6; }
-
+        /* ====== АНИМАЦИИ ТАБЛИЦЫ ====== */
         @keyframes rowIn {
             from { opacity: 0; background: #eff6ff; }
             to   { opacity: 1; background: transparent; }
         }
 
-        .new-row td { animation: rowIn 0.6s ease; }
+        .new-row td { animation: rowIn 0.5s ease; }
         .removing   { opacity: 0; transition: opacity 0.3s ease; }
 
-        /* Виджет питомца */
-        .pet-widget {
+        /* ====== CONFIRM UNDO ====== */
+        #undo-overlay {
+            display: none;
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 220px;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .undo-box {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-            z-index: 99999;
+            border-radius: 18px;
+            padding: 30px;
+            max-width: 340px;
+            width: 90%;
             text-align: center;
-            padding: 16px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.2);
         }
 
-        .pet-widget img {
-            width: 160px;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 12px;
+        .undo-box p {
+            font-size: 16px;
+            margin: 0 0 22px;
+            color: #374151;
         }
 
-        .pet-widget button {
-            width: 100%;
-            font-size: 13px;
-            padding: 10px;
-        }
+        .undo-buttons { display: flex; gap: 10px; justify-content: center; }
 
-        /* Конфетти */
+        /* ====== КОНФЕТТИ ====== */
         .confetti-piece {
             position: fixed;
             font-size: 28px;
             z-index: 99999;
             pointer-events: none;
-            transition: top 5s linear, opacity 1s;
+        }
+
+        /* ====== ВИДЖЕТ ПИТОМЦА ====== */
+        .pet-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            z-index: 99999;
+            text-align: center;
+            padding: 14px;
+        }
+
+        .pet-widget img {
+            width: 150px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .pet-widget button {
+            width: 100%;
+            font-size: 12px;
+            padding: 9px;
+            border-radius: 10px;
+        }
+
+        /* ====== АДАПТИВ ====== */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 20px; }
         }
 
     </style>
 </head>
 <body id="body">
 
-<!-- TOPBAR -->
-<div class="topbar">
-    <div>
-        <h1 style="margin:0;">Панель секретаря</h1>
-        <p style="margin:4px 0 0; color:#6b7280; font-size:14px;">{{ session["user"] }}</p>
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <div class="title">⚡ Профком</div>
+        <div class="subtitle">СПбГТИ(ТУ)</div>
     </div>
-    <a href="/logout" class="logout">Выйти</a>
+
+    <div class="sidebar-user">
+        <div class="name">{{ session["user"] }}</div>
+        <span class="role-badge">Секретарь</span>
+    </div>
+
+    <div class="sidebar-bottom">
+        <a href="/logout">← Выйти</a>
+    </div>
 </div>
 
-<!-- Уведомления -->
-<div id="notifications"></div>
+<!-- MAIN -->
+<div class="main">
 
-<!-- ВЫДАЧА -->
-<div class="card">
-    <h2>Выдача продукции</h2>
+    <!-- Уведомления -->
+    <div id="notifications"></div>
 
-    <div class="search-wrapper">
-        <label>Студент — поиск по ФИО или ID</label>
-        <input
-            type="text"
-            id="student_search"
-            placeholder="Введите ФИО или ID (например, 1001)"
-            autocomplete="off"
-        >
-        <input type="hidden" id="student_id_input">
-        <div id="search_results"></div>
+    <!-- ВЫДАЧА -->
+    <div class="card">
+        <h2>📦 Выдача продукции</h2>
+
+        <div class="search-wrapper">
+            <input
+                type="text"
+                id="student_search"
+                placeholder="🔍 Поиск по ФИО или ID студента..."
+                autocomplete="off"
+                style="margin-bottom:0;"
+            >
+            <input type="hidden" id="student_id_input">
+            <div id="search_results"></div>
+        </div>
+
+        <!-- Лимиты -->
+        <div id="live_limits" style="display:none;">
+            <h2>Лимиты студента</h2>
+            <table>
+                <tr><td>Печать</td>            <td id="limit_prints"></td>
+                    <td>Копии</td>             <td id="limit_copies"></td></tr>
+                <tr><td>Тетради</td>           <td id="limit_notebooks"></td>
+                    <td>Линейки</td>           <td id="limit_rulers"></td></tr>
+                <tr><td>Корректоры</td>        <td id="limit_correctors"></td>
+                    <td>Карандаши</td>         <td id="limit_pencils"></td></tr>
+                <tr><td>Ластики/Точилки</td>   <td id="limit_erasers"></td>
+                    <td>Миллиметровки</td>     <td id="limit_millimeters"></td></tr>
+            </table>
+        </div>
+
+        <!-- Поля в сетке -->
+        <div class="fields-grid" style="margin-top:14px;">
+            <div class="field-group">
+                <label>Печать</label>
+                <input type="number" id="print_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Копии</label>
+                <input type="number" id="copy_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Тетради</label>
+                <input type="number" id="notebook_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Линейки</label>
+                <input type="number" id="ruler_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Корректоры</label>
+                <input type="number" id="corrector_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Карандаши</label>
+                <input type="number" id="pencil_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Ластики / Точилки</label>
+                <input type="number" id="eraser_sharpener_count" min="0" value="0">
+            </div>
+            <div class="field-group">
+                <label>Миллиметровки</label>
+                <input type="number" id="millimeter_count" min="0" value="0">
+            </div>
+        </div>
+
+        <button id="submit_btn" onclick="submitIssue()" style="margin-top:16px;">
+            Сохранить выдачу
+        </button>
     </div>
 
-    <div class="card" id="live_limits" style="display:none;">
-        <h2>Лимиты студента</h2>
-        <table>
-            <tr><td>Печать</td>            <td id="limit_prints"></td></tr>
-            <tr><td>Копии</td>             <td id="limit_copies"></td></tr>
-            <tr><td>Тетради</td>           <td id="limit_notebooks"></td></tr>
-            <tr><td>Линейки</td>           <td id="limit_rulers"></td></tr>
-            <tr><td>Корректоры</td>        <td id="limit_correctors"></td></tr>
-            <tr><td>Карандаши</td>         <td id="limit_pencils"></td></tr>
-            <tr><td>Ластики / Точилки</td> <td id="limit_erasers"></td></tr>
-            <tr><td>Миллиметровки</td>     <td id="limit_millimeters"></td></tr>
-        </table>
-    </div>
-
-    <label>Печать</label>
-    <input type="number" id="print_count" min="0" value="0">
-    <label>Копии</label>
-    <input type="number" id="copy_count" min="0" value="0">
-    <label>Тетради</label>
-    <input type="number" id="notebook_count" min="0" value="0">
-    <label>Линейки</label>
-    <input type="number" id="ruler_count" min="0" value="0">
-    <label>Корректоры</label>
-    <input type="number" id="corrector_count" min="0" value="0">
-    <label>Карандаши</label>
-    <input type="number" id="pencil_count" min="0" value="0">
-    <label>Ластики / Точилки</label>
-    <input type="number" id="eraser_sharpener_count" min="0" value="0">
-    <label>Миллиметровки</label>
-    <input type="number" id="millimeter_count" min="0" value="0">
-
-    <button id="submit_btn" onclick="submitIssue()">Сохранить</button>
-</div>
-
-<!-- ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
-<div class="card">
-    <h2>Последние действия</h2>
-    <div style="max-height:500px; overflow-y:auto; border-radius:12px;">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Студент</th>
-                    <th>Секретарь</th>
-                    <th>Действие</th>
-                    <th>Дата</th>
-                    <th>Отмена</th>
+    <!-- ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
+    <div class="card">
+        <h2>📋 Последние действия</h2>
+        <div style="max-height:500px; overflow-y:auto; border-radius:10px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Студент</th>
+                        <th>Секретарь</th>
+                        <th>Действие</th>
+                        <th>Дата</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="entries_tbody">
+                {% for entry in entries %}
+                <tr id="row-{{ entry.id }}">
+                    <td><span class="id-badge">{{ entry.student_id }}</span></td>
+                    <td>{{ entry.student_name }}</td>
+                    <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
+                    <td>{{ entry.action_text }}</td>
+                    <td class="ts" data-ts="{{ entry.created_at }}"
+                        style="white-space:nowrap; color:#9ca3af; font-size:13px;">
+                        {{ entry.created_at }}
+                    </td>
+                    <td>
+                        <button class="btn-danger"
+                                style="font-size:12px; padding:6px 12px; border-radius:8px;"
+                                onclick="undoEntry({{ entry.id }}, this)">
+                            Отменить
+                        </button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody id="entries_tbody">
-            {% for entry in entries %}
-            <tr id="row-{{ entry.id }}">
-                <td><span class="id-badge">{{ entry.student_id }}</span></td>
-                <td>{{ entry.student_name }}</td>
-                <td>{{ entry.secretary }}</td>
-                <td>{{ entry.action_text }}</td>
-                <td style="white-space:nowrap; color:#6b7280; font-size:13px;" class="ts" data-ts="{{ entry.created_at }}">{{ entry.created_at }}</td>
-                <td>
-                    <button class="danger-btn" style="font-size:13px; padding:7px 14px;"
-                            onclick="undoEntry({{ entry.id }}, this)">
-                        Отменить
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /main -->
+
+
+<!-- CONFIRM UNDO -->
+<div id="undo-overlay">
+    <div class="undo-box">
+        <p>Отменить эту выдачу?</p>
+        <div class="undo-buttons">
+            <button class="btn-danger" id="undo-ok-btn">Да, отменить</button>
+            <button class="btn-gray" onclick="closeUndoConfirm()">Нет</button>
+        </div>
     </div>
 </div>
 
 
-<!-- ===================== ВИДЖЕТ ДЛЯ ДАРЬИ ===================== -->
+<!-- ВИДЖЕТ ДЛЯ ДАРЬИ -->
 {% if session["user"] == "Исаакян Дарья Эдуардовна" %}
-<div class="pet-widget" id="pet-widget">
+<div class="pet-widget">
     <img id="petGif" src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" alt="котик">
     <button onclick="changePetGif()">Погладить котика 🐾</button>
 </div>
@@ -340,23 +541,21 @@ const petGifs = [
     "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
     "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif",
     "https://media.giphy.com/media/8vQSQ3cNXuDGo/giphy.gif",
-    "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif",
-    "https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif"
+    "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif"
 ];
 function changePetGif() {
-    const current = document.getElementById("petGif").src;
+    const cur = document.getElementById("petGif").src;
     let next;
-    do {
-        next = petGifs[Math.floor(Math.random() * petGifs.length)];
-    } while (next === current && petGifs.length > 1);
+    do { next = petGifs[Math.floor(Math.random() * petGifs.length)]; }
+    while (next === cur && petGifs.length > 1);
     document.getElementById("petGif").src = next;
 }
 </script>
 {% endif %}
 
-<!-- ===================== ВИДЖЕТ ДЛЯ АНАСТАСИИ ===================== -->
+<!-- ВИДЖЕТ ДЛЯ АНАСТАСИИ -->
 {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
-<div class="pet-widget" id="pet-widget">
+<div class="pet-widget">
     <img id="petGif" src="https://media.giphy.com/media/MhHXeM4SpKrpC/giphy.gif" alt="выдра">
     <button onclick="changePetGif()" style="background:#0d9488;">Погладить выдру 🦦</button>
 </div>
@@ -367,35 +566,17 @@ const petGifs = [
     "https://media.giphy.com/media/l0IypeKl9NJhPFMrK/giphy.gif",
     "https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif",
     "https://media.giphy.com/media/3o7abB06u9bNzA8lu8/giphy.gif",
-    "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif",
-    "https://media.giphy.com/media/8UGGp7rQvfhe8/giphy.gif"
+    "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif"
 ];
 function changePetGif() {
-    const current = document.getElementById("petGif").src;
+    const cur = document.getElementById("petGif").src;
     let next;
-    do {
-        next = petGifs[Math.floor(Math.random() * petGifs.length)];
-    } while (next === current && petGifs.length > 1);
+    do { next = petGifs[Math.floor(Math.random() * petGifs.length)]; }
+    while (next === cur && petGifs.length > 1);
     document.getElementById("petGif").src = next;
 }
 </script>
 {% endif %}
-
-
-<!-- CONFIRM UNDO -->
-<div id="undo-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
-     z-index:2000;align-items:center;justify-content:center;">
-    <div style="background:white;border-radius:16px;padding:28px;max-width:340px;width:90%;
-                text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-        <p style="font-size:16px;margin:0 0 20px;color:#374151;">
-            Отменить эту выдачу?
-        </p>
-        <div style="display:flex;gap:10px;justify-content:center;">
-            <button class="danger-btn" id="undo-ok-btn">Да, отменить</button>
-            <button style="background:#6b7280;" onclick="closeUndoConfirm()">Отмена</button>
-        </div>
-    </div>
-</div>
 
 
 <script>
@@ -406,75 +587,44 @@ const searchInput    = document.getElementById("student_search");
 const resultsBox     = document.getElementById("search_results");
 const studentIdInput = document.getElementById("student_id_input");
 
-
 // ======================================================
-// ФОРМАТИРОВАНИЕ ВРЕМЕНИ (GMT+3)
+// ФОРМАТИРОВАНИЕ ВРЕМЕНИ (UTC → GMT+3)
 // ======================================================
 
 function formatTs(raw) {
     if (!raw) return raw;
-    // Postgres возвращает "2025-05-26 14:32:11.123456" без timezone
-    // Добавляем +03:00 чтобы интерпретировать как Moscow time
-    const normalized = raw.replace(" ", "T").replace(/\.\d+$/, "") + "+03:00";
+    const normalized = raw.replace(" ", "T").replace(/\\.\\d+$/, "") + "Z";
     const d = new Date(normalized);
     if (isNaN(d)) return raw;
-    return d.toLocaleString("ru-RU", {
-        timeZone:  "Europe/Moscow",
-        day:       "2-digit",
-        month:     "long",
-        hour:      "2-digit",
-        minute:    "2-digit"
-    });
+    const msk   = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+    const pad   = n => String(n).padStart(2, "0");
+    const day   = pad(msk.getUTCDate());
+    const month = ["янв","фев","мар","апр","май","июн",
+                   "июл","авг","сен","окт","ноя","дек"][msk.getUTCMonth()];
+    const hh    = pad(msk.getUTCHours());
+    const mm    = pad(msk.getUTCMinutes());
+    return `${day} ${month}, ${hh}:${mm}`;
 }
 
-// Форматируем все уже существующие строки при загрузке
+// Форматируем все существующие строки при загрузке
 document.querySelectorAll(".ts").forEach(td => {
     td.textContent = formatTs(td.dataset.ts);
 });
 
 // ======================================================
-// ПОДТВЕРЖДЕНИЕ ОТМЕНЫ
-// ======================================================
-
-let pendingUndoId  = null;
-let pendingUndoBtn = null;
-
-function openUndoConfirm(entryId, btn) {
-    pendingUndoId  = entryId;
-    pendingUndoBtn = btn;
-    const overlay  = document.getElementById("undo-overlay");
-    overlay.style.display = "flex";
-    document.getElementById("undo-ok-btn").onclick = () => {
-        closeUndoConfirm();
-        doUndo(pendingUndoId, pendingUndoBtn);
-    };
-}
-
-function closeUndoConfirm() {
-    document.getElementById("undo-overlay").style.display = "none";
-    pendingUndoId  = null;
-    pendingUndoBtn = null;
-}
-
-document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeUndoConfirm();
-});
-
-// ======================================================
 // УВЕДОМЛЕНИЯ
-// type: "message" | "error" | "achievement"
 // ======================================================
 
 function showNotification(text, type = "message") {
-    const div = document.createElement("div");
+    const div       = document.createElement("div");
     div.className   = type;
     div.textContent = text;
     notifications.appendChild(div);
-    const delay = type === "achievement" ? 6000 : 4000;
+    const delay = type === "achievement" ? 7000 : 4000;
     setTimeout(() => {
         div.style.opacity    = "0";
-        div.style.transition = "opacity 0.5s";
-        setTimeout(() => div.remove(), 500);
+        div.style.transition = "opacity 0.4s";
+        setTimeout(() => div.remove(), 400);
     }, delay);
 }
 
@@ -511,23 +661,28 @@ function resetForm() {
 }
 
 // ======================================================
-// ДОБАВИТЬ СТРОКУ В ТАБЛИЦУ ВЫДАЧ
+// ДОБАВИТЬ СТРОКУ В ТАБЛИЦУ
 // ======================================================
 
 function prependEntry(e) {
-    const tbody = document.getElementById("entries_tbody");
-    const tr    = document.createElement("tr");
+    const tbody  = document.getElementById("entries_tbody");
+    const tr     = document.createElement("tr");
     tr.id        = `row-${e.id}`;
     tr.className = "new-row";
     tr.innerHTML = `
         <td><span class="id-badge">${e.student_id}</span></td>
         <td>${e.student_name}</td>
-        <td>${e.secretary}</td>
+        <td style="color:#6b7280;font-size:13px;">${e.secretary}</td>
         <td>${e.action_text}</td>
-        <td style="white-space:nowrap;color:#6b7280;font-size:13px;">${formatTs(e.created_at)}</td>
+        <td style="white-space:nowrap;color:#9ca3af;font-size:13px;">
+            ${formatTs(e.created_at)}
+        </td>
         <td>
-            <button class="danger-btn" style="font-size:13px;padding:7px 14px;"
-                    onclick="undoEntry(${e.id},this)">Отменить</button>
+            <button class="btn-danger"
+                    style="font-size:12px;padding:6px 12px;border-radius:8px;"
+                    onclick="undoEntry(${e.id},this)">
+                Отменить
+            </button>
         </td>
     `;
     tbody.insertBefore(tr, tbody.firstChild);
@@ -540,31 +695,32 @@ function prependEntry(e) {
 
 function launchConfetti(emojis = ["🎉","✨","🎊","⭐","🏆"]) {
     for (let i = 0; i < 60; i++) {
-        const el = document.createElement("div");
+        const el      = document.createElement("div");
         el.className  = "confetti-piece";
         el.innerText  = emojis[Math.floor(Math.random() * emojis.length)];
         el.style.left = Math.random() * 100 + "vw";
         el.style.top  = "-60px";
-        el.style.fontSize = (20 + Math.random() * 20) + "px";
+        el.style.fontSize = (18 + Math.random() * 18) + "px";
+        el.style.transition = `top ${4 + Math.random() * 2}s linear, opacity 1s`;
         document.body.appendChild(el);
-        setTimeout(() => { el.style.top = "110vh"; el.style.opacity = "0"; }, 100 + i * 30);
-        setTimeout(() => el.remove(), 6000);
+        setTimeout(() => { el.style.top = "110vh"; el.style.opacity = "0"; }, 100 + i * 40);
+        setTimeout(() => el.remove(), 7000);
     }
 }
 
 // ======================================================
-// СЧЁТЧИК ВЫДАЧ ЗА СЕССИЮ (для спидрана и сони)
+// СЧЁТЧИКИ ТАЙНЫХ АЧИВОК
 // ======================================================
 
-let sessionIssues      = 0;
-let lastIssueTime      = Date.now();
-let sonaTimer          = null;
-let unlockedAchievements = new Set(
-    JSON.parse(localStorage.getItem("achievements") || "[]")
+let sessionIssues = 0;
+let sonaTimer     = null;
+
+const unlockedAchievements = new Set(
+    JSON.parse(localStorage.getItem("prof_achievements") || "[]")
 );
 
 function saveAchievements() {
-    localStorage.setItem("achievements", JSON.stringify([...unlockedAchievements]));
+    localStorage.setItem("prof_achievements", JSON.stringify([...unlockedAchievements]));
 }
 
 function unlockAchievement(key, text) {
@@ -575,24 +731,15 @@ function unlockAchievement(key, text) {
     launchConfetti();
 }
 
-// ======================================================
-// ПРОВЕРКА ТАЙНЫХ АЧИВОК ПОСЛЕ ВЫДАЧИ
-// ======================================================
-
 function checkSecretAchievements(payload) {
+    const now  = new Date();
+    const wday = now.getDay();
+    const day  = now.getDate();
 
-    const now   = new Date();
-    const day   = now.getDate();
-    const wday  = now.getDay(); // 0=вс, 5=пт
-    const total =
-        (payload.print_count || 0) +
-        (payload.copy_count || 0) +
-        (payload.notebook_count || 0) +
-        (payload.ruler_count || 0) +
-        (payload.corrector_count || 0) +
-        (payload.pencil_count || 0) +
-        (payload.eraser_sharpener_count || 0) +
-        (payload.millimeter_count || 0);
+    // 📅 ПЯТНИЦА 13-Е
+    if (wday === 5 && day === 13) {
+        unlockAchievement("friday13", "😱 Тайная ачивка: Пятница 13-е! Бесстрашный профкомовец!");
+    }
 
     // 🌈 РАДУГА — все 8 видов за один раз
     const allTypes = [
@@ -605,31 +752,20 @@ function checkSecretAchievements(payload) {
         unlockAchievement("rainbow", "🌈 Тайная ачивка: Радуга! Все 8 видов за один раз!");
     }
 
-    // 📅 ПЯТНИЦА 13-Е
-    if (wday === 5 && day === 13) {
-        unlockAchievement("friday13", "😱 Тайная ачивка: Пятница 13-е! Бесстрашный профкомовец!");
-    }
-
     // ⚡ СПИДРАН — 20 выдач за сессию
     sessionIssues++;
-    lastIssueTime = Date.now();
-
     if (sessionIssues >= 20) {
         unlockAchievement("speedrun", "⚡ Тайная ачивка: Спидран! 20 выдач за сессию!");
     }
 
-    // Сбрасываем таймер сони
     resetSonaTimer();
 }
 
-// ======================================================
-// СОНЯ — 5 минут без выдачи после открытия страницы
-// ======================================================
-
+// 😴 СОНЯ — 5 минут без действий
 function resetSonaTimer() {
     if (sonaTimer) clearTimeout(sonaTimer);
     sonaTimer = setTimeout(() => {
-        unlockAchievement("sleepy", "😴 Тайная ачивка: Соня! 5 минут тишины...");
+        unlockAchievement("sleepy", "😴 Тайная ачивка: Соня! 5 минут полной тишины...");
     }, 5 * 60 * 1000);
 }
 
@@ -648,7 +784,7 @@ async function submitIssue() {
         return;
     }
 
-    const btn = document.getElementById("submit_btn");
+    const btn       = document.getElementById("submit_btn");
     btn.disabled    = true;
     btn.textContent = "Сохранение...";
 
@@ -677,18 +813,16 @@ async function submitIssue() {
         } else {
             showNotification(data.message, "message");
 
-            // Серверные ачивки (100 / 500 / 1000 выдач)
             if (data.achievement) {
-                showNotification(data.achievement, "achievement");
+                data.achievement.split("||").forEach(a => {
+                    showNotification(a.trim(), "achievement");
+                });
                 launchConfetti();
             }
 
             updateLimits(data.limits);
             prependEntry(data.entry);
-
-            // Тайные ачивки
             checkSecretAchievements(payload);
-
             resetForm();
         }
     } catch (err) {
@@ -696,22 +830,38 @@ async function submitIssue() {
     }
 
     btn.disabled    = false;
-    btn.textContent = "Сохранить";
+    btn.textContent = "Сохранить выдачу";
 }
 
 // ======================================================
-// ОТМЕНА ВЫДАЧИ (AJAX)
+// ПОДТВЕРЖДЕНИЕ ОТМЕНЫ ВЫДАЧИ
 // ======================================================
 
-// Публичная функция — сначала спрашиваем подтверждение
+let pendingUndoId  = null;
+let pendingUndoBtn = null;
+
 function undoEntry(entryId, btn) {
-    openUndoConfirm(entryId, btn);
+    pendingUndoId  = entryId;
+    pendingUndoBtn = btn;
+    document.getElementById("undo-overlay").style.display = "flex";
+    document.getElementById("undo-ok-btn").onclick = () => {
+        // Сохраняем значения ДО закрытия, чтобы не потерять при обнулении
+        const id  = pendingUndoId;
+        const b   = pendingUndoBtn;
+        closeUndoConfirm();
+        doUndo(id, b);
+    };
+}
+
+function closeUndoConfirm() {
+    document.getElementById("undo-overlay").style.display = "none";
+    pendingUndoId  = null;
+    pendingUndoBtn = null;
 }
 
 async function doUndo(entryId, btn) {
 
-    btn.disabled    = true;
-    btn.textContent = "...";
+    if (btn) { btn.disabled = true; btn.textContent = "..."; }
 
     try {
         const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
@@ -725,18 +875,20 @@ async function doUndo(entryId, btn) {
             }
         } else {
             showNotification(data.error || "Ошибка", "error");
-            btn.disabled    = false;
-            btn.textContent = "Отменить";
+            if (btn) { btn.disabled = false; btn.textContent = "Отменить"; }
         }
     } catch (err) {
         showNotification("Ошибка соединения", "error");
-        btn.disabled    = false;
-        btn.textContent = "Отменить";
+        if (btn) { btn.disabled = false; btn.textContent = "Отменить"; }
     }
 }
 
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeUndoConfirm();
+});
+
 // ======================================================
-// ПОИСК СТУДЕНТОВ
+// ПОИСК СТУДЕНТОВ + ПАСХАЛКИ
 // ======================================================
 
 searchInput.addEventListener("input", async function() {
@@ -744,24 +896,17 @@ searchInput.addEventListener("input", async function() {
     const query = this.value.trim();
     const cmd   = query.toLowerCase();
 
-    // ---- ПАСХАЛКИ (с / или без) ----
-
     const triggers = {
-        "tiger":   () => { showNotification("🐯 Тигр найден! Рррр!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов! Тигр пойман!"); },
-        "/tiger":  () => { showNotification("🐯 Тигр найден! Рррр!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов! Тигр пойман!"); },
-
-        "matrix":  () => { activateMatrix(); this.value = ""; },
+        "tiger":   () => { showNotification("🐯 Тигр найден! Рррр!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов!"); },
+        "/tiger":  () => { showNotification("🐯 Тигр найден! Рррр!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов!"); },
+        "matrix":  () => { activateMatrix(); this.value = ""; unlockAchievement("matrix", "🟢 Тайная ачивка: Читер! Ты нашёл матрицу."); },
         "/matrix": () => { activateMatrix(); this.value = ""; unlockAchievement("matrix", "🟢 Тайная ачивка: Читер! Ты нашёл матрицу."); },
-
         "boss":    () => { body.style.background = "#fff7ed"; showNotification("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ", "message"); this.value = ""; },
         "/boss":   () => { body.style.background = "#fff7ed"; showNotification("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ", "message"); this.value = ""; },
-
-        "supreme":  () => { body.style.background = "linear-gradient(to bottom,#fef3c7,#fde68a)"; showNotification("👑 SUPREME MODE", "message"); this.value = ""; },
-        "/supreme": () => { body.style.background = "linear-gradient(to bottom,#fef3c7,#fde68a)"; showNotification("👑 SUPREME MODE", "message"); this.value = ""; },
-
+        "supreme":  () => { body.style.background = "linear-gradient(135deg,#fef3c7,#fde68a)"; showNotification("👑 SUPREME MODE", "message"); this.value = ""; },
+        "/supreme": () => { body.style.background = "linear-gradient(135deg,#fef3c7,#fde68a)"; showNotification("👑 SUPREME MODE", "message"); this.value = ""; },
         "party":   () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
         "/party":  () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
-
         "reset":   () => { body.style.background = ""; this.value = ""; showNotification("♻️ Тема сброшена", "message"); },
         "/reset":  () => { body.style.background = ""; this.value = ""; showNotification("♻️ Тема сброшена", "message"); },
     };
@@ -772,10 +917,7 @@ searchInput.addEventListener("input", async function() {
         return;
     }
 
-    if (query.length < 1) {
-        resultsBox.innerHTML = "";
-        return;
-    }
+    if (query.length < 1) { resultsBox.innerHTML = ""; return; }
 
     try {
         const res      = await fetch(`/search_students?q=${encodeURIComponent(query)}`);
@@ -802,12 +944,9 @@ searchInput.addEventListener("input", async function() {
             };
             resultsBox.appendChild(div);
         });
-    } catch (e) {
-        console.log(e);
-    }
+    } catch (e) { console.log(e); }
 });
 
-// ENTER
 searchInput.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
         e.preventDefault();
@@ -822,13 +961,14 @@ searchInput.addEventListener("keydown", function(e) {
 // ======================================================
 
 function activateMatrix() {
-    body.style.background = "black";
+    body.style.background = "#000";
     body.style.color      = "#00ff00";
     document.querySelectorAll(".card").forEach(c => {
-        c.style.background = "#111";
+        c.style.background = "#0a0a0a";
         c.style.color      = "#00ff00";
         c.style.border     = "1px solid #00ff00";
     });
+    document.querySelector(".sidebar").style.background = "#001100";
     showNotification("🟢 MATRIX MODE ACTIVATED", "message");
 }
 
@@ -836,16 +976,12 @@ function activateMatrix() {
 // СЕЗОННЫЕ ТЕМЫ
 // ======================================================
 
-const month = new Date().getMonth() + 1;
+const month   = new Date().getMonth() + 1;
 const dateDay = new Date().getDate();
 
-if (month === 12) body.style.background = "linear-gradient(to bottom,#dbeafe,#ffffff)";
-if (month === 9)  body.style.background = "linear-gradient(to bottom,#fff7ed,#ffffff)";
-
-// Новогодний конфетти при первом заходе в декабре
-if (month === 12 && dateDay >= 25) {
-    setTimeout(() => launchConfetti(["🎄","⭐","❄️","🎅","🎁"]), 1000);
-}
+if (month === 12) body.style.background = "linear-gradient(160deg,#dbeafe 0%,#f0f2f8 60%)";
+if (month === 9)  body.style.background = "linear-gradient(160deg,#fff7ed 0%,#f0f2f8 60%)";
+if (month === 12 && dateDay >= 25) setTimeout(() => launchConfetti(["🎄","⭐","❄️","🎅","🎁"]), 1000);
 
 // ======================================================
 // ANTI SLEEP
