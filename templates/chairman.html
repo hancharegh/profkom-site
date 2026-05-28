@@ -426,7 +426,26 @@
             border: none;
             transition: opacity 0.2s;
         }
+        .load-more-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #f8faff;
+    color: #2563eb;
+    border: 2px dashed #bfdbfe;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+    text-align: center;
+    transition: background 0.2s;
+}
 
+.load-more-btn:hover {
+    background: #eff6ff;
+    transform: none;
+}
 
         @media (max-width: 768px) {
             .sidebar { display: none; }
@@ -1120,7 +1139,54 @@ const hash = window.location.hash;
 if (hash === "#students") openModal("modal-students");
 if (hash === "#entries")  openModal("modal-entries");
 if (hash === "#schedule") openModal("modal-schedule");
+// ======================================================
+// ОГРАНИЧЕНИЕ СТРОК В ТАБЛИЦЕ ПОСЛЕДНИХ ДЕЙСТВИЙ
+// По умолчанию показывается 20, остальные скрыты.
+// Кнопка "Показать ещё" открывает следующие 20.
+// ======================================================
 
+(function() {
+    const BATCH = 20;
+
+    function initTable(tbodyId, btnId) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        if (rows.length <= BATCH) return;
+
+        // Скрываем всё что после BATCH
+        rows.forEach((row, i) => {
+            if (i >= BATCH) row.style.display = "none";
+        });
+
+        // Создаём кнопку "Показать ещё"
+        let shown = BATCH;
+
+        const btn = document.createElement("button");
+        btn.id        = btnId;
+        btn.className = "load-more-btn";
+        btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
+        tbody.closest("table").after(btn);
+
+        btn.onclick = () => {
+            const next = Math.min(shown + BATCH, rows.length);
+            for (let i = shown; i < next; i++) {
+                rows[i].style.display = "";
+            }
+            shown = next;
+            if (shown >= rows.length) {
+                btn.remove();
+            } else {
+                btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
+            }
+        };
+    }
+
+    // Инициализируем все таблицы на странице
+    initTable("entries_tbody",    "load-more-entries");
+    initTable("entries-tbody",    "load-more-entries-2");
+})();
 </script>
 </body>
 </html>
