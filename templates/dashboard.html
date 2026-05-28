@@ -330,7 +330,26 @@
         }
 
         .undo-buttons { display: flex; gap: 10px; justify-content: center; }
+        .load-more-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #f8faff;
+    color: #2563eb;
+    border: 2px dashed #bfdbfe;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+    text-align: center;
+    transition: background 0.2s;
+}
 
+.load-more-btn:hover {
+    background: #eff6ff;
+    transform: none;
+}
         /* ====== КОНФЕТТИ ====== */
         .confetti-piece {
             position: fixed;
@@ -489,26 +508,7 @@
                 <tbody id="entries_tbody">
                 {% for entry in entries %}
                 <tr id="row-{{ entry.id }}">
-                    .load-more-btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background: #f8faff;
-    color: #2563eb;
-    border: 2px dashed #bfdbfe;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 8px;
-    text-align: center;
-    transition: background 0.2s;
-}
-
-.load-more-btn:hover {
-    background: #eff6ff;
-    transform: none;
-}
+                    
                     <td><span class="id-badge">{{ entry.student_id }}</span></td>
                     <td>{{ entry.student_name }}</td>
                     <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
