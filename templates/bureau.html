@@ -13,31 +13,31 @@
         :root {
             --accent: #dc2626; --light: #fee2e2; --mid: #fca5a5;
             --dark:   #991b1b; --th:    #fef2f2; --focus: #ef4444;
-            --sidebar-role: #dc2626;
+            --dashed: #fca5a5; --more-bg: #fff5f5; --more-color: #dc2626;
         }
         {% elif bureau_num == 2 %}
         :root {
             --accent: #ea580c; --light: #ffedd5; --mid: #fdba74;
             --dark:   #9a3412; --th:    #fff7ed; --focus: #f97316;
-            --sidebar-role: #ea580c;
+            --dashed: #fdba74; --more-bg: #fff8f0; --more-color: #ea580c;
         }
         {% elif bureau_num == 3 %}
         :root {
             --accent: #ca8a04; --light: #fef9c3; --mid: #fde047;
             --dark:   #854d0e; --th:    #fefce8; --focus: #eab308;
-            --sidebar-role: #ca8a04;
+            --dashed: #fde047; --more-bg: #fefce8; --more-color: #ca8a04;
         }
         {% elif bureau_num == 4 %}
         :root {
             --accent: #16a34a; --light: #dcfce7; --mid: #86efac;
             --dark:   #166534; --th:    #f0fdf4; --focus: #22c55e;
-            --sidebar-role: #16a34a;
+            --dashed: #86efac; --more-bg: #f0fdf4; --more-color: #16a34a;
         }
         {% else %}
         :root {
             --accent: #2563eb; --light: #dbeafe; --mid: #93c5fd;
             --dark:   #1e40af; --th:    #eff6ff; --focus: #3b82f6;
-            --sidebar-role: #2563eb;
+            --dashed: #93c5fd; --more-bg: #eff6ff; --more-color: #2563eb;
         }
         {% endif %}
 
@@ -68,7 +68,7 @@
             margin-bottom: 20px;
         }
 
-        .sidebar-logo .title   { font-size: 16px; font-weight: bold; }
+        .sidebar-logo .title    { font-size: 16px; font-weight: bold; }
         .sidebar-logo .subtitle { font-size: 12px; color: #9ca3af; margin-top: 4px; }
 
         .sidebar-user {
@@ -81,7 +81,7 @@
 
         .sidebar-role {
             display: inline-block;
-            background: var(--sidebar-role);
+            background: var(--accent);
             color: white;
             padding: 2px 8px;
             border-radius: 20px;
@@ -117,10 +117,7 @@
 
         .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
 
-        .sidebar-bottom {
-            padding: 0 24px;
-            margin-top: auto;
-        }
+        .sidebar-bottom { padding: 0 24px; margin-top: auto; }
 
         .sidebar-bottom a {
             display: block;
@@ -209,7 +206,7 @@
             background: white;
         }
 
-        /* Сетка числовых полей — как у секретаря */
+        /* Сетка числовых полей */
         .fields-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -238,13 +235,8 @@
         .btn-danger { background: #ef4444; }
         .btn-gray   { background: #6b7280; }
         .btn-green  { background: #16a34a; }
-        .btn-outline {
-            background: white;
-            color: var(--accent);
-            border: 2px solid var(--accent);
-        }
 
-        /* ====== ТАБЛИЦА ====== */
+        /* ====== TABLE ====== */
         table { width: 100%; border-collapse: collapse; }
 
         th {
@@ -308,7 +300,7 @@
         }
 
         .search-item:last-child { border-bottom: none; }
-        .search-item:hover { background: #f5f5f5; }
+        .search-item:hover { background: var(--light); }
 
         /* ====== ЛИМИТЫ ====== */
         #live_limits {
@@ -319,12 +311,7 @@
             margin: 12px 0 16px;
         }
 
-        #live_limits h2 {
-            font-size: 14px;
-            margin-bottom: 10px;
-            color: var(--dark);
-        }
-
+        #live_limits h2 { font-size: 14px; margin-bottom: 10px; color: var(--dark); }
         #live_limits table { font-size: 13px; }
         #live_limits td { padding: 5px 8px; border: none; }
 
@@ -425,26 +412,6 @@
             padding: 20px;
         }
 
-        .load-more-btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background: #f8faff;
-    color: #2563eb;
-    border: 2px dashed #bfdbfe;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 8px;
-    text-align: center;
-    transition: background 0.2s;
-}
-
-.load-more-btn:hover {
-    background: #eff6ff;
-    transform: none;
-}
         .modal-overlay.open { display: flex; }
 
         .modal {
@@ -452,7 +419,7 @@
             border-radius: 20px;
             padding: 30px;
             width: 100%;
-            max-width: 820px;
+            max-width: 860px;
             max-height: 88vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.2);
@@ -568,6 +535,25 @@
         .table-search { margin-bottom: 14px; }
         .table-search input { margin: 0; }
 
+        /* ====== КНОПКА «ПОКАЗАТЬ ЕЩЁ» ====== */
+        .load-more-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: var(--more-bg);
+            color: var(--more-color);
+            border: 2px dashed var(--dashed);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .load-more-btn:hover { opacity: 0.85; transform: none; }
+
         /* ====== КОНФЕТТИ ====== */
         .confetti-piece {
             position: fixed;
@@ -576,7 +562,6 @@
             pointer-events: none;
         }
 
-        /* ====== АДАПТИВ ====== */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main { margin-left: 0; padding: 20px; }
@@ -610,6 +595,9 @@
     </div>
 
     <div class="sidebar-bottom">
+        {% if session.get("roles") and session["roles"]|length > 1 %}
+        <a href="/switch_role">⇄ Сменить роль</a>
+        {% endif %}
         <a href="/logout">← Выйти</a>
     </div>
 </div>
@@ -650,21 +638,20 @@
             <div id="search_results"></div>
         </div>
 
-        <!-- Лимиты -->
         <div id="live_limits" style="display:none;">
             <h2>Лимиты студента</h2>
             <table>
                 <tr>
-                    <td>Печать</td>   <td id="limit_prints"></td>
-                    <td>Копии</td>    <td id="limit_copies"></td>
+                    <td>Печать</td>    <td id="limit_prints"></td>
+                    <td>Копии</td>     <td id="limit_copies"></td>
                 </tr>
                 <tr>
-                    <td>Тетради</td>  <td id="limit_notebooks"></td>
-                    <td>Линейки</td>  <td id="limit_rulers"></td>
+                    <td>Тетради</td>   <td id="limit_notebooks"></td>
+                    <td>Линейки</td>   <td id="limit_rulers"></td>
                 </tr>
                 <tr>
-                    <td>Корректоры</td> <td id="limit_correctors"></td>
-                    <td>Карандаши</td>  <td id="limit_pencils"></td>
+                    <td>Корректоры</td>     <td id="limit_correctors"></td>
+                    <td>Карандаши</td>      <td id="limit_pencils"></td>
                 </tr>
                 <tr>
                     <td>Ластики/Точилки</td> <td id="limit_erasers"></td>
@@ -673,7 +660,6 @@
             </table>
         </div>
 
-        <!-- Поля в сетке -->
         <div class="fields-grid" style="margin-top:14px;">
             <div class="field-group">
                 <label>Печать</label>
@@ -728,15 +714,13 @@
             <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
         </div>
 
-        <!-- Поиск -->
         <div class="table-search">
             <input type="text" id="table-search"
                    placeholder="🔍 Поиск по ФИО или ID..."
                    oninput="filterTable()">
         </div>
 
-        <!-- Таблица -->
-        <div style="max-height:380px; overflow-y:auto; border-radius:12px;
+        <div style="max-height:360px; overflow-y:auto; border-radius:12px;
                     border:1px solid #f3f4f6;">
             <table>
                 <thead>
@@ -770,7 +754,6 @@
             Показано: <span id="table-count">{{ bureau_students|length }}</span>
         </p>
 
-        <!-- Добавить студента -->
         <div class="add-form">
             <div style="flex:1; min-width:200px;">
                 <label style="margin-top:0;">ФИО нового студента</label>
@@ -783,7 +766,6 @@
             </button>
         </div>
 
-        <!-- Загрузка CSV -->
         <div class="upload-section">
             <span style="font-weight:bold; font-size:13px;">📄 CSV:</span>
             <form method="POST" action="/upload_students" enctype="multipart/form-data"
@@ -807,7 +789,7 @@
             <button class="modal-close" onclick="closeModal('modal-entries')">✕</button>
         </div>
 
-        <div style="overflow-x:auto; max-height:580px; overflow-y:auto;">
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
@@ -821,7 +803,9 @@
                 </thead>
                 <tbody id="entries_tbody">
                 {% for entry in entries %}
-                <tr id="row-{{ entry.id }}">
+                <tr id="row-{{ entry.id }}"
+                    class="entry-row"
+                    style="{% if loop.index > 20 %}display:none;{% endif %}">
                     <td><span class="id-badge">{{ entry.student_id }}</span></td>
                     <td>{{ entry.student_name }}</td>
                     <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
@@ -842,6 +826,12 @@
                 </tbody>
             </table>
         </div>
+
+        {% if entries|length > 20 %}
+        <button class="load-more-btn" id="load-more-entries" onclick="loadMoreEntries()">
+            Показать ещё ({{ entries|length - 20 }} из {{ entries|length }})
+        </button>
+        {% endif %}
 
     </div>
 </div>
@@ -900,6 +890,38 @@ document.querySelectorAll(".ts").forEach(td => {
 });
 
 // ======================================================
+// ПОКАЗАТЬ ЕЩЁ
+// ======================================================
+
+let shownEntries = 20;
+
+function loadMoreEntries() {
+    const rows = Array.from(document.querySelectorAll(".entry-row"));
+    const next = Math.min(shownEntries + 20, rows.length);
+    for (let i = shownEntries; i < next; i++) rows[i].style.display = "";
+    shownEntries = next;
+    const btn = document.getElementById("load-more-entries");
+    if (btn) {
+        const remaining = rows.length - shownEntries;
+        remaining <= 0 ? btn.remove()
+                       : btn.textContent = `Показать ещё (${remaining} из ${rows.length})`;
+    }
+}
+
+// ======================================================
+// TOAST
+// ======================================================
+
+function showToast(text, type = "success") {
+    const el       = document.createElement("div");
+    el.className   = `toast toast-${type}`;
+    el.textContent = text;
+    document.getElementById("toast-container").appendChild(el);
+    setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; }, 3000);
+    setTimeout(() => el.remove(), 3400);
+}
+
+// ======================================================
 // УВЕДОМЛЕНИЯ
 // ======================================================
 
@@ -914,15 +936,6 @@ function showNotification(text, type = "message") {
         div.style.transition = "opacity 0.4s";
         setTimeout(() => div.remove(), 400);
     }, delay);
-}
-
-function showToast(text, type = "success") {
-    const el       = document.createElement("div");
-    el.className   = `toast toast-${type}`;
-    el.textContent = text;
-    document.getElementById("toast-container").appendChild(el);
-    setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; }, 3000);
-    setTimeout(() => el.remove(), 3400);
 }
 
 // ======================================================
@@ -950,9 +963,7 @@ function resetForm() {
     searchInput.value    = "";
     ["print_count","copy_count","notebook_count","ruler_count",
      "corrector_count","pencil_count","eraser_sharpener_count",
-     "millimeter_count"].forEach(id => {
-        document.getElementById(id).value = 0;
-    });
+     "millimeter_count"].forEach(id => document.getElementById(id).value = 0);
     document.getElementById("live_limits").style.display = "none";
     searchInput.focus();
 }
@@ -965,7 +976,7 @@ function prependEntry(e) {
     const tbody  = document.getElementById("entries_tbody");
     const tr     = document.createElement("tr");
     tr.id        = `row-${e.id}`;
-    tr.className = "new-row";
+    tr.className = "new-row entry-row";
     tr.innerHTML = `
         <td><span class="id-badge">${e.student_id}</span></td>
         <td>${e.student_name}</td>
@@ -975,20 +986,20 @@ function prependEntry(e) {
             ${formatTs(e.created_at)}
         </td>
         <td>
-            <button class="btn-danger"
-                    style="font-size:12px;padding:6px 12px;"
+            <button class="btn-danger" style="font-size:12px;padding:6px 12px;"
                     onclick="undoEntry(${e.id},this)">Отменить</button>
         </td>
     `;
     tbody.insertBefore(tr, tbody.firstChild);
-    while (tbody.rows.length > 50) tbody.removeChild(tbody.lastChild);
+    shownEntries++;
 }
 
 // ======================================================
 // КОНФЕТТИ
 // ======================================================
 
-function launchConfetti(emojis = ["🎉","✨","🎊","⭐","🏆"]) {
+function launchConfetti() {
+    const emojis = ["🎉","✨","🎊","⭐","🏆"];
     for (let i = 0; i < 50; i++) {
         const el      = document.createElement("div");
         el.className  = "confetti-piece";
@@ -1088,11 +1099,9 @@ function closeUndoConfirm() {
 
 async function doUndo(entryId, btn) {
     if (btn) { btn.disabled = true; btn.textContent = "..."; }
-
     try {
         const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
         const data = await res.json();
-
         if (data.ok) {
             const row = document.getElementById(`row-${entryId}`);
             if (row) {
@@ -1121,7 +1130,6 @@ searchInput.addEventListener("input", async function() {
         const res      = await fetch(`/search_students?q=${encodeURIComponent(query)}`);
         const students = await res.json();
         resultsBox.innerHTML = "";
-
         students.forEach(student => {
             const div = document.createElement("div");
             div.className = "search-item";
@@ -1185,10 +1193,8 @@ async function addStudent() {
             </td>
         `;
         tbody.insertBefore(tr, tbody.firstChild);
-
         const c = document.getElementById("table-count");
         c.textContent = parseInt(c.textContent) + 1;
-
         document.getElementById("new-name").value = "";
         showToast(`Добавлен: ${fullName} — ID ${data.student_id}`);
     } else {
@@ -1203,7 +1209,6 @@ async function addStudent() {
 async function deleteStudent(studentId) {
     const res  = await fetch(`/delete_student/${studentId}`, { method: "POST" });
     const data = await res.json();
-
     if (data.ok) {
         const row = document.getElementById(`stu-row-${studentId}`);
         if (row) {
@@ -1254,7 +1259,7 @@ document.querySelectorAll(".modal-overlay").forEach(overlay => {
 });
 
 // ======================================================
-// CONFIRM (удаление)
+// CONFIRM
 // ======================================================
 
 function confirmAction(text, callback) {
@@ -1283,54 +1288,7 @@ document.addEventListener("keydown", e => {
 // ======================================================
 
 setInterval(() => fetch("/ping").catch(() => {}), 240000);
-// ======================================================
-// ОГРАНИЧЕНИЕ СТРОК В ТАБЛИЦЕ ПОСЛЕДНИХ ДЕЙСТВИЙ
-// По умолчанию показывается 20, остальные скрыты.
-// Кнопка "Показать ещё" открывает следующие 20.
-// ======================================================
 
-(function() {
-    const BATCH = 20;
-
-    function initTable(tbodyId, btnId) {
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-        if (rows.length <= BATCH) return;
-
-        // Скрываем всё что после BATCH
-        rows.forEach((row, i) => {
-            if (i >= BATCH) row.style.display = "none";
-        });
-
-        // Создаём кнопку "Показать ещё"
-        let shown = BATCH;
-
-        const btn = document.createElement("button");
-        btn.id        = btnId;
-        btn.className = "load-more-btn";
-        btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
-        tbody.closest("table").after(btn);
-
-        btn.onclick = () => {
-            const next = Math.min(shown + BATCH, rows.length);
-            for (let i = shown; i < next; i++) {
-                rows[i].style.display = "";
-            }
-            shown = next;
-            if (shown >= rows.length) {
-                btn.remove();
-            } else {
-                btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
-            }
-        };
-    }
-
-    // Инициализируем все таблицы на странице
-    initTable("entries_tbody",    "load-more-entries");
-    initTable("entries-tbody",    "load-more-entries-2");
-})();
 </script>
 </body>
 </html>
