@@ -20,9 +20,7 @@
         /* ====== SIDEBAR ====== */
         .sidebar {
             position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
+            left: 0; top: 0; bottom: 0;
             width: 240px;
             background: #111827;
             color: white;
@@ -38,17 +36,8 @@
             margin-bottom: 20px;
         }
 
-        .sidebar-logo .title {
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-        }
-
-        .sidebar-logo .subtitle {
-            font-size: 12px;
-            color: #9ca3af;
-            margin-top: 4px;
-        }
+        .sidebar-logo .title   { font-size: 16px; font-weight: bold; }
+        .sidebar-logo .subtitle { font-size: 12px; color: #9ca3af; margin-top: 4px; }
 
         .sidebar-user {
             padding: 0 24px 20px;
@@ -56,13 +45,9 @@
             margin-bottom: 20px;
         }
 
-        .sidebar-user .name {
-            font-size: 13px;
-            color: #d1d5db;
-            line-height: 1.4;
-        }
+        .sidebar-user .name { font-size: 13px; color: #d1d5db; line-height: 1.4; }
 
-        .sidebar-user .role-badge {
+        .sidebar-role {
             display: inline-block;
             background: #2563eb;
             color: white;
@@ -72,10 +57,7 @@
             margin-top: 5px;
         }
 
-        .sidebar-bottom {
-            margin-top: auto;
-            padding: 0 24px;
-        }
+        .sidebar-bottom { margin-top: auto; padding: 0 24px; }
 
         .sidebar-bottom a {
             display: block;
@@ -87,14 +69,21 @@
 
         .sidebar-bottom a:hover { color: white; }
 
-        /* ====== MAIN CONTENT ====== */
+        /* ====== MAIN ====== */
         .main {
             margin-left: 240px;
             padding: 30px;
             min-height: 100vh;
         }
 
-        /* ====== CARDS ====== */
+        .page-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #111827;
+            margin: 0 0 24px;
+        }
+
+        /* ====== CARD ====== */
         .card {
             background: white;
             padding: 25px;
@@ -103,17 +92,13 @@
             margin-bottom: 24px;
         }
 
-        h2 {
-            margin: 0 0 20px;
-            font-size: 17px;
-            color: #111827;
-        }
+        h2 { margin: 0 0 20px; font-size: 17px; color: #111827; }
 
         label {
             display: block;
-            margin-top: 10px;
-            margin-bottom: 5px;
             font-weight: bold;
+            margin-bottom: 5px;
+            margin-top: 10px;
             font-size: 14px;
             color: #374151;
         }
@@ -150,11 +135,11 @@
             background: #2563eb;
             color: white;
             border: none;
-            padding: 12px 22px;
+            padding: 11px 20px;
             border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
             font-size: 14px;
+            font-weight: bold;
             transition: opacity 0.2s, transform 0.1s;
         }
 
@@ -165,7 +150,7 @@
         .btn-danger { background: #ef4444; }
         .btn-gray   { background: #6b7280; }
 
-        /* ====== ТАБЛИЦА ====== */
+        /* ====== TABLE ====== */
         table { width: 100%; border-collapse: collapse; }
 
         th {
@@ -208,8 +193,7 @@
         #search_results {
             position: absolute;
             top: calc(100% + 4px);
-            left: 0;
-            right: 0;
+            left: 0; right: 0;
             background: white;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
@@ -241,7 +225,6 @@
         }
 
         #live_limits h2 { font-size: 14px; margin-bottom: 10px; color: #1d4ed8; }
-
         #live_limits table { font-size: 13px; }
         #live_limits td { padding: 5px 8px; border: none; }
 
@@ -323,33 +306,28 @@
             box-shadow: 0 16px 50px rgba(0,0,0,0.2);
         }
 
-        .undo-box p {
-            font-size: 16px;
-            margin: 0 0 22px;
-            color: #374151;
+        .undo-box p { font-size: 16px; margin: 0 0 22px; color: #374151; }
+        .undo-buttons { display: flex; gap: 10px; justify-content: center; }
+
+        /* ====== КНОПКА "ПОКАЗАТЬ ЕЩЁ" ====== */
+        .load-more-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #f8faff;
+            color: #2563eb;
+            border: 2px dashed #bfdbfe;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            text-align: center;
+            transition: background 0.2s;
         }
 
-        .undo-buttons { display: flex; gap: 10px; justify-content: center; }
-        .load-more-btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background: #f8faff;
-    color: #2563eb;
-    border: 2px dashed #bfdbfe;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 8px;
-    text-align: center;
-    transition: background 0.2s;
-}
+        .load-more-btn:hover { background: #eff6ff; transform: none; }
 
-.load-more-btn:hover {
-    background: #eff6ff;
-    transform: none;
-}
         /* ====== КОНФЕТТИ ====== */
         .confetti-piece {
             position: fixed;
@@ -376,6 +354,7 @@
             width: 150px;
             border-radius: 12px;
             margin-bottom: 10px;
+            transition: opacity 0.3s;
         }
 
         .pet-widget button {
@@ -384,8 +363,7 @@
             padding: 9px;
             border-radius: 10px;
         }
-        
-        /* ====== АДАПТИВ ====== */
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main { margin-left: 0; padding: 20px; }
@@ -404,16 +382,21 @@
 
     <div class="sidebar-user">
         <div class="name">{{ session["user"] }}</div>
-        <span class="role-badge">Секретарь</span>
+        <span class="sidebar-role">Секретарь</span>
     </div>
 
     <div class="sidebar-bottom">
+        {% if session.get("roles") and session["roles"]|length > 1 %}
+        <a href="/switch_role">⇄ Сменить роль</a>
+        {% endif %}
         <a href="/logout">← Выйти</a>
     </div>
 </div>
 
 <!-- MAIN -->
 <div class="main">
+
+    <div class="page-title">Панель секретаря</div>
 
     <!-- Уведомления -->
     <div id="notifications"></div>
@@ -434,22 +417,28 @@
             <div id="search_results"></div>
         </div>
 
-        <!-- Лимиты -->
         <div id="live_limits" style="display:none;">
             <h2>Лимиты студента</h2>
             <table>
-                <tr><td>Печать</td>            <td id="limit_prints"></td>
-                    <td>Копии</td>             <td id="limit_copies"></td></tr>
-                <tr><td>Тетради</td>           <td id="limit_notebooks"></td>
-                    <td>Линейки</td>           <td id="limit_rulers"></td></tr>
-                <tr><td>Корректоры</td>        <td id="limit_correctors"></td>
-                    <td>Карандаши</td>         <td id="limit_pencils"></td></tr>
-                <tr><td>Ластики/Точилки</td>   <td id="limit_erasers"></td>
-                    <td>Миллиметровки</td>     <td id="limit_millimeters"></td></tr>
+                <tr>
+                    <td>Печать</td>    <td id="limit_prints"></td>
+                    <td>Копии</td>     <td id="limit_copies"></td>
+                </tr>
+                <tr>
+                    <td>Тетради</td>   <td id="limit_notebooks"></td>
+                    <td>Линейки</td>   <td id="limit_rulers"></td>
+                </tr>
+                <tr>
+                    <td>Корректоры</td> <td id="limit_correctors"></td>
+                    <td>Карандаши</td>  <td id="limit_pencils"></td>
+                </tr>
+                <tr>
+                    <td>Ластики/Точилки</td> <td id="limit_erasers"></td>
+                    <td>Миллиметровки</td>   <td id="limit_millimeters"></td>
+                </tr>
             </table>
         </div>
 
-        <!-- Поля в сетке -->
         <div class="fields-grid" style="margin-top:14px;">
             <div class="field-group">
                 <label>Печать</label>
@@ -493,7 +482,7 @@
     <!-- ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
     <div class="card">
         <h2>📋 Последние действия</h2>
-        <div style="max-height:500px; overflow-y:auto; border-radius:10px;">
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
@@ -507,8 +496,9 @@
                 </thead>
                 <tbody id="entries_tbody">
                 {% for entry in entries %}
-                <tr id="row-{{ entry.id }}">
-                    
+                <tr id="row-{{ entry.id }}"
+                    class="entry-row"
+                    style="{% if loop.index > 20 %}display:none;{% endif %}">
                     <td><span class="id-badge">{{ entry.student_id }}</span></td>
                     <td>{{ entry.student_name }}</td>
                     <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
@@ -529,6 +519,12 @@
                 </tbody>
             </table>
         </div>
+
+        {% if entries|length > 20 %}
+        <button class="load-more-btn" id="load-more-btn" onclick="loadMore()">
+            Показать ещё ({{ entries|length - 20 }} из {{ entries|length }})
+        </button>
+        {% endif %}
     </div>
 
 </div><!-- /main -->
@@ -546,14 +542,14 @@
 </div>
 
 
-<!-- ВИДЖЕТ ДЛЯ ДАРЬИ -->
+<!-- ====== ВИДЖЕТ ДЛЯ ДАРЬИ ====== -->
 {% if session["user"] == "Исаакян Дарья Эдуардовна" %}
 <div class="pet-widget">
-    <img id="petGif" src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" alt="котик">
-    <button onclick="changePetGif()">Погладить котика 🐾</button>
+    <img id="petGif" src="" alt="котик">
+    <button onclick="nextGif()">Погладить котика 🐾</button>
 </div>
 <script>
-const petGifs = [
+const PET_GIFS = [
     "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
     "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
     "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif",
@@ -561,40 +557,86 @@ const petGifs = [
     "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
     "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif",
     "https://media.giphy.com/media/8vQSQ3cNXuDGo/giphy.gif",
-    "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif"
+    "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif",
+    "https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif",
+    "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif",
+    "https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif",
+    "https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif",
+    "https://media.giphy.com/media/ule4vhcY1xEKQ/giphy.gif",
+    "https://media.giphy.com/media/5i7umUqAOYYEw/giphy.gif",
+    "https://media.giphy.com/media/o75ajIFH0QnXBQ/giphy.gif",
+    "https://media.giphy.com/media/pjFoQHzqHuBMHBVRBg/giphy.gif",
+    "https://media.giphy.com/media/gJ3mEToTDJn3LT6kCT/giphy.gif",
+    "https://media.giphy.com/media/nR4L10XlJcSeQ/giphy.gif",
+    "https://media.giphy.com/media/cVZe3dHOlBPe/giphy.gif",
+    "https://media.giphy.com/media/Zb63DFkD3cMkw/giphy.gif"
 ];
-function changePetGif() {
-    const cur = document.getElementById("petGif").src;
-    let next;
-    do { next = petGifs[Math.floor(Math.random() * petGifs.length)]; }
-    while (next === cur && petGifs.length > 1);
-    document.getElementById("petGif").src = next;
+
+let petIdx = Math.floor(Math.random() * PET_GIFS.length);
+
+function nextGif() {
+    const img = document.getElementById("petGif");
+    img.style.opacity = "0";
+    setTimeout(() => {
+        petIdx = (petIdx + 1) % PET_GIFS.length;
+        img.src = PET_GIFS[petIdx];
+        img.style.opacity = "1";
+    }, 300);
 }
+
+// Начальная гифка
+document.getElementById("petGif").src = PET_GIFS[petIdx];
+
+// Автосмена каждые 8 секунд
+setInterval(nextGif, 8000);
 </script>
 {% endif %}
 
-<!-- ВИДЖЕТ ДЛЯ АНАСТАСИИ -->
+
+<!-- ====== ВИДЖЕТ ДЛЯ АНАСТАСИИ ====== -->
 {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
 <div class="pet-widget">
-    <img id="petGif" src="https://media.giphy.com/media/MhHXeM4SpKrpC/giphy.gif" alt="выдра">
-    <button onclick="changePetGif()" style="background:#0d9488;">Погладить выдру 🦦</button>
+    <img id="petGif" src="" alt="выдра">
+    <button onclick="nextGif()" style="background:#0d9488;">Погладить выдру 🦦</button>
 </div>
 <script>
-const petGifs = [
+const PET_GIFS = [
     "https://media.giphy.com/media/MhHXeM4SpKrpC/giphy.gif",
     "https://media.giphy.com/media/3oriO6Oq5NXgrMkuSs/giphy.gif",
     "https://media.giphy.com/media/l0IypeKl9NJhPFMrK/giphy.gif",
     "https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif",
     "https://media.giphy.com/media/3o7abB06u9bNzA8lu8/giphy.gif",
-    "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif"
+    "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif",
+    "https://media.giphy.com/media/8UGGp7rQvfhe8/giphy.gif",
+    "https://media.giphy.com/media/zHd3eDxQZS5tW/giphy.gif",
+    "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
+    "https://media.giphy.com/media/l2JedJsO3OPMdVSne/giphy.gif",
+    "https://media.giphy.com/media/3o7TKxOhkp8gO0LXMI/giphy.gif",
+    "https://media.giphy.com/media/26BRzozg4TCBXv6QU/giphy.gif",
+    "https://media.giphy.com/media/l3vR5K4OkJnHJFAuY/giphy.gif",
+    "https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif",
+    "https://media.giphy.com/media/26BRrSvJEDf0IQWAM/giphy.gif",
+    "https://media.giphy.com/media/3oEjHWPTo7c0ajPwty/giphy.gif",
+    "https://media.giphy.com/media/26xBI73gWquCBLCDO/giphy.gif",
+    "https://media.giphy.com/media/l2JedEEHFbhFmx0Cs/giphy.gif",
+    "https://media.giphy.com/media/3oEjHV0z8S7WM4MwnK/giphy.gif",
+    "https://media.giphy.com/media/26BRBupa6nRXMGBP2/giphy.gif"
 ];
-function changePetGif() {
-    const cur = document.getElementById("petGif").src;
-    let next;
-    do { next = petGifs[Math.floor(Math.random() * petGifs.length)]; }
-    while (next === cur && petGifs.length > 1);
-    document.getElementById("petGif").src = next;
+
+let petIdx = Math.floor(Math.random() * PET_GIFS.length);
+
+function nextGif() {
+    const img = document.getElementById("petGif");
+    img.style.opacity = "0";
+    setTimeout(() => {
+        petIdx = (petIdx + 1) % PET_GIFS.length;
+        img.src = PET_GIFS[petIdx];
+        img.style.opacity = "1";
+    }, 300);
 }
+
+document.getElementById("petGif").src = PET_GIFS[petIdx];
+setInterval(nextGif, 8000);
 </script>
 {% endif %}
 
@@ -626,10 +668,33 @@ function formatTs(raw) {
     return `${day} ${month}, ${hh}:${mm}`;
 }
 
-// Форматируем все существующие строки при загрузке
 document.querySelectorAll(".ts").forEach(td => {
     td.textContent = formatTs(td.dataset.ts);
 });
+
+// ======================================================
+// ПОКАЗАТЬ ЕЩЁ
+// ======================================================
+
+let shownCount = 20;
+
+function loadMore() {
+    const rows = Array.from(document.querySelectorAll(".entry-row"));
+    const next = Math.min(shownCount + 20, rows.length);
+    for (let i = shownCount; i < next; i++) {
+        rows[i].style.display = "";
+    }
+    shownCount = next;
+    const btn = document.getElementById("load-more-btn");
+    if (btn) {
+        const remaining = rows.length - shownCount;
+        if (remaining <= 0) {
+            btn.remove();
+        } else {
+            btn.textContent = `Показать ещё (${remaining} из ${rows.length})`;
+        }
+    }
+}
 
 // ======================================================
 // УВЕДОМЛЕНИЯ
@@ -688,7 +753,7 @@ function prependEntry(e) {
     const tbody  = document.getElementById("entries_tbody");
     const tr     = document.createElement("tr");
     tr.id        = `row-${e.id}`;
-    tr.className = "new-row";
+    tr.className = "new-row entry-row";
     tr.innerHTML = `
         <td><span class="id-badge">${e.student_id}</span></td>
         <td>${e.student_name}</td>
@@ -706,7 +771,7 @@ function prependEntry(e) {
         </td>
     `;
     tbody.insertBefore(tr, tbody.firstChild);
-    while (tbody.rows.length > 20) tbody.removeChild(tbody.lastChild);
+    shownCount++;
 }
 
 // ======================================================
@@ -720,7 +785,7 @@ function launchConfetti(emojis = ["🎉","✨","🎊","⭐","🏆"]) {
         el.innerText  = emojis[Math.floor(Math.random() * emojis.length)];
         el.style.left = Math.random() * 100 + "vw";
         el.style.top  = "-60px";
-        el.style.fontSize = (18 + Math.random() * 18) + "px";
+        el.style.fontSize   = (18 + Math.random() * 18) + "px";
         el.style.transition = `top ${4 + Math.random() * 2}s linear, opacity 1s`;
         document.body.appendChild(el);
         setTimeout(() => { el.style.top = "110vh"; el.style.opacity = "0"; }, 100 + i * 40);
@@ -729,7 +794,7 @@ function launchConfetti(emojis = ["🎉","✨","🎊","⭐","🏆"]) {
 }
 
 // ======================================================
-// СЧЁТЧИКИ ТАЙНЫХ АЧИВОК
+// ТАЙНЫЕ АЧИВКИ
 // ======================================================
 
 let sessionIssues = 0;
@@ -756,12 +821,10 @@ function checkSecretAchievements(payload) {
     const wday = now.getDay();
     const day  = now.getDate();
 
-    // 📅 ПЯТНИЦА 13-Е
     if (wday === 5 && day === 13) {
-        unlockAchievement("friday13", "😱 Тайная ачивка: Пятница 13-е! Бесстрашный профкомовец!");
+        unlockAchievement("friday13", "😱 Тайная ачивка: Пятница 13-е!");
     }
 
-    // 🌈 РАДУГА — все 8 видов за один раз
     const allTypes = [
         payload.print_count, payload.copy_count, payload.notebook_count,
         payload.ruler_count, payload.corrector_count, payload.pencil_count,
@@ -769,10 +832,9 @@ function checkSecretAchievements(payload) {
     ].every(v => (v || 0) > 0);
 
     if (allTypes) {
-        unlockAchievement("rainbow", "🌈 Тайная ачивка: Радуга! Все 8 видов за один раз!");
+        unlockAchievement("rainbow", "🌈 Тайная ачивка: Радуга! Все 8 видов за раз!");
     }
 
-    // ⚡ СПИДРАН — 20 выдач за сессию
     sessionIssues++;
     if (sessionIssues >= 20) {
         unlockAchievement("speedrun", "⚡ Тайная ачивка: Спидран! 20 выдач за сессию!");
@@ -781,11 +843,10 @@ function checkSecretAchievements(payload) {
     resetSonaTimer();
 }
 
-// 😴 СОНЯ — 5 минут без действий
 function resetSonaTimer() {
     if (sonaTimer) clearTimeout(sonaTimer);
     sonaTimer = setTimeout(() => {
-        unlockAchievement("sleepy", "😴 Тайная ачивка: Соня! 5 минут полной тишины...");
+        unlockAchievement("sleepy", "😴 Тайная ачивка: Соня! 5 минут тишины...");
     }, 5 * 60 * 1000);
 }
 
@@ -798,7 +859,6 @@ resetSonaTimer();
 async function submitIssue() {
 
     const student_id = studentIdInput.value.trim();
-
     if (!student_id) {
         showNotification("Выберите студента", "error");
         return;
@@ -832,14 +892,12 @@ async function submitIssue() {
             showNotification(data.error, "error");
         } else {
             showNotification(data.message, "message");
-
             if (data.achievement) {
                 data.achievement.split("||").forEach(a => {
                     showNotification(a.trim(), "achievement");
                 });
                 launchConfetti();
             }
-
             updateLimits(data.limits);
             prependEntry(data.entry);
             checkSecretAchievements(payload);
@@ -854,7 +912,7 @@ async function submitIssue() {
 }
 
 // ======================================================
-// ПОДТВЕРЖДЕНИЕ ОТМЕНЫ ВЫДАЧИ
+// ПОДТВЕРЖДЕНИЕ ОТМЕНЫ
 // ======================================================
 
 let pendingUndoId  = null;
@@ -865,9 +923,8 @@ function undoEntry(entryId, btn) {
     pendingUndoBtn = btn;
     document.getElementById("undo-overlay").style.display = "flex";
     document.getElementById("undo-ok-btn").onclick = () => {
-        // Сохраняем значения ДО закрытия, чтобы не потерять при обнулении
-        const id  = pendingUndoId;
-        const b   = pendingUndoBtn;
+        const id = pendingUndoId;
+        const b  = pendingUndoBtn;
         closeUndoConfirm();
         doUndo(id, b);
     };
@@ -880,13 +937,10 @@ function closeUndoConfirm() {
 }
 
 async function doUndo(entryId, btn) {
-
     if (btn) { btn.disabled = true; btn.textContent = "..."; }
-
     try {
         const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
         const data = await res.json();
-
         if (data.ok) {
             const row = document.getElementById(`row-${entryId}`);
             if (row) {
@@ -917,18 +971,18 @@ searchInput.addEventListener("input", async function() {
     const cmd   = query.toLowerCase();
 
     const triggers = {
-        "tiger":   () => { showNotification("🐯 Тигр найден! Рррр!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов!"); },
-        "/tiger":  () => { showNotification("🐯 Тигр найден! Рррр!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов!"); },
-        "matrix":  () => { activateMatrix(); this.value = ""; unlockAchievement("matrix", "🟢 Тайная ачивка: Читер! Ты нашёл матрицу."); },
-        "/matrix": () => { activateMatrix(); this.value = ""; unlockAchievement("matrix", "🟢 Тайная ачивка: Читер! Ты нашёл матрицу."); },
-        "boss":    () => { body.style.background = "#fff7ed"; showNotification("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ", "message"); this.value = ""; },
-        "/boss":   () => { body.style.background = "#fff7ed"; showNotification("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ", "message"); this.value = ""; },
+        "tiger":    () => { showNotification("🐯 Тигр найден!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов!"); },
+        "/tiger":   () => { showNotification("🐯 Тигр найден!", "message"); this.value = ""; unlockAchievement("tiger_found", "🐯 Тайная ачивка: Тигролов!"); },
+        "matrix":   () => { activateMatrix(); this.value = ""; unlockAchievement("matrix", "🟢 Тайная ачивка: Читер! Ты нашёл матрицу."); },
+        "/matrix":  () => { activateMatrix(); this.value = ""; unlockAchievement("matrix", "🟢 Тайная ачивка: Читер!"); },
+        "boss":     () => { body.style.background = "#fff7ed"; showNotification("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ", "message"); this.value = ""; },
+        "/boss":    () => { body.style.background = "#fff7ed"; showNotification("⚠️ ПРЕДСЕДАТЕЛЬ РЯДОМ", "message"); this.value = ""; },
         "supreme":  () => { body.style.background = "linear-gradient(135deg,#fef3c7,#fde68a)"; showNotification("👑 SUPREME MODE", "message"); this.value = ""; },
         "/supreme": () => { body.style.background = "linear-gradient(135deg,#fef3c7,#fde68a)"; showNotification("👑 SUPREME MODE", "message"); this.value = ""; },
-        "party":   () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
-        "/party":  () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
-        "reset":   () => { body.style.background = ""; this.value = ""; showNotification("♻️ Тема сброшена", "message"); },
-        "/reset":  () => { body.style.background = ""; this.value = ""; showNotification("♻️ Тема сброшена", "message"); },
+        "party":    () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
+        "/party":   () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
+        "reset":    () => { body.style.background = ""; showNotification("♻️ Тема сброшена", "message"); this.value = ""; },
+        "/reset":   () => { body.style.background = ""; showNotification("♻️ Тема сброшена", "message"); this.value = ""; },
     };
 
     if (triggers[cmd]) {
@@ -942,9 +996,7 @@ searchInput.addEventListener("input", async function() {
     try {
         const res      = await fetch(`/search_students?q=${encodeURIComponent(query)}`);
         const students = await res.json();
-
         resultsBox.innerHTML = "";
-
         students.forEach(student => {
             const div = document.createElement("div");
             div.className = "search-item";
@@ -956,10 +1008,8 @@ searchInput.addEventListener("input", async function() {
                 searchInput.value    = student.full_name;
                 studentIdInput.value = student.student_id;
                 resultsBox.innerHTML = "";
-
                 const limRes = await fetch(`/student_limits/${student.student_id}`);
                 updateLimits(await limRes.json());
-
                 document.getElementById("print_count").focus();
             };
             resultsBox.appendChild(div);
@@ -1008,54 +1058,7 @@ if (month === 12 && dateDay >= 25) setTimeout(() => launchConfetti(["🎄","⭐"
 // ======================================================
 
 setInterval(() => fetch("/ping").catch(() => {}), 240000);
-// ======================================================
-// ОГРАНИЧЕНИЕ СТРОК В ТАБЛИЦЕ ПОСЛЕДНИХ ДЕЙСТВИЙ
-// По умолчанию показывается 20, остальные скрыты.
-// Кнопка "Показать ещё" открывает следующие 20.
-// ======================================================
 
-(function() {
-    const BATCH = 20;
-
-    function initTable(tbodyId, btnId) {
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-        if (rows.length <= BATCH) return;
-
-        // Скрываем всё что после BATCH
-        rows.forEach((row, i) => {
-            if (i >= BATCH) row.style.display = "none";
-        });
-
-        // Создаём кнопку "Показать ещё"
-        let shown = BATCH;
-
-        const btn = document.createElement("button");
-        btn.id        = btnId;
-        btn.className = "load-more-btn";
-        btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
-        tbody.closest("table").after(btn);
-
-        btn.onclick = () => {
-            const next = Math.min(shown + BATCH, rows.length);
-            for (let i = shown; i < next; i++) {
-                rows[i].style.display = "";
-            }
-            shown = next;
-            if (shown >= rows.length) {
-                btn.remove();
-            } else {
-                btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
-            }
-        };
-    }
-
-    // Инициализируем все таблицы на странице
-    initTable("entries_tbody",    "load-more-entries");
-    initTable("entries-tbody",    "load-more-entries-2");
-})();
 </script>
 </body>
 </html>
