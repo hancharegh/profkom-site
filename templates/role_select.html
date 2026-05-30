@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <title>Выбор роли</title>
+    <style>
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e1b4b 0%, #111827 60%, #1e3a5f 100%);
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+            text-align: center;
+        }
+
+        .logo {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: bold;
+            color: #111827;
+            margin: 0 0 6px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 28px;
+        }
+
+        .user-name {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #374151;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 28px;
+        }
+
+        .roles-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .role-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .role-btn:hover {
+            border-color: var(--color);
+            background: var(--bg);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            opacity: 1;
+        }
+
+        .role-btn:active {
+            transform: translateY(0);
+        }
+
+        .role-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .role-info { flex: 1; }
+
+        .role-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #111827;
+            display: block;
+        }
+
+        .role-desc {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+            display: block;
+        }
+
+        .role-arrow {
+            color: #d1d5db;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .role-btn:hover .role-arrow {
+            color: var(--color);
+        }
+
+        /* Цвета для каждой роли */
+        .role-chairman     { --color: #7c3aed; --bg: #f5f3ff; }
+        .role-vice         { --color: #6d28d9; --bg: #ede9fe; }
+        .role-secretary    { --color: #2563eb; --bg: #eff6ff; }
+        .role-bureau-1     { --color: #dc2626; --bg: #fef2f2; }
+        .role-bureau-2     { --color: #ea580c; --bg: #fff7ed; }
+        .role-bureau-3     { --color: #ca8a04; --bg: #fefce8; }
+        .role-bureau-4     { --color: #16a34a; --bg: #f0fdf4; }
+        .role-bureau-5     { --color: #2563eb; --bg: #eff6ff; }
+
+        .logout-link {
+            font-size: 13px;
+            color: #9ca3af;
+            text-decoration: none;
+        }
+
+        .logout-link:hover { color: #6b7280; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="logo">⚡</div>
+
+    <h1>Добро пожаловать</h1>
+    <p class="subtitle">Выберите роль для входа</p>
+
+    <div class="user-name">👤 {{ user }}</div>
+
+    <form method="POST" action="/select_role">
+        <div class="roles-grid">
+
+        {% for option in role_options %}
+
+            {% set role = option.role %}
+            {% set label = option.label %}
+
+            {% if role == "chairman" %}
+                {% set icon = "👑" %}
+                {% set desc = "Полный доступ" %}
+                {% set cls  = "role-chairman" %}
+            {% elif role == "vice_chairman" %}
+                {% set icon = "🎖️" %}
+                {% set desc = "Управление секретарями" %}
+                {% set cls  = "role-vice" %}
+            {% elif role == "secretary" %}
+                {% set icon = "📋" %}
+                {% set desc = "Выдача продукции" %}
+                {% set cls  = "role-secretary" %}
+            {% elif role == "bureau" %}
+                {% set icon = "🏛️" %}
+                {% set desc = "Выдача и список студентов" %}
+                {% set bureau_n = option.label[-1] if option.label[-1].isdigit() else "" %}
+                {% if bureau_n == "1" %}{% set cls = "role-bureau-1" %}
+                {% elif bureau_n == "2" %}{% set cls = "role-bureau-2" %}
+                {% elif bureau_n == "3" %}{% set cls = "role-bureau-3" %}
+                {% elif bureau_n == "4" %}{% set cls = "role-bureau-4" %}
+                {% else %}{% set cls = "role-bureau-5" %}
+                {% endif %}
+            {% else %}
+                {% set icon = "👤" %}
+                {% set desc = "" %}
+                {% set cls  = "role-secretary" %}
+            {% endif %}
+
+            <button type="submit" name="role" value="{{ role }}"
+                    class="role-btn {{ cls }}">
+                <div class="role-icon">{{ icon }}</div>
+                <div class="role-info">
+                    <span class="role-title">{{ label }}</span>
+                    <span class="role-desc">{{ desc }}</span>
+                </div>
+                <span class="role-arrow">→</span>
+            </button>
+
+        {% endfor %}
+
+        </div>
+    </form>
+
+    <a href="/logout" class="logout-link">← Выйти из аккаунта</a>
+
+</div>
+
+</body>
+</html>
