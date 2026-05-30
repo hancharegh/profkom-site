@@ -79,14 +79,12 @@
             background: rgba(255,255,255,0.08);
             color: white;
             transform: none;
+            opacity: 1;
         }
 
         .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
 
-        .sidebar-bottom {
-            padding: 0 24px;
-            margin-top: auto;
-        }
+        .sidebar-bottom { padding: 0 24px; margin-top: auto; }
 
         .sidebar-bottom a {
             display: block;
@@ -112,7 +110,7 @@
             margin: 0 0 24px;
         }
 
-        /* ====== STATS GRID ====== */
+        /* ====== STATS ====== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -206,7 +204,7 @@
         table { width: 100%; border-collapse: collapse; }
 
         th {
-            background: #f8f5ff;
+            background: #f5f3ff;
             padding: 12px 14px;
             text-align: left;
             font-size: 12px;
@@ -229,10 +227,12 @@
         /* Бейджи ролей */
         .role-badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 3px 9px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
+            margin-right: 4px;
+            margin-bottom: 2px;
         }
 
         .role-secretary { background: #e0f2fe; color: #0369a1; }
@@ -262,6 +262,47 @@
 
         /* Поле бюро — скрыто по умолчанию */
         #bureau-field { display: none; }
+
+        /* Поиск студентов в форме добавления */
+        .user-search-wrapper { position: relative; }
+
+        #user_search_results {
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0; right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            z-index: 999;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .user-search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .user-search-item:last-child { border-bottom: none; }
+        .user-search-item:hover { background: #f5f3ff; }
+
+        /* Статус при добавлении пользователя */
+        #add-user-status {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .status-ok      { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .status-info    { background: #eff6ff; color: #1d4ed8; border-left: 4px solid #3b82f6; }
+        .status-error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
 
         /* ====== MODAL ====== */
         .modal-overlay {
@@ -309,8 +350,7 @@
             background: #f3f4f6;
             color: #374151;
             border: none;
-            width: 34px;
-            height: 34px;
+            width: 34px; height: 34px;
             border-radius: 50%;
             font-size: 16px;
             cursor: pointer;
@@ -319,7 +359,6 @@
             justify-content: center;
             padding: 0;
             flex-shrink: 0;
-            transition: background 0.2s;
         }
 
         .modal-close:hover { background: #e5e7eb; transform: none; }
@@ -353,8 +392,7 @@
         /* ====== TOAST ====== */
         #toast-container {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 20px; right: 20px;
             z-index: 9999;
             display: flex;
             flex-direction: column;
@@ -368,11 +406,12 @@
             font-weight: bold;
             box-shadow: 0 4px 14px rgba(0,0,0,0.15);
             animation: toastIn 0.3s ease;
-            max-width: 320px;
+            max-width: 360px;
         }
 
         .toast-success { background: #dcfce7; color: #166534; }
         .toast-error   { background: #fee2e2; color: #991b1b; }
+        .toast-info    { background: #eff6ff; color: #1d4ed8; }
 
         @keyframes toastIn {
             from { opacity: 0; transform: translateX(16px); }
@@ -397,7 +436,6 @@
 
         .pass-inline input { margin: 0; flex: 1; min-width: 120px; }
 
-        /* Загрузка CSV */
         .upload-section {
             display: flex;
             gap: 12px;
@@ -408,7 +446,6 @@
             border-top: 1px solid #f3f4f6;
         }
 
-        /* Фильтр-кнопки */
         .filter-row {
             display: flex;
             flex-wrap: wrap;
@@ -426,26 +463,25 @@
             border: none;
             transition: opacity 0.2s;
         }
-        .load-more-btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background: #f8faff;
-    color: #2563eb;
-    border: 2px dashed #bfdbfe;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 8px;
-    text-align: center;
-    transition: background 0.2s;
-}
 
-.load-more-btn:hover {
-    background: #eff6ff;
-    transform: none;
-}
+        /* Кнопка «Показать ещё» */
+        .load-more-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #f8f5ff;
+            color: #7c3aed;
+            border: 2px dashed #c4b5fd;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .load-more-btn:hover { background: #ede9fe; transform: none; }
 
         @media (max-width: 768px) {
             .sidebar { display: none; }
@@ -532,8 +568,7 @@
             <thead>
                 <tr>
                     <th>ФИО</th>
-                    <th>Роль</th>
-                    <th>Бюро</th>
+                    <th>Роли</th>
                     <th>Действия</th>
                 </tr>
             </thead>
@@ -544,21 +579,23 @@
                 <td>{{ secretary.name }}</td>
 
                 <td>
-                    {% if secretary.role == "vice_chairman" %}
-                        <span class="role-badge role-vice">Зам. председателя</span>
-                    {% elif secretary.role == "bureau" %}
-                        <span class="role-badge role-bureau">Профбюро</span>
-                    {% else %}
-                        <span class="role-badge role-secretary">Секретарь</span>
-                    {% endif %}
-                </td>
-
-                <td>
-                    {% if secretary.bureau %}
-                        <span class="bureau-badge">№{{ secretary.bureau }}</span>
-                    {% else %}
-                        <span style="color:#d1d5db;">—</span>
-                    {% endif %}
+                    {% set roles = secretary.roles if secretary.roles else ([secretary.role] if secretary.role else ['secretary']) %}
+                    {% for role in roles %}
+                        {% if role == "vice_chairman" %}
+                            <span class="role-badge role-vice">Зам. председателя</span>
+                        {% elif role == "bureau" %}
+                            <span class="role-badge role-bureau">
+                                Профбюро
+                                {%- if secretary.bureaus and secretary.bureaus.bureau %}
+                                    &nbsp;№{{ secretary.bureaus.bureau[0] }}
+                                {%- elif secretary.bureau %}
+                                    &nbsp;№{{ secretary.bureau }}
+                                {%- endif %}
+                            </span>
+                        {% elif role == "secretary" %}
+                            <span class="role-badge role-secretary">Секретарь</span>
+                        {% endif %}
+                    {% endfor %}
                 </td>
 
                 <td>
@@ -598,26 +635,38 @@
         </table>
 
         <hr style="margin:22px 0; border:none; border-top:1px solid #f3f4f6;">
-        <h3>Добавить пользователя</h3>
+        <h3>Добавить / назначить роль</h3>
 
-        <form method="POST" action="/add_secretary"
-              style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+        <p style="font-size:13px; color:#6b7280; margin:0 0 14px;">
+            Если человек уже есть в системе — ему будет добавлена роль.
+            Если нового — будет создан аккаунт.
+        </p>
 
-            <div style="flex:2; min-width:180px;">
-                <label style="margin-top:0;">ФИО</label>
-                <input type="text" name="name" placeholder="Фамилия Имя Отчество"
-                       required style="margin:0;">
-            </div>
+        <!-- Поиск по базе студентов -->
+        <div class="user-search-wrapper">
+            <label style="margin-top:0;">ФИО (поиск из базы студентов)</label>
+            <input
+                type="text"
+                id="user-name-input"
+                placeholder="Начните вводить ФИО..."
+                autocomplete="off"
+                style="margin-bottom:4px;"
+            >
+            <div id="user_search_results"></div>
+        </div>
 
-            <div style="flex:1; min-width:130px;">
-                <label style="margin-top:0;">Пароль</label>
-                <input type="password" name="password" placeholder="Пароль"
-                       required style="margin:0;">
-            </div>
+        <!-- Пароль — показывается только если человека нет в системе -->
+        <div id="password-field">
+            <label>Пароль <span style="color:#9ca3af; font-weight:normal;">(только для нового пользователя)</span></label>
+            <input type="password" id="user-password-input" placeholder="Пароль"
+                   style="margin-bottom:4px;">
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
 
             <div style="flex:1; min-width:160px;">
                 <label style="margin-top:0;">Роль</label>
-                <select name="role" id="role-select" onchange="toggleBureauField()"
+                <select id="user-role-select" onchange="toggleBureauField()"
                         style="margin:0;">
                     <option value="secretary">Секретарь</option>
                     <option value="vice_chairman">Зам. председателя</option>
@@ -627,7 +676,7 @@
 
             <div id="bureau-field" style="flex:1; min-width:130px;">
                 <label style="margin-top:0;">Номер бюро</label>
-                <select name="bureau" style="margin:0;">
+                <select id="user-bureau-select" style="margin:0;">
                     <option value="">—</option>
                     <option value="1">Бюро 1</option>
                     <option value="2">Бюро 2</option>
@@ -637,10 +686,14 @@
                 </select>
             </div>
 
-            <button type="submit" style="height:44px; margin-bottom:0;">
-                Добавить
+            <button onclick="addUser()" style="height:44px; margin-bottom:0;">
+                Применить
             </button>
-        </form>
+
+        </div>
+
+        <div id="add-user-status"></div>
+
     </div>
 
     <!-- СМЕНА СВОЕГО ПАРОЛЯ -->
@@ -776,7 +829,7 @@
             <button class="modal-close" onclick="closeModal('modal-entries')">✕</button>
         </div>
 
-        <div style="overflow-x:auto; max-height:600px; overflow-y:auto;">
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
@@ -787,9 +840,10 @@
                         <th>Дата</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="entries-tbody">
                 {% for entry in entries %}
-                <tr>
+                <tr class="entry-row"
+                    style="{% if loop.index > 20 %}display:none;{% endif %}">
                     <td><span class="id-badge">{{ entry.student_id }}</span></td>
                     <td>{{ entry.student_name }}</td>
                     <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
@@ -803,6 +857,12 @@
                 </tbody>
             </table>
         </div>
+
+        {% if entries|length > 20 %}
+        <button class="load-more-btn" id="load-more-entries" onclick="loadMoreEntries()">
+            Показать ещё ({{ entries|length - 20 }} из {{ entries|length }})
+        </button>
+        {% endif %}
 
     </div>
 </div>
@@ -822,7 +882,8 @@
             <select name="{{ day }}">
                 <option value="">Не назначен</option>
                 {% for secretary in secretaries %}
-                {% if secretary.role == "secretary" %}
+                {% set roles = secretary.roles if secretary.roles else ([secretary.role] if secretary.role else []) %}
+                {% if "secretary" in roles %}
                 <option value="{{ secretary.name }}"
                     {% if schedule[day] == secretary.name %}selected{% endif %}>
                     {{ secretary.name }}
@@ -831,9 +892,7 @@
                 {% endfor %}
             </select>
             {% endfor %}
-            <button type="submit" style="margin-top:4px;">
-                Сохранить расписание
-            </button>
+            <button type="submit" style="margin-top:4px;">Сохранить расписание</button>
         </form>
 
     </div>
@@ -906,6 +965,30 @@ document.querySelectorAll(".ts").forEach(td => {
 });
 
 // ======================================================
+// ПОКАЗАТЬ ЕЩЁ (последние действия)
+// ======================================================
+
+let shownEntries = 20;
+
+function loadMoreEntries() {
+    const rows = Array.from(document.querySelectorAll(".entry-row"));
+    const next = Math.min(shownEntries + 20, rows.length);
+    for (let i = shownEntries; i < next; i++) {
+        rows[i].style.display = "";
+    }
+    shownEntries = next;
+    const btn = document.getElementById("load-more-entries");
+    if (btn) {
+        const remaining = rows.length - shownEntries;
+        if (remaining <= 0) {
+            btn.remove();
+        } else {
+            btn.textContent = `Показать ещё (${remaining} из ${rows.length})`;
+        }
+    }
+}
+
+// ======================================================
 // TOAST
 // ======================================================
 
@@ -914,8 +997,8 @@ function showToast(text, type = "success") {
     el.className   = `toast toast-${type}`;
     el.textContent = text;
     document.getElementById("toast-container").appendChild(el);
-    setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; }, 3000);
-    setTimeout(() => el.remove(), 3400);
+    setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; }, 4000);
+    setTimeout(() => el.remove(), 4400);
 }
 
 // ======================================================
@@ -967,7 +1050,7 @@ function closeConfirm() {
 // ======================================================
 
 function toggleBureauField() {
-    const role = document.getElementById("role-select").value;
+    const role = document.getElementById("user-role-select").value;
     document.getElementById("bureau-field").style.display =
         role === "bureau" ? "block" : "none";
 }
@@ -979,6 +1062,152 @@ function toggleBureauField() {
 function togglePassForm(id) {
     const el = document.getElementById(id);
     el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+// ======================================================
+// ПОИСК СТУДЕНТОВ ДЛЯ ФОРМЫ ДОБАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯ
+// ======================================================
+
+const userNameInput   = document.getElementById("user-name-input");
+const userSearchBox   = document.getElementById("user_search_results");
+
+userNameInput.addEventListener("input", async function() {
+    const query = this.value.trim();
+    if (query.length < 2) { userSearchBox.innerHTML = ""; return; }
+
+    try {
+        const res      = await fetch(`/search_students?q=${encodeURIComponent(query)}`);
+        const students = await res.json();
+
+        userSearchBox.innerHTML = "";
+
+        students.forEach(s => {
+            const div = document.createElement("div");
+            div.className = "user-search-item";
+            div.innerHTML = `
+                <span class="id-badge">${s.student_id}</span>
+                <span>${s.full_name}</span>
+            `;
+            div.onclick = () => {
+                userNameInput.value    = s.full_name;
+                userSearchBox.innerHTML = "";
+                checkExistingUser(s.full_name);
+            };
+            userSearchBox.appendChild(div);
+        });
+    } catch (e) { console.log(e); }
+});
+
+// Проверяем — есть ли уже пользователь с таким ФИО
+async function checkExistingUser(name) {
+    // Небольшой индикатор
+    const statusEl = document.getElementById("add-user-status");
+    statusEl.style.display = "none";
+
+    // Проверяем существование через поиск в /search_students уже сделан выше.
+    // Пароль показываем всегда — сервер сам разберётся нужен ли он.
+}
+
+// ======================================================
+// ДОБАВИТЬ / НАЗНАЧИТЬ РОЛЬ (AJAX)
+// ======================================================
+
+async function addUser() {
+
+    const name     = userNameInput.value.trim();
+    const password = document.getElementById("user-password-input").value.trim();
+    const role     = document.getElementById("user-role-select").value;
+    const bureau   = document.getElementById("user-bureau-select").value || null;
+
+    const statusEl = document.getElementById("add-user-status");
+    statusEl.style.display = "none";
+
+    if (!name) {
+        showToast("Введите ФИО", "error");
+        return;
+    }
+
+    const res  = await fetch("/add_secretary", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ name, password, role, bureau })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+
+        // Показываем статус
+        statusEl.className     = `status-${data.mode === "created" ? "ok" : "info"}`;
+        statusEl.textContent   = data.message;
+        statusEl.style.display = "block";
+
+        if (data.mode === "created") {
+            // Новый пользователь — добавляем строку в таблицу
+            addUserRow(data.user);
+            const stat = document.getElementById("stat-secretaries");
+            stat.textContent = parseInt(stat.textContent) + 1;
+        } else {
+            // Существующий — обновляем строку
+            updateUserRow(data.user);
+        }
+
+        // Очищаем форму
+        userNameInput.value = "";
+        document.getElementById("user-password-input").value = "";
+        userSearchBox.innerHTML = "";
+
+    } else {
+        statusEl.className     = "status-error";
+        statusEl.textContent   = data.error || "Ошибка";
+        statusEl.style.display = "block";
+    }
+}
+
+function roleBadgeHtml(role, bureau) {
+    if (role === "vice_chairman") return `<span class="role-badge role-vice">Зам. председателя</span>`;
+    if (role === "bureau")        return `<span class="role-badge role-bureau">Профбюро${bureau ? " №" + bureau : ""}</span>`;
+    return `<span class="role-badge role-secretary">Секретарь</span>`;
+}
+
+function addUserRow(user) {
+    const tbody = document.getElementById("secretaries-tbody");
+    const tr    = document.createElement("tr");
+    tr.id        = `sec-row-${user.id}`;
+    tr.className = "new-row";
+
+    const rolesHtml = user.roles.map(r => roleBadgeHtml(r, user.bureau)).join(" ");
+
+    tr.innerHTML = `
+        <td>${user.name}</td>
+        <td>${rolesHtml}</td>
+        <td>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button class="btn-outline" style="font-size:12px;padding:7px 12px;"
+                        onclick="togglePassForm('pass-${user.id}')">🔑 Пароль</button>
+                <button class="btn-danger" style="font-size:12px;padding:7px 12px;"
+                        onclick="confirmAction('Удалить пользователя ${user.name}?',()=>deleteSecretary(${user.id}))">
+                    Удалить</button>
+            </div>
+            <div id="pass-${user.id}" style="display:none;margin-top:10px;">
+                <div class="pass-inline">
+                    <input type="password" id="pass-input-${user.id}" placeholder="Новый пароль">
+                    <button class="btn-green" style="padding:9px 14px;white-space:nowrap;"
+                            onclick="changeSecretaryPassword(${user.id})">Сохранить</button>
+                </div>
+            </div>
+        </td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+}
+
+function updateUserRow(user) {
+    const row = document.getElementById(`sec-row-${user.id}`);
+    if (!row) return;
+    const rolesCell = row.cells[1];
+    rolesCell.innerHTML = user.roles.map(r => roleBadgeHtml(r, user.bureau)).join(" ");
+    // Лёгкая анимация обновления
+    row.style.background = "#f5f3ff";
+    setTimeout(() => { row.style.background = ""; }, 800);
 }
 
 // ======================================================
@@ -1016,7 +1245,7 @@ async function deleteSecretary(userId) {
 
     if (data.ok) {
         const row = document.getElementById(`sec-row-${userId}`);
-        if (row) { row.classList.add("removing"); setTimeout(() => row.remove(), 300); }
+        if (row) { row.style.opacity = "0"; row.style.transition = "opacity 0.3s"; setTimeout(() => row.remove(), 300); }
         const stat = document.getElementById("stat-secretaries");
         stat.textContent = Math.max(parseInt(stat.textContent) - 1, 0);
         showToast("Пользователь удалён");
@@ -1072,7 +1301,6 @@ async function addStudent() {
 
         document.getElementById("new-student-name").value   = "";
         document.getElementById("new-student-bureau").value = "";
-
         showToast(`Добавлен: ${fullName} — ID ${data.student_id}`);
     } else {
         showToast(data.error || "Ошибка", "error");
@@ -1089,7 +1317,7 @@ async function deleteStudent(studentId) {
 
     if (data.ok) {
         const row = document.getElementById(`stu-row-${studentId}`);
-        if (row) { row.classList.add("removing"); setTimeout(() => row.remove(), 300); }
+        if (row) { row.style.opacity = "0"; row.style.transition = "opacity 0.3s"; setTimeout(() => row.remove(), 300); }
         const c = document.getElementById("students-count");
         c.textContent = Math.max(parseInt(c.textContent) - 1, 0);
         const s = document.getElementById("stat-students");
@@ -1106,12 +1334,8 @@ async function deleteStudent(studentId) {
 
 let activeBureauFilter = "";
 
-function filterByBureau(val) {
-    activeBureauFilter = val;
-    applyFilters();
-}
-
-function filterStudents() { applyFilters(); }
+function filterByBureau(val) { activeBureauFilter = val; applyFilters(); }
+function filterStudents()     { applyFilters(); }
 
 function applyFilters() {
     const q      = document.getElementById("student-search").value.toLowerCase();
@@ -1139,54 +1363,7 @@ const hash = window.location.hash;
 if (hash === "#students") openModal("modal-students");
 if (hash === "#entries")  openModal("modal-entries");
 if (hash === "#schedule") openModal("modal-schedule");
-// ======================================================
-// ОГРАНИЧЕНИЕ СТРОК В ТАБЛИЦЕ ПОСЛЕДНИХ ДЕЙСТВИЙ
-// По умолчанию показывается 20, остальные скрыты.
-// Кнопка "Показать ещё" открывает следующие 20.
-// ======================================================
 
-(function() {
-    const BATCH = 20;
-
-    function initTable(tbodyId, btnId) {
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-        if (rows.length <= BATCH) return;
-
-        // Скрываем всё что после BATCH
-        rows.forEach((row, i) => {
-            if (i >= BATCH) row.style.display = "none";
-        });
-
-        // Создаём кнопку "Показать ещё"
-        let shown = BATCH;
-
-        const btn = document.createElement("button");
-        btn.id        = btnId;
-        btn.className = "load-more-btn";
-        btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
-        tbody.closest("table").after(btn);
-
-        btn.onclick = () => {
-            const next = Math.min(shown + BATCH, rows.length);
-            for (let i = shown; i < next; i++) {
-                rows[i].style.display = "";
-            }
-            shown = next;
-            if (shown >= rows.length) {
-                btn.remove();
-            } else {
-                btn.textContent = `Показать ещё (${rows.length - shown} из ${rows.length})`;
-            }
-        };
-    }
-
-    // Инициализируем все таблицы на странице
-    initTable("entries_tbody",    "load-more-entries");
-    initTable("entries-tbody",    "load-more-entries-2");
-})();
 </script>
 </body>
 </html>
