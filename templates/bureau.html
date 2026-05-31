@@ -567,6 +567,37 @@
             .main { margin-left: 0; padding: 20px; }
         }
 
+        /* Форма пароля */
+        .pass-form-card {
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+        }
+
+        .pass-field-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .pass-field-row > div { flex: 1; min-width: 160px; }
+        .pass-field-row input { margin: 0; }
+
+        /* Ошибки/успех смены пароля */
+        #pass-status {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .pass-ok  { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .pass-err { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+
     </style>
 </head>
 <body>
@@ -598,6 +629,7 @@
         {% if session.get("roles") and session["roles"]|length > 1 %}
         <a href="/switch_role">⇄ Сменить роль</a>
         {% endif %}
+        <a href="#" onclick="togglePassCard(); return false;">🔑 Сменить пароль</a>
         <a href="/logout">← Выйти</a>
     </div>
 </div>
@@ -617,6 +649,25 @@
             <div class="label">Всего выдач</div>
             <div class="stat">{{ entries_count }}</div>
         </div>
+    </div>
+
+    <!-- Смена пароля (скрыта по умолчанию) -->
+    <div class="pass-form-card" id="pass-card" style="display:none;">
+        <h2 style="margin-bottom:16px;">🔑 Сменить пароль</h2>
+        <div class="pass-field-row">
+            <div>
+                <label style="margin-top:0;">Текущий пароль</label>
+                <input type="password" id="old-password" placeholder="Введите текущий пароль">
+            </div>
+            <div>
+                <label style="margin-top:0;">Новый пароль</label>
+                <input type="password" id="new-password" placeholder="Новый пароль">
+            </div>
+            <button onclick="changeOwnPassword()" style="height:44px; margin-bottom:0;">
+                Сохранить
+            </button>
+        </div>
+        <div id="pass-status"></div>
     </div>
 
     <!-- Уведомления -->
@@ -1284,10 +1335,72 @@ document.addEventListener("keydown", e => {
 });
 
 // ======================================================
+// СМЕНА ПАРОЛЯ
+// ======================================================
+
+function togglePassCard() {
+    const card = document.getElementById("pass-card");
+    const isHidden = card.style.display === "none";
+    card.style.display = isHidden ? "block" : "none";
+    if (isHidden) {
+        document.getElementById("old-password").focus();
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+async function changeOwnPassword() {
+    const oldPass = document.getElementById("old-password").value.trim();
+    const newPass = document.getElementById("new-password").value.trim();
+    const statusEl = document.getElementById("pass-status");
+
+    statusEl.style.display = "none";
+
+    if (!oldPass || !newPass) {
+        statusEl.className     = "pass-err";
+        statusEl.textContent   = "Заполните оба поля";
+        statusEl.style.display = "block";
+        return;
+    }
+
+    try {
+        const res  = await fetch("/change_own_password", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({
+                old_password: oldPass,
+                new_password: newPass
+            })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            statusEl.className     = "pass-ok";
+            statusEl.textContent   = "✓ Пароль успешно изменён";
+            statusEl.style.display = "block";
+            document.getElementById("old-password").value = "";
+            document.getElementById("new-password").value = "";
+            // Скрываем карточку через 2 секунды
+            setTimeout(() => {
+                document.getElementById("pass-card").style.display = "none";
+                statusEl.style.display = "none";
+            }, 2000);
+        } else {
+            statusEl.className     = "pass-err";
+            statusEl.textContent   = data.error || "Ошибка";
+            statusEl.style.display = "block";
+        }
+    } catch (e) {
+        statusEl.className     = "pass-err";
+        statusEl.textContent   = "Ошибка соединения";
+        statusEl.style.display = "block";
+    }
+}
+
+// ======================================================
 // ANTI SLEEP
 // ======================================================
 
-setInterval(() => fetch("/ping").catch(() => {}), 240000);
+setInterval(() => fetch("/ping").catch(() => {}), 30000);
 
 </script>
 </body>
