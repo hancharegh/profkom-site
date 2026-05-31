@@ -3,94 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-    <title>ПРОФКОМ</title>
-
+    <title>Профком СПбГТИ(ТУ)</title>
     <style>
 
-        body{
-            font-family:Arial;
-            background:#f3f4f6;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e1b4b 0%, #111827 60%, #1e3a5f 100%);
+            transition: background 0.8s ease;
+            overflow: hidden;
         }
 
-        .card{
-            background:white;
-            padding:40px;
-            border-radius:20px;
-            width:350px;
-            box-shadow:0 0 20px rgba(0,0,0,0.1);
+        /* Фоновые частицы */
+        .bg-dots {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
         }
 
-        .logo{
-            text-align:center;
-            color:#2563eb;
-            font-size:42px;
-            font-weight:bold;
-            margin-bottom:30px;
+        .dot {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.12;
+            animation: float linear infinite;
         }
 
-        input{
-            width:100%;
-            padding:12px;
-            margin-bottom:15px;
-            border-radius:10px;
-            border:1px solid #ccc;
+        @keyframes float {
+            from { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10%  { opacity: 0.12; }
+            90%  { opacity: 0.12; }
+            to   { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
         }
 
-        button{
-            width:100%;
-            padding:12px;
-            border:none;
-            border-radius:10px;
-            background:#2563eb;
-            color:white;
-            cursor:pointer;
-            font-size:16px;
+        /* Карточка */
+        .card {
+            position: relative;
+            z-index: 10;
+            background: white;
+            border-radius: 24px;
+            padding: 44px 40px 36px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+            animation: cardIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+            transition: transform 0.3s;
         }
 
-        .tigers{
-            text-align:center;
-            color:#777;
-            font-style:italic;
-            margin-top:-5px;
-            margin-bottom:20px;
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+
+        /* Логотип */
+        .logo-wrap {
+            text-align: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .logo-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 12px;
+            transition: transform 0.15s;
+            box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+        }
+
+        .logo-icon:active { transform: scale(0.92); }
+
+        .logo-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #111827;
+            letter-spacing: 2px;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 3px;
+            margin-bottom: 28px;
+        }
+
+        /* Счётчик кликов (скрытый) */
+        .click-hint {
+            font-size: 11px;
+            color: #d1d5db;
+            text-align: center;
+            height: 16px;
+            margin-bottom: 4px;
+            transition: opacity 0.3s;
+        }
+
+        /* Поля */
+        .field { margin-bottom: 14px; }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #f9fafb;
+            color: #111827;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .field input:focus {
+            border-color: #7c3aed;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+        }
+
+        /* Подпись */
+        .tagline {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+            font-style: italic;
+            margin: 4px 0 18px;
+        }
+
+        /* Кнопка */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+        }
+
+        .submit-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(124,58,237,0.35);
+        }
+
+        .submit-btn:active { transform: translateY(0); }
+
+        /* Ошибка */
+        .flash-msg {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            border-left: 4px solid #ef4444;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ====== ПАСХАЛКИ ====== */
+
+        /* Тигр */
+        body.tiger-mode {
+            background: linear-gradient(135deg, #92400e, #b45309, #78350f) !important;
+        }
+
+        body.tiger-mode .logo-icon {
+            background: linear-gradient(135deg, #d97706, #b45309);
+        }
+
+        body.tiger-mode .submit-btn {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            box-shadow: 0 4px 16px rgba(217,119,6,0.4);
+        }
+
+        body.tiger-mode .field input:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(217,119,6,0.15);
+        }
+
+        /* Радуга */
+        body.rainbow-mode {
+            background: linear-gradient(135deg,
+                #ff0080, #ff8000, #ffff00, #00ff80, #0080ff, #8000ff) !important;
+            background-size: 300% 300% !important;
+            animation: rainbowBg 3s ease infinite !important;
+        }
+
+        @keyframes rainbowBg {
+            0%   { background-position: 0%   50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0%   50%; }
+        }
+
+        /* Матрица */
+        body.matrix-mode {
+            background: #000 !important;
+        }
+
+        body.matrix-mode .card {
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        body.matrix-mode .logo-title  { color: #00ff00; }
+        body.matrix-mode .logo-subtitle { color: #00aa00; }
+        body.matrix-mode .tagline { color: #007700; }
+        body.matrix-mode .field label { color: #00aa00; }
+
+        body.matrix-mode .field input {
+            background: #000;
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        body.matrix-mode .field input:focus {
+            box-shadow: 0 0 0 3px rgba(0,255,0,0.2);
+        }
+
+        body.matrix-mode .submit-btn {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 4px 16px rgba(0,255,0,0.3);
+        }
+
+        body.matrix-mode .logo-icon {
+            background: linear-gradient(135deg, #003300, #00aa00);
+        }
+
+        /* Тряска карточки */
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%     { transform: translateX(-8px) rotate(-1deg); }
+            40%     { transform: translateX(8px)  rotate(1deg); }
+            60%     { transform: translateX(-6px) rotate(-0.5deg); }
+            80%     { transform: translateX(6px)  rotate(0.5deg); }
+        }
+
+        .card.shaking { animation: shake 0.5s ease; }
+
+        /* Конфетти */
+        .confetti-piece {
+            position: fixed;
+            font-size: 28px;
+            z-index: 99999;
+            pointer-events: none;
+        }
+
+        /* Тост */
+        #login-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 9999;
+            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        #login-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Коды клавиш */
+        .konami-hint {
+            position: fixed;
+            bottom: 12px;
+            right: 16px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.1);
+            pointer-events: none;
+            letter-spacing: 2px;
         }
 
     </style>
-
 </head>
-<body>
+<body id="body">
 
-<div class="card">
+<!-- Фоновые частицы -->
+<div class="bg-dots" id="bg-dots"></div>
 
-    <div class="logo">
-        ПРОФКОМ
+<!-- Тост -->
+<div id="login-toast"></div>
+
+<!-- Подсказка Konami -->
+<div class="konami-hint">↑↑↓↓←→←→</div>
+
+<div class="card" id="card">
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for msg in messages %}
+        <div class="flash-msg">{{ msg }}</div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Логотип — кликабельный для пасхалки -->
+    <div class="logo-wrap" id="logo-wrap">
+        <div class="logo-icon" id="logo-icon">⚡</div>
+        <div class="logo-title">ПРОФКОМ</div>
+        <div class="logo-subtitle">СПбГТИ(ТУ)</div>
     </div>
 
-    <form method="POST">
+    <div class="click-hint" id="click-hint"></div>
 
-        <input
-            type="text"
-            name="name"
-            placeholder="Логин"
-            required
-        >
+    <form method="POST" id="login-form">
 
-        <input
-            type="password"
-            name="password"
-            placeholder="Пароль"
-            required
-        >
-
-        <div class="tigers">
-            для тигров, тигриц и тигрёнков
+        <div class="field">
+            <label>Логин</label>
+            <input type="text" name="name" placeholder="Фамилия Имя Отчество"
+                   autocomplete="username" required>
         </div>
 
-        <button type="submit">
+        <div class="field">
+            <label>Пароль</label>
+            <input type="password" name="password" placeholder="••••••••"
+                   autocomplete="current-password" required>
+        </div>
+
+        <div class="tagline" id="tagline">для тигров, тигриц и тигрёнков</div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">
             Войти
         </button>
 
@@ -98,9 +371,236 @@
 
 </div>
 
+
+<script>
+
+const body      = document.getElementById("body");
+const card      = document.getElementById("card");
+const logoWrap  = document.getElementById("logo-wrap");
+const logoIcon  = document.getElementById("logo-icon");
+const clickHint = document.getElementById("click-hint");
+const tagline   = document.getElementById("tagline");
+const toast     = document.getElementById("login-toast");
+
+// ======================================================
+// ФОНОВЫЕ ЧАСТИЦЫ
+// ======================================================
+
+(function spawnDots() {
+    const container = document.getElementById("bg-dots");
+    const emojis    = ["⭐","✨","🌟","💫","·","·","·","·"];
+
+    for (let i = 0; i < 18; i++) {
+        const el    = document.createElement("div");
+        el.className = "dot";
+        const size  = 6 + Math.random() * 14;
+        el.style.cssText = `
+            left: ${Math.random() * 100}%;
+            width: ${size}px;
+            height: ${size}px;
+            background: rgba(255,255,255,0.6);
+            animation-duration: ${8 + Math.random() * 14}s;
+            animation-delay: ${-Math.random() * 20}s;
+        `;
+        container.appendChild(el);
+    }
+})();
+
+// ======================================================
+// ТОСТ
+// ======================================================
+
+let toastTimer = null;
+
+function showToast(text, duration = 2500) {
+    toast.textContent = text;
+    toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), duration);
+}
+
+// ======================================================
+// КОНФЕТТИ
+// ======================================================
+
+function launchConfetti(emojis = ["🎉","✨","🎊","⭐","🏆","🐯"]) {
+    for (let i = 0; i < 50; i++) {
+        const el      = document.createElement("div");
+        el.className  = "confetti-piece";
+        el.innerText  = emojis[Math.floor(Math.random() * emojis.length)];
+        el.style.left = Math.random() * 100 + "vw";
+        el.style.top  = "-60px";
+        el.style.fontSize   = (16 + Math.random() * 16) + "px";
+        el.style.transition = `top ${3 + Math.random() * 3}s linear, opacity 1s`;
+        document.body.appendChild(el);
+        setTimeout(() => { el.style.top = "110vh"; el.style.opacity = "0"; }, 50 + i * 50);
+        setTimeout(() => el.remove(), 6000);
+    }
+}
+
+// ======================================================
+// ТРЯСКА
+// ======================================================
+
+function shakeCard() {
+    card.classList.remove("shaking");
+    void card.offsetWidth;
+    card.classList.add("shaking");
+    setTimeout(() => card.classList.remove("shaking"), 500);
+}
+
+// ======================================================
+// ПАСХАЛКА 1 — 5 кликов по логотипу → режим тигра
+// ======================================================
+
+let logoClicks    = 0;
+let logoClickTimer = null;
+
+const CLICK_MESSAGES = ["1", "2", "3", "🐯...", "🐯🐯🐯!!!"];
+
+logoWrap.addEventListener("click", () => {
+
+    logoClicks++;
+
+    if (logoClicks <= 5) {
+        clickHint.textContent = CLICK_MESSAGES[logoClicks - 1] || "";
+        clickHint.style.opacity = "1";
+    }
+
+    if (logoClickTimer) clearTimeout(logoClickTimer);
+
+    if (logoClicks >= 5) {
+        // Активируем тигра
+        body.classList.remove("rainbow-mode", "matrix-mode");
+        body.classList.toggle("tiger-mode");
+
+        if (body.classList.contains("tiger-mode")) {
+            logoIcon.textContent = "🐯";
+            tagline.textContent  = "тигр вошёл в систему";
+            showToast("🐯 ТИГР АКТИВИРОВАН", 3000);
+            launchConfetti(["🐯","🔥","⭐","💥"]);
+        } else {
+            logoIcon.textContent = "⚡";
+            tagline.textContent  = "для тигров, тигриц и тигрёнков";
+            showToast("тигр ушёл...");
+        }
+
+        logoClicks = 0;
+        clickHint.textContent = "";
+
+    } else {
+        // Сброс через 2 секунды без активации
+        logoClickTimer = setTimeout(() => {
+            logoClicks = 0;
+            clickHint.textContent  = "";
+            clickHint.style.opacity = "0";
+        }, 2000);
+    }
+});
+
+// ======================================================
+// ПАСХАЛКА 2 — Konami Code → радуга
+// ======================================================
+
+const KONAMI = [
+    "ArrowUp","ArrowUp","ArrowDown","ArrowDown",
+    "ArrowLeft","ArrowRight","ArrowLeft","ArrowRight",
+    "b","a"
+];
+
+let konamiIdx = 0;
+
+document.addEventListener("keydown", (e) => {
+
+    if (e.key === KONAMI[konamiIdx]) {
+        konamiIdx++;
+        if (konamiIdx === KONAMI.length) {
+            konamiIdx = 0;
+            body.classList.remove("tiger-mode", "matrix-mode");
+            body.classList.toggle("rainbow-mode");
+
+            if (body.classList.contains("rainbow-mode")) {
+                tagline.textContent = "🌈 радужный режим активирован";
+                showToast("🌈 RAINBOW MODE!", 3000);
+                launchConfetti(["🌈","✨","💜","💙","💚","💛","🧡","❤️"]);
+            } else {
+                tagline.textContent = "для тигров, тигриц и тигрёнков";
+                showToast("радуга ушла...");
+            }
+        }
+    } else {
+        konamiIdx = 0;
+    }
+
+    // MATRIX — Ctrl+M
+    if (e.ctrlKey && e.key === "m") {
+        e.preventDefault();
+        body.classList.remove("tiger-mode", "rainbow-mode");
+        body.classList.toggle("matrix-mode");
+
+        if (body.classList.contains("matrix-mode")) {
+            logoIcon.textContent = "🟢";
+            tagline.textContent  = "// SYSTEM OVERRIDE";
+            showToast("🟢 MATRIX MODE ACTIVATED", 3000);
+        } else {
+            logoIcon.textContent = "⚡";
+            tagline.textContent  = "для тигров, тигриц и тигрёнков";
+        }
+    }
+});
+
+// ======================================================
+// ПАСХАЛКА 3 — тройной клик по подписи → конфетти
+// ======================================================
+
+let taglineClicks = 0;
+let taglineTimer  = null;
+
+tagline.style.cursor = "default";
+
+tagline.addEventListener("click", () => {
+    taglineClicks++;
+    if (taglineTimer) clearTimeout(taglineTimer);
+
+    if (taglineClicks >= 3) {
+        taglineClicks = 0;
+        launchConfetti(["🐯","🦦","🐱","⭐","✨","🎉"]);
+        showToast("🎉 профком рад вам!");
+    } else {
+        taglineTimer = setTimeout(() => { taglineClicks = 0; }, 800);
+    }
+});
+
+// ======================================================
+// ПАСХАЛКА 4 — долгое удержание кнопки "Войти" → сброс
+// ======================================================
+
+let holdTimer = null;
+const btn     = document.getElementById("submit-btn");
+
+btn.addEventListener("mousedown", () => {
+    holdTimer = setTimeout(() => {
+        body.classList.remove("tiger-mode", "rainbow-mode", "matrix-mode");
+        logoIcon.textContent = "⚡";
+        tagline.textContent  = "для тигров, тигриц и тигрёнков";
+        showToast("♻️ всё сброшено");
+    }, 3000);
+});
+
+btn.addEventListener("mouseup",   () => clearTimeout(holdTimer));
+btn.addEventListener("mouseleave", () => clearTimeout(holdTimer));
+
+// ======================================================
+// СЕЗОННЫЕ ТЕМЫ
+// ======================================================
+
+const month   = new Date().getMonth() + 1;
+const day     = new Date().getDate();
+
+if (month === 12 && day >= 25) {
+    setTimeout(() => launchConfetti(["🎄","⭐","❄️","🎅","🎁"]), 800);
+}
+
+</script>
 </body>
 </html>
-
-
-
-
