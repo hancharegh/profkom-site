@@ -313,6 +313,17 @@ def init_db():
                 (day, "")
             )
 
+    # Таблица онлайн-сессий
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS online_sessions (
+        id         SERIAL PRIMARY KEY,
+        user_name  TEXT NOT NULL,
+        role       TEXT NOT NULL,
+        last_seen  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (user_name, role)
+    )
+    """)
+
     # Председатель по умолчанию
     cur.execute("SELECT * FROM users WHERE 'chairman' = ANY(roles)")
     if not cur.fetchone():
@@ -1644,7 +1655,100 @@ def student_limits_api(student_id):
 
 @app.route("/ping")
 def ping():
+    # Обновляем время последней активности если пользователь авторизован
+    if "user" in session and "role" in session:
+        try:
+            conn = get_db()
+            cur  = conn.cursor()
+            cur.execute("""
+                INSERT INTO online_sessions (user_name, role, last_seen)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (user_name, role)
+                DO UPDATE SET last_seen = CURRENT_TIMESTAMP
+            """, (session["user"], session.get("role", "unknown")))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception:
+            pass
     return "ok"
+
+
+# ======================================================
+# ONLINE USERS API — только для chairman
+# ======================================================
+
+@app.route("/online_users")
+@login_required
+@role_required("chairman")
+def online_users():
+    """Возвращает пользователей активных за последние 2 минуты."""
+    conn = get_db()
+    cur  = conn.cursor()
+    cur.execute("""
+        SELECT user_name, role, last_seen
+        FROM online_sessions
+        WHERE last_seen > CURRENT_TIMESTAMP - INTERVAL '2 minutes'
+        ORDER BY last_seen DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([{
+        "name":      row["user_name"],
+        "role":      row["role"],
+        "last_seen": str(row["last_seen"])
+    } for row in rows])
+
+
+# ======================================================
+# CHANGE OWN PASSWORD — bureau
+# ======================================================
+
+@app.route("/change_own_password", methods=["POST"])
+@login_required
+@role_required("bureau", "secretary")
+def change_own_password():
+    data         = request.get_json()
+    old_password = (data.get("old_password") or "").strip()
+    new_password = (data.get("new_password") or "").strip()
+
+    if not old_password or not new_password:
+        return jsonify(ok=False, error="Заполните оба поля")
+
+    if len(new_password) < 4:
+        return jsonify(ok=False, error="Пароль должен быть не короче 4 символов")
+
+    conn = get_db()
+    cur  = conn.cursor()
+
+    cur.execute("SELECT * FROM users WHERE name = %s", (session["user"],))
+    user = cur.fetchone()
+
+    if not user:
+        cur.close()
+        conn.close()
+        return jsonify(ok=False, error="Пользователь не найден")
+
+    try:
+        if not check_password_hash(user["password"], old_password):
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Неверный текущий пароль")
+    except Exception:
+        cur.close()
+        conn.close()
+        return jsonify(ok=False, error="Ошибка проверки пароля")
+
+    cur.execute(
+        "UPDATE users SET password = %s WHERE name = %s",
+        (generate_password_hash(new_password), session["user"])
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify(ok=True)
 
 
 # ======================================================
