@@ -1702,6 +1702,37 @@ def online_users():
 
 
 # ======================================================
+# CHANGE OWN PASSWORD — chairman / vice_chairman (AJAX)
+# ======================================================
+
+@app.route("/change_own_password_admin", methods=["POST"])
+@login_required
+@role_required("chairman", "vice_chairman")
+def change_own_password_admin():
+    data         = request.get_json()
+    new_password = (data.get("new_password") or "").strip()
+
+    if not new_password:
+        return jsonify(ok=False, error="Введите новый пароль")
+
+    if len(new_password) < 4:
+        return jsonify(ok=False, error="Пароль должен быть не короче 4 символов")
+
+    conn = get_db()
+    cur  = conn.cursor()
+
+    cur.execute(
+        "UPDATE users SET password = %s WHERE name = %s",
+        (generate_password_hash(new_password), session["user"])
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify(ok=True)
+
+
+# ======================================================
 # CHANGE OWN PASSWORD — bureau
 # ======================================================
 
