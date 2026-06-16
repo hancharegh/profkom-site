@@ -1491,6 +1491,81 @@ def delete_student(student_id):
 
 
 # ======================================================
+# BULK DELETE STUDENTS — AJAX
+# Принимает JSON: { "ids": ["1001","1002",...] }
+# или { "bureau": 3 } для удаления всего бюро
+# или { "names": ["Иванов И.И.", ...] } для удаления по ФИО из CSV
+# Только chairman и vice_chairman.
+# ======================================================
+
+@app.route("/bulk_delete_students", methods=["POST"])
+@login_required
+@role_required("chairman", "vice_chairman")
+def bulk_delete_students():
+
+    data = request.get_json()
+
+    conn = get_db()
+    cur  = conn.cursor()
+
+    deleted = 0
+
+    # Удаление по списку ID
+    if "ids" in data:
+        ids = [str(i).strip() for i in data["ids"] if i]
+        if not ids:
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Список ID пуст")
+
+        cur.execute(
+            "DELETE FROM students WHERE student_id = ANY(%s) RETURNING student_id",
+            (ids,)
+        )
+        deleted = cur.rowcount
+
+    # Удаление по бюро
+    elif "bureau" in data:
+        try:
+            bureau = int(data["bureau"])
+        except (ValueError, TypeError):
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Некорректный номер бюро")
+
+        cur.execute(
+            "DELETE FROM students WHERE bureau = %s RETURNING student_id",
+            (bureau,)
+        )
+        deleted = cur.rowcount
+
+    # Удаление по ФИО (из CSV)
+    elif "names" in data:
+        names = [str(n).strip() for n in data["names"] if n]
+        if not names:
+            cur.close()
+            conn.close()
+            return jsonify(ok=False, error="Список имён пуст")
+
+        cur.execute(
+            "DELETE FROM students WHERE full_name = ANY(%s) RETURNING student_id",
+            (names,)
+        )
+        deleted = cur.rowcount
+
+    else:
+        cur.close()
+        conn.close()
+        return jsonify(ok=False, error="Не указан параметр удаления")
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify(ok=True, deleted=deleted)
+
+
+# ======================================================
 # UPLOAD STUDENTS
 # ======================================================
 
