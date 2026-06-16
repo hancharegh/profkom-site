@@ -568,522 +568,7 @@ document.addEventListener("keydown", e => {
         closeConfirm();
     }
 });
-</script>
-<div id="toast-container"></div>
-
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-    <div style="position:fixed;top:16px;left:260px;right:20px;z-index:9998;">
-    {% for msg in messages %}
-    <div style="background:#dcfce7;color:#166534;padding:13px 18px;border-radius:12px;
-                margin-bottom:10px;border-left:4px solid #22c55e;font-size:14px;">
-        {{ msg }}
-    </div>
-    {% endfor %}
-    </div>
-{% endif %}
-{% endwith %}
-
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <div class="sidebar-logo">
-        <div class="title">⚡ Профком</div>
-        <div class="subtitle">СПбГТИ(ТУ)</div>
-    </div>
-
-    <div class="sidebar-user">
-        <div class="name">{{ session["user"] }}</div>
-        <span class="sidebar-role">Зам. председателя</span>
-    </div>
-
-    <div class="sidebar-nav">
-        <button class="nav-btn" onclick="openModal('modal-students')">
-            <span class="icon">👨‍🎓</span> Студенты
-        </button>
-        <button class="nav-btn" onclick="openModal('modal-entries')">
-            <span class="icon">📋</span> Последние действия
-        </button>
-        <button class="nav-btn" onclick="openModal('modal-schedule')">
-            <span class="icon">📅</span> Расписание
-        </button>
-        <button class="nav-btn" onclick="openModal('modal-excel')">
-            <span class="icon">📊</span> Экспорт Excel
-        </button>
-    </div>
-
-    <div class="sidebar-bottom">
-        {% if session.get("roles") and session["roles"]|length > 1 %}
-        <a href="/switch_role">⇄ Сменить роль</a>
-        {% endif %}
-        <a href="/logout">← Выйти</a>
-    </div>
-</div>
-
-<!-- MAIN -->
-<div class="main">
-
-    <div class="page-title">Панель заместителя</div>
-
-    <!-- STATS -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="label">Студентов в базе</div>
-            <div class="stat" id="stat-students">{{ students_count }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Всего выдач</div>
-            <div class="stat">{{ entries_count }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Пользователей</div>
-            <div class="stat" id="stat-secretaries">{{ secretaries|length }}</div>
-        </div>
-    </div>
-
-    <!-- ПОЛЬЗОВАТЕЛИ -->
-    <div class="card">
-        <h2>Пользователи</h2>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>ФИО</th>
-                    <th>Роли</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody id="secretaries-tbody">
-            {% for secretary in secretaries %}
-            <tr id="sec-row-{{ secretary.id }}">
-
-                <td>{{ secretary.name }}</td>
-
-                <td>
-                    {% set roles = secretary.roles if secretary.roles else ([secretary.role] if secretary.role else ['secretary']) %}
-                    {% for role in roles %}
-                        {% if role == "vice_chairman" %}
-                            <span class="role-badge role-vice">Зам. председателя</span>
-                        {% elif role == "bureau" %}
-                            <span class="role-badge role-bureau">
-                                Профбюро
-                                {%- if secretary.bureaus and secretary.bureaus.bureau %}
-                                    &nbsp;№{{ secretary.bureaus.bureau[0] }}
-                                {%- elif secretary.bureau %}
-                                    &nbsp;№{{ secretary.bureau }}
-                                {%- endif %}
-                            </span>
-                        {% elif role == "secretary" %}
-                            <span class="role-badge role-secretary">Секретарь</span>
-                        {% endif %}
-                    {% endfor %}
-                </td>
-
-                <td>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                        <button class="btn-outline"
-                                style="font-size:12px; padding:7px 12px;"
-                                onclick="togglePassForm('pass-{{ secretary.id }}')">
-                            🔑 Пароль
-                        </button>
-                        <button class="btn-danger"
-                                style="font-size:12px; padding:7px 12px;"
-                                onclick="confirmAction(
-                                    'Удалить пользователя {{ secretary.name }}?',
-                                    () => deleteSecretary({{ secretary.id }})
-                                )">
-                            Удалить
-                        </button>
-                    </div>
-
-                    <div id="pass-{{ secretary.id }}" style="display:none; margin-top:10px;">
-                        <div class="pass-inline">
-                            <input type="password"
-                                   id="pass-input-{{ secretary.id }}"
-                                   placeholder="Новый пароль">
-                            <button class="btn-green"
-                                    style="padding:9px 14px; white-space:nowrap;"
-                                    onclick="changeSecretaryPassword({{ secretary.id }})">
-                                Сохранить
-                            </button>
-                        </div>
-                    </div>
-                </td>
-
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-
-        <hr style="margin:22px 0; border:none; border-top:1px solid #f3f4f6;">
-        <h3>Добавить / назначить роль</h3>
-
-        <p style="font-size:13px; color:#6b7280; margin:0 0 14px;">
-            Если человек уже есть в системе — ему будет добавлена роль.
-            Если нового — будет создан аккаунт.
-        </p>
-
-        <div class="user-search-wrapper">
-            <label style="margin-top:0;">ФИО (поиск из базы студентов)</label>
-            <input
-                type="text"
-                id="user-name-input"
-                placeholder="Начните вводить ФИО..."
-                autocomplete="off"
-                style="margin-bottom:4px;"
-            >
-            <div id="user_search_results"></div>
-        </div>
-
-        <div id="password-field">
-            <label>Пароль <span style="color:#9ca3af; font-weight:normal;">(только для нового пользователя)</span></label>
-            <input type="password" id="user-password-input" placeholder="Пароль"
-                   style="margin-bottom:4px;">
-        </div>
-
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
-
-            <div style="flex:1; min-width:160px;">
-                <label style="margin-top:0;">Роль</label>
-                <select id="user-role-select" onchange="toggleBureauField()"
-                        style="margin:0;">
-                    <option value="secretary">Секретарь</option>
-                    <option value="bureau">Профбюро</option>
-                </select>
-            </div>
-
-            <div id="bureau-field" style="flex:1; min-width:130px;">
-                <label style="margin-top:0;">Номер бюро</label>
-                <select id="user-bureau-select" style="margin:0;">
-                    <option value="">—</option>
-                    <option value="1">Бюро 1</option>
-                    <option value="2">Бюро 2</option>
-                    <option value="3">Бюро 3</option>
-                    <option value="4">Бюро 4</option>
-                    <option value="5">Бюро 5</option>
-                </select>
-            </div>
-
-            <button onclick="addUser()" style="height:44px; margin-bottom:0;">
-                Применить
-            </button>
-
-        </div>
-
-        <div id="add-user-status"></div>
-
-    </div>
-
-    <!-- СМЕНА ПАРОЛЯ -->
-    <div class="card">
-        <h2>🔐 Сменить свой пароль</h2>
-        <form method="POST" action="/change_password"
-              style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
-            <div style="flex:1; min-width:200px;">
-                <input type="password" name="new_password"
-                       placeholder="Новый пароль" required style="margin:0;">
-            </div>
-            <button type="submit" style="height:44px;">Изменить</button>
-        </form>
-    </div>
-
-</div><!-- /main -->
-
-
-<!-- =================== MODALS =================== -->
-
-<!-- MODAL: СТУДЕНТЫ -->
-<div class="modal-overlay" id="modal-students">
-    <div class="modal" style="max-width:860px;">
-
-        <div class="modal-header">
-            <h2>👨‍🎓 Студенты</h2>
-            <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
-        </div>
-
-        <!-- Вкладки -->
-        <div class="bulk-tab-row">
-            <button class="bulk-tab active" onclick="switchTab('tab-add',this)">➕ Добавить</button>
-            <button class="bulk-tab" onclick="switchTab('tab-bulk-delete',this)">🗑️ Массовое удаление</button>
-        </div>
-
-        <!-- ВКЛАДКА: ДОБАВЛЕНИЕ -->
-        <div id="tab-add" class="bulk-section active">
-            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;
-                        margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f3f4f6;">
-                <div style="flex:2;min-width:160px;">
-                    <label style="margin-top:0;">ФИО</label>
-                    <input type="text" id="new-student-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
-                </div>
-                <div style="flex:1;min-width:120px;">
-                    <label style="margin-top:0;">Бюро</label>
-                    <select id="new-student-bureau" style="margin:0;">
-                        <option value="">— выберите —</option>
-                        <option value="1">Бюро 1</option>
-                        <option value="2">Бюро 2</option>
-                        <option value="3">Бюро 3</option>
-                        <option value="4">Бюро 4</option>
-                        <option value="5">Бюро 5</option>
-                    </select>
-                </div>
-                <button class="btn-green" style="height:44px;" onclick="addStudent()">Добавить</button>
-            </div>
-            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-                <span style="font-weight:bold;font-size:13px;">📄 CSV:</span>
-                <form method="POST" action="/upload_students" enctype="multipart/form-data"
-                      style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                    <input type="file" name="file" accept=".csv,.txt"
-                           style="width:auto;margin:0;padding:8px;font-size:13px;">
-                    <button type="submit" style="padding:9px 16px;">Загрузить</button>
-                </form>
-                <span style="color:#9ca3af;font-size:12px;">ФИО;номер_бюро</span>
-            </div>
-        </div>
-
-        <!-- ВКЛАДКА: МАССОВОЕ УДАЛЕНИЕ -->
-        <div id="tab-bulk-delete" class="bulk-section">
-            <p style="font-size:13px;color:#6b7280;margin:0 0 14px;">Выберите способ удаления:</p>
-
-            <div style="padding:14px;background:#fafafa;border-radius:12px;
-                        border:1px solid #e5e7eb;margin-bottom:12px;">
-                <div style="font-size:13px;font-weight:bold;color:#374151;margin-bottom:10px;">
-                    🏛️ Удалить всё бюро
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                    <select id="bulk-bureau-select" style="margin:0;flex:1;min-width:120px;">
-                        <option value="">— выберите бюро —</option>
-                        <option value="1">Бюро 1</option>
-                        <option value="2">Бюро 2</option>
-                        <option value="3">Бюро 3</option>
-                        <option value="4">Бюро 4</option>
-                        <option value="5">Бюро 5</option>
-                    </select>
-                    <button class="btn-danger" style="padding:10px 16px;"
-                            onclick="confirmAction(
-                                'Удалить ВСЕХ студентов выбранного бюро?',
-                                () => bulkDeleteByBureau()
-                            )">Удалить бюро</button>
-                </div>
-            </div>
-
-            <div style="padding:14px;background:#fafafa;border-radius:12px;
-                        border:1px solid #e5e7eb;margin-bottom:12px;">
-                <div style="font-size:13px;font-weight:bold;color:#374151;margin-bottom:6px;">
-                    📄 Удалить по CSV
-                </div>
-                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px;">
-                    Формат: одно ФИО на строку
-                </div>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                    <input type="file" id="bulk-delete-file" accept=".csv,.txt"
-                           style="width:auto;margin:0;padding:8px;font-size:13px;flex:1;">
-                    <button class="btn-danger" style="padding:10px 16px;"
-                            onclick="bulkDeleteByCSV()">Удалить из файла</button>
-                </div>
-            </div>
-
-            <div id="bulk-status" style="display:none;padding:11px 14px;
-                 border-radius:10px;font-size:13px;margin-top:8px;"></div>
-        </div>
-
-        <!-- Панель выбранных -->
-        <div class="bulk-panel" id="bulk-panel">
-            <span class="selected-count" id="selected-count-text">Выбрано: 0</span>
-            <button class="btn-danger" style="font-size:13px;padding:8px 16px;"
-                    onclick="confirmAction('Удалить всех выбранных студентов?',()=>bulkDeleteSelected())">
-                🗑️ Удалить выбранных
-            </button>
-            <button class="btn-gray" style="font-size:13px;padding:8px 14px;"
-                    onclick="clearSelection()">Снять выделение</button>
-        </div>
-
-        <!-- Фильтр -->
-        <div class="filter-row" style="margin-top:4px;">
-            <span style="font-size:12px;color:#6b7280;">Фильтр:</span>
-            <button class="filter-btn" style="background:#ede9fe;color:#6d28d9;"
-                    onclick="filterByBureau('')">Все</button>
-            {% for i in range(1, 6) %}
-            <button class="filter-btn" style="background:#fef9c3;color:#854d0e;"
-                    onclick="filterByBureau('{{ i }}')">Бюро {{ i }}</button>
-            {% endfor %}
-        </div>
-
-        <input type="text" id="student-search"
-               placeholder="🔍 Поиск по ФИО или ID..."
-               oninput="filterStudents()"
-               style="margin-bottom:12px;">
-
-        <div style="max-height:340px;overflow-y:auto;border-radius:12px;border:1px solid #f3f4f6;">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="cb-col">
-                            <input type="checkbox" id="select-all-cb"
-                                   onchange="toggleSelectAll(this.checked)">
-                        </th>
-                        <th>ID</th><th>ФИО</th><th>Бюро</th><th></th>
-                    </tr>
-                </thead>
-                <tbody id="students-tbody">
-                {% for student in students %}
-                <tr class="student-row"
-                    id="stu-row-{{ student.student_id }}"
-                    data-name="{{ student.full_name | lower }}"
-                    data-id="{{ student.student_id | lower }}"
-                    data-bureau="{{ student.bureau }}">
-                    <td class="cb-col">
-                        <input type="checkbox" class="row-cb"
-                               value="{{ student.student_id }}"
-                               onchange="onRowCheckChange()">
-                    </td>
-                    <td><span class="id-badge">{{ student.student_id }}</span></td>
-                    <td>{{ student.full_name }}</td>
-                    <td><span class="bureau-badge">№{{ student.bureau }}</span></td>
-                    <td>
-                        <button class="btn-danger" style="font-size:12px;padding:6px 12px;"
-                                onclick="confirmAction(
-                                    'Удалить студента {{ student.full_name }}?',
-                                    () => deleteStudent('{{ student.student_id }}')
-                                )">Удалить</button>
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <p style="color:#9ca3af;font-size:12px;margin:10px 0 0;">
-            Показано: <span id="students-count">{{ students|length }}</span>
-        </p>
-
-    </div>
-</div>
-
-<!-- MODAL: ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
-<div class="modal-overlay" id="modal-entries">
-    <div class="modal" style="max-width:960px;">
-
-        <div class="modal-header">
-            <h2>📋 Последние действия</h2>
-            <button class="modal-close" onclick="closeModal('modal-entries')">✕</button>
-        </div>
-
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Студент</th>
-                        <th>Секретарь</th>
-                        <th>Действие</th>
-                        <th>Дата</th>
-                    </tr>
-                </thead>
-                <tbody id="entries-tbody">
-                {% for entry in entries %}
-                <tr class="entry-row"
-                    style="{% if loop.index > 20 %}display:none;{% endif %}">
-                    <td><span class="id-badge">{{ entry.student_id }}</span></td>
-                    <td>{{ entry.student_name }}</td>
-                    <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
-                    <td>{{ entry.action_text }}</td>
-                    <td class="ts" data-ts="{{ entry.created_at }}"
-                        style="white-space:nowrap; color:#9ca3af; font-size:13px;">
-                        {{ entry.created_at }}
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        {% if entries|length > 20 %}
-        <button class="load-more-btn" id="load-more-entries" onclick="loadMoreEntries()">
-            Показать ещё ({{ entries|length - 20 }} из {{ entries|length }})
-        </button>
-        {% endif %}
-
-    </div>
-</div>
-
-<!-- MODAL: РАСПИСАНИЕ -->
-<div class="modal-overlay" id="modal-schedule">
-    <div class="modal" style="max-width:480px;">
-
-        <div class="modal-header">
-            <h2>📅 Расписание секретарей</h2>
-            <button class="modal-close" onclick="closeModal('modal-schedule')">✕</button>
-        </div>
-
-        <form method="POST" action="/save_schedule">
-            {% for day in ["Понедельник","Вторник","Среда","Четверг","Пятница"] %}
-            <label>{{ day }}</label>
-            <select name="{{ day }}">
-                <option value="">Не назначен</option>
-                {% for secretary in secretaries %}
-                {% set roles = secretary.roles if secretary.roles else ([secretary.role] if secretary.role else []) %}
-                {% if "secretary" in roles %}
-                <option value="{{ secretary.name }}"
-                    {% if schedule[day] == secretary.name %}selected{% endif %}>
-                    {{ secretary.name }}
-                </option>
-                {% endif %}
-                {% endfor %}
-            </select>
-            {% endfor %}
-            <button type="submit" style="margin-top:4px;">Сохранить расписание</button>
-        </form>
-
-    </div>
-</div>
-
-<!-- MODAL: ЭКСПОРТ EXCEL -->
-<div class="modal-overlay" id="modal-excel">
-    <div class="modal" style="max-width:440px;">
-
-        <div class="modal-header">
-            <h2>📊 Экспорт Excel</h2>
-            <button class="modal-close" onclick="closeModal('modal-excel')">✕</button>
-        </div>
-
-        <form action="/export_excel">
-            <label>Дата от</label>
-            <input type="date" name="date_from">
-            <label>Дата до</label>
-            <input type="date" name="date_to">
-            <label>Секретарь / Профбюро</label>
-            <select name="secretary">
-                <option value="">Все</option>
-                {% for secretary in secretaries %}
-                <option value="{{ secretary.name }}">{{ secretary.name }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn-green" style="margin-top:4px;">
-                Скачать Excel
-            </button>
-        </form>
-
-    </div>
-</div>
-
-<!-- CONFIRM -->
-<div class="confirm-overlay" id="confirm-overlay">
-    <div class="confirm-box">
-        <p id="confirm-text"></p>
-        <div class="confirm-buttons">
-            <button class="btn-danger" id="confirm-ok-btn">Подтвердить</button>
-            <button class="btn-gray" onclick="closeConfirm()">Отмена</button>
-        </div>
-    </div>
-</div>
-
-
-<script>
-
-// ======================================================
-// ФОРМАТИРОВАНИЕ ВРЕМЕНИ (UTC → GMT+3)
-// ======================================================
-
-function formatTs(raw) {
+    function formatTs(raw) {
     if (!raw) return raw;
     const normalized = raw.replace(" ", "T").replace(/\\.\\d+$/, "") + "Z";
     const d = new Date(normalized);
@@ -1602,7 +1087,515 @@ const hash = window.location.hash;
 if (hash === "#students") openModal("modal-students");
 if (hash === "#entries")  openModal("modal-entries");
 if (hash === "#schedule") openModal("modal-schedule");
-
 </script>
+<div id="toast-container"></div>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+    <div style="position:fixed;top:16px;left:260px;right:20px;z-index:9998;">
+    {% for msg in messages %}
+    <div style="background:#dcfce7;color:#166534;padding:13px 18px;border-radius:12px;
+                margin-bottom:10px;border-left:4px solid #22c55e;font-size:14px;">
+        {{ msg }}
+    </div>
+    {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <div class="title">⚡ Профком</div>
+        <div class="subtitle">СПбГТИ(ТУ)</div>
+    </div>
+
+    <div class="sidebar-user">
+        <div class="name">{{ session["user"] }}</div>
+        <span class="sidebar-role">Зам. председателя</span>
+    </div>
+
+    <div class="sidebar-nav">
+        <button class="nav-btn" onclick="openModal('modal-students')">
+            <span class="icon">👨‍🎓</span> Студенты
+        </button>
+        <button class="nav-btn" onclick="openModal('modal-entries')">
+            <span class="icon">📋</span> Последние действия
+        </button>
+        <button class="nav-btn" onclick="openModal('modal-schedule')">
+            <span class="icon">📅</span> Расписание
+        </button>
+        <button class="nav-btn" onclick="openModal('modal-excel')">
+            <span class="icon">📊</span> Экспорт Excel
+        </button>
+    </div>
+
+    <div class="sidebar-bottom">
+        {% if session.get("roles") and session["roles"]|length > 1 %}
+        <a href="/switch_role">⇄ Сменить роль</a>
+        {% endif %}
+        <a href="/logout">← Выйти</a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <div class="page-title">Панель заместителя</div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="label">Студентов в базе</div>
+            <div class="stat" id="stat-students">{{ students_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Всего выдач</div>
+            <div class="stat">{{ entries_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Пользователей</div>
+            <div class="stat" id="stat-secretaries">{{ secretaries|length }}</div>
+        </div>
+    </div>
+
+    <!-- ПОЛЬЗОВАТЕЛИ -->
+    <div class="card">
+        <h2>Пользователи</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Роли</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="secretaries-tbody">
+            {% for secretary in secretaries %}
+            <tr id="sec-row-{{ secretary.id }}">
+
+                <td>{{ secretary.name }}</td>
+
+                <td>
+                    {% set roles = secretary.roles if secretary.roles else ([secretary.role] if secretary.role else ['secretary']) %}
+                    {% for role in roles %}
+                        {% if role == "vice_chairman" %}
+                            <span class="role-badge role-vice">Зам. председателя</span>
+                        {% elif role == "bureau" %}
+                            <span class="role-badge role-bureau">
+                                Профбюро
+                                {%- if secretary.bureaus and secretary.bureaus.bureau %}
+                                    &nbsp;№{{ secretary.bureaus.bureau[0] }}
+                                {%- elif secretary.bureau %}
+                                    &nbsp;№{{ secretary.bureau }}
+                                {%- endif %}
+                            </span>
+                        {% elif role == "secretary" %}
+                            <span class="role-badge role-secretary">Секретарь</span>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+
+                <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <button class="btn-outline"
+                                style="font-size:12px; padding:7px 12px;"
+                                onclick="togglePassForm('pass-{{ secretary.id }}')">
+                            🔑 Пароль
+                        </button>
+                        <button class="btn-danger"
+                                style="font-size:12px; padding:7px 12px;"
+                                onclick="confirmAction(
+                                    'Удалить пользователя {{ secretary.name }}?',
+                                    () => deleteSecretary({{ secretary.id }})
+                                )">
+                            Удалить
+                        </button>
+                    </div>
+
+                    <div id="pass-{{ secretary.id }}" style="display:none; margin-top:10px;">
+                        <div class="pass-inline">
+                            <input type="password"
+                                   id="pass-input-{{ secretary.id }}"
+                                   placeholder="Новый пароль">
+                            <button class="btn-green"
+                                    style="padding:9px 14px; white-space:nowrap;"
+                                    onclick="changeSecretaryPassword({{ secretary.id }})">
+                                Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </td>
+
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr style="margin:22px 0; border:none; border-top:1px solid #f3f4f6;">
+        <h3>Добавить / назначить роль</h3>
+
+        <p style="font-size:13px; color:#6b7280; margin:0 0 14px;">
+            Если человек уже есть в системе — ему будет добавлена роль.
+            Если нового — будет создан аккаунт.
+        </p>
+
+        <div class="user-search-wrapper">
+            <label style="margin-top:0;">ФИО (поиск из базы студентов)</label>
+            <input
+                type="text"
+                id="user-name-input"
+                placeholder="Начните вводить ФИО..."
+                autocomplete="off"
+                style="margin-bottom:4px;"
+            >
+            <div id="user_search_results"></div>
+        </div>
+
+        <div id="password-field">
+            <label>Пароль <span style="color:#9ca3af; font-weight:normal;">(только для нового пользователя)</span></label>
+            <input type="password" id="user-password-input" placeholder="Пароль"
+                   style="margin-bottom:4px;">
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
+
+            <div style="flex:1; min-width:160px;">
+                <label style="margin-top:0;">Роль</label>
+                <select id="user-role-select" onchange="toggleBureauField()"
+                        style="margin:0;">
+                    <option value="secretary">Секретарь</option>
+                    <option value="bureau">Профбюро</option>
+                </select>
+            </div>
+
+            <div id="bureau-field" style="flex:1; min-width:130px;">
+                <label style="margin-top:0;">Номер бюро</label>
+                <select id="user-bureau-select" style="margin:0;">
+                    <option value="">—</option>
+                    <option value="1">Бюро 1</option>
+                    <option value="2">Бюро 2</option>
+                    <option value="3">Бюро 3</option>
+                    <option value="4">Бюро 4</option>
+                    <option value="5">Бюро 5</option>
+                </select>
+            </div>
+
+            <button onclick="addUser()" style="height:44px; margin-bottom:0;">
+                Применить
+            </button>
+
+        </div>
+
+        <div id="add-user-status"></div>
+
+    </div>
+
+    <!-- СМЕНА ПАРОЛЯ -->
+    <div class="card">
+        <h2>🔐 Сменить свой пароль</h2>
+        <form method="POST" action="/change_password"
+              style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+                <input type="password" name="new_password"
+                       placeholder="Новый пароль" required style="margin:0;">
+            </div>
+            <button type="submit" style="height:44px;">Изменить</button>
+        </form>
+    </div>
+
+</div><!-- /main -->
+
+
+<!-- =================== MODALS =================== -->
+
+<!-- MODAL: СТУДЕНТЫ -->
+<div class="modal-overlay" id="modal-students">
+    <div class="modal" style="max-width:860px;">
+
+        <div class="modal-header">
+            <h2>👨‍🎓 Студенты</h2>
+            <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
+        </div>
+
+        <!-- Вкладки -->
+        <div class="bulk-tab-row">
+            <button class="bulk-tab active" onclick="switchTab('tab-add',this)">➕ Добавить</button>
+            <button class="bulk-tab" onclick="switchTab('tab-bulk-delete',this)">🗑️ Массовое удаление</button>
+        </div>
+
+        <!-- ВКЛАДКА: ДОБАВЛЕНИЕ -->
+        <div id="tab-add" class="bulk-section active">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;
+                        margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f3f4f6;">
+                <div style="flex:2;min-width:160px;">
+                    <label style="margin-top:0;">ФИО</label>
+                    <input type="text" id="new-student-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
+                </div>
+                <div style="flex:1;min-width:120px;">
+                    <label style="margin-top:0;">Бюро</label>
+                    <select id="new-student-bureau" style="margin:0;">
+                        <option value="">— выберите —</option>
+                        <option value="1">Бюро 1</option>
+                        <option value="2">Бюро 2</option>
+                        <option value="3">Бюро 3</option>
+                        <option value="4">Бюро 4</option>
+                        <option value="5">Бюро 5</option>
+                    </select>
+                </div>
+                <button class="btn-green" style="height:44px;" onclick="addStudent()">Добавить</button>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <span style="font-weight:bold;font-size:13px;">📄 CSV:</span>
+                <form method="POST" action="/upload_students" enctype="multipart/form-data"
+                      style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="file" name="file" accept=".csv,.txt"
+                           style="width:auto;margin:0;padding:8px;font-size:13px;">
+                    <button type="submit" style="padding:9px 16px;">Загрузить</button>
+                </form>
+                <span style="color:#9ca3af;font-size:12px;">ФИО;номер_бюро</span>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА: МАССОВОЕ УДАЛЕНИЕ -->
+        <div id="tab-bulk-delete" class="bulk-section">
+            <p style="font-size:13px;color:#6b7280;margin:0 0 14px;">Выберите способ удаления:</p>
+
+            <div style="padding:14px;background:#fafafa;border-radius:12px;
+                        border:1px solid #e5e7eb;margin-bottom:12px;">
+                <div style="font-size:13px;font-weight:bold;color:#374151;margin-bottom:10px;">
+                    🏛️ Удалить всё бюро
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                    <select id="bulk-bureau-select" style="margin:0;flex:1;min-width:120px;">
+                        <option value="">— выберите бюро —</option>
+                        <option value="1">Бюро 1</option>
+                        <option value="2">Бюро 2</option>
+                        <option value="3">Бюро 3</option>
+                        <option value="4">Бюро 4</option>
+                        <option value="5">Бюро 5</option>
+                    </select>
+                    <button class="btn-danger" style="padding:10px 16px;"
+                            onclick="confirmAction(
+                                'Удалить ВСЕХ студентов выбранного бюро?',
+                                () => bulkDeleteByBureau()
+                            )">Удалить бюро</button>
+                </div>
+            </div>
+
+            <div style="padding:14px;background:#fafafa;border-radius:12px;
+                        border:1px solid #e5e7eb;margin-bottom:12px;">
+                <div style="font-size:13px;font-weight:bold;color:#374151;margin-bottom:6px;">
+                    📄 Удалить по CSV
+                </div>
+                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px;">
+                    Формат: одно ФИО на строку
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="file" id="bulk-delete-file" accept=".csv,.txt"
+                           style="width:auto;margin:0;padding:8px;font-size:13px;flex:1;">
+                    <button class="btn-danger" style="padding:10px 16px;"
+                            onclick="bulkDeleteByCSV()">Удалить из файла</button>
+                </div>
+            </div>
+
+            <div id="bulk-status" style="display:none;padding:11px 14px;
+                 border-radius:10px;font-size:13px;margin-top:8px;"></div>
+        </div>
+
+        <!-- Панель выбранных -->
+        <div class="bulk-panel" id="bulk-panel">
+            <span class="selected-count" id="selected-count-text">Выбрано: 0</span>
+            <button class="btn-danger" style="font-size:13px;padding:8px 16px;"
+                    onclick="confirmAction('Удалить всех выбранных студентов?',()=>bulkDeleteSelected())">
+                🗑️ Удалить выбранных
+            </button>
+            <button class="btn-gray" style="font-size:13px;padding:8px 14px;"
+                    onclick="clearSelection()">Снять выделение</button>
+        </div>
+
+        <!-- Фильтр -->
+        <div class="filter-row" style="margin-top:4px;">
+            <span style="font-size:12px;color:#6b7280;">Фильтр:</span>
+            <button class="filter-btn" style="background:#ede9fe;color:#6d28d9;"
+                    onclick="filterByBureau('')">Все</button>
+            {% for i in range(1, 6) %}
+            <button class="filter-btn" style="background:#fef9c3;color:#854d0e;"
+                    onclick="filterByBureau('{{ i }}')">Бюро {{ i }}</button>
+            {% endfor %}
+        </div>
+
+        <input type="text" id="student-search"
+               placeholder="🔍 Поиск по ФИО или ID..."
+               oninput="filterStudents()"
+               style="margin-bottom:12px;">
+
+        <div style="max-height:340px;overflow-y:auto;border-radius:12px;border:1px solid #f3f4f6;">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="cb-col">
+                            <input type="checkbox" id="select-all-cb"
+                                   onchange="toggleSelectAll(this.checked)">
+                        </th>
+                        <th>ID</th><th>ФИО</th><th>Бюро</th><th></th>
+                    </tr>
+                </thead>
+                <tbody id="students-tbody">
+                {% for student in students %}
+                <tr class="student-row"
+                    id="stu-row-{{ student.student_id }}"
+                    data-name="{{ student.full_name | lower }}"
+                    data-id="{{ student.student_id | lower }}"
+                    data-bureau="{{ student.bureau }}">
+                    <td class="cb-col">
+                        <input type="checkbox" class="row-cb"
+                               value="{{ student.student_id }}"
+                               onchange="onRowCheckChange()">
+                    </td>
+                    <td><span class="id-badge">{{ student.student_id }}</span></td>
+                    <td>{{ student.full_name }}</td>
+                    <td><span class="bureau-badge">№{{ student.bureau }}</span></td>
+                    <td>
+                        <button class="btn-danger" style="font-size:12px;padding:6px 12px;"
+                                onclick="confirmAction(
+                                    'Удалить студента {{ student.full_name }}?',
+                                    () => deleteStudent('{{ student.student_id }}')
+                                )">Удалить</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p style="color:#9ca3af;font-size:12px;margin:10px 0 0;">
+            Показано: <span id="students-count">{{ students|length }}</span>
+        </p>
+
+    </div>
+</div>
+
+<!-- MODAL: ПОСЛЕДНИЕ ДЕЙСТВИЯ -->
+<div class="modal-overlay" id="modal-entries">
+    <div class="modal" style="max-width:960px;">
+
+        <div class="modal-header">
+            <h2>📋 Последние действия</h2>
+            <button class="modal-close" onclick="closeModal('modal-entries')">✕</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Студент</th>
+                        <th>Секретарь</th>
+                        <th>Действие</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody id="entries-tbody">
+                {% for entry in entries %}
+                <tr class="entry-row"
+                    style="{% if loop.index > 20 %}display:none;{% endif %}">
+                    <td><span class="id-badge">{{ entry.student_id }}</span></td>
+                    <td>{{ entry.student_name }}</td>
+                    <td style="color:#6b7280; font-size:13px;">{{ entry.secretary }}</td>
+                    <td>{{ entry.action_text }}</td>
+                    <td class="ts" data-ts="{{ entry.created_at }}"
+                        style="white-space:nowrap; color:#9ca3af; font-size:13px;">
+                        {{ entry.created_at }}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if entries|length > 20 %}
+        <button class="load-more-btn" id="load-more-entries" onclick="loadMoreEntries()">
+            Показать ещё ({{ entries|length - 20 }} из {{ entries|length }})
+        </button>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- MODAL: РАСПИСАНИЕ -->
+<div class="modal-overlay" id="modal-schedule">
+    <div class="modal" style="max-width:480px;">
+
+        <div class="modal-header">
+            <h2>📅 Расписание секретарей</h2>
+            <button class="modal-close" onclick="closeModal('modal-schedule')">✕</button>
+        </div>
+
+        <form method="POST" action="/save_schedule">
+            {% for day in ["Понедельник","Вторник","Среда","Четверг","Пятница"] %}
+            <label>{{ day }}</label>
+            <select name="{{ day }}">
+                <option value="">Не назначен</option>
+                {% for secretary in secretaries %}
+                {% set roles = secretary.roles if secretary.roles else ([secretary.role] if secretary.role else []) %}
+                {% if "secretary" in roles %}
+                <option value="{{ secretary.name }}"
+                    {% if schedule[day] == secretary.name %}selected{% endif %}>
+                    {{ secretary.name }}
+                </option>
+                {% endif %}
+                {% endfor %}
+            </select>
+            {% endfor %}
+            <button type="submit" style="margin-top:4px;">Сохранить расписание</button>
+        </form>
+
+    </div>
+</div>
+
+<!-- MODAL: ЭКСПОРТ EXCEL -->
+<div class="modal-overlay" id="modal-excel">
+    <div class="modal" style="max-width:440px;">
+
+        <div class="modal-header">
+            <h2>📊 Экспорт Excel</h2>
+            <button class="modal-close" onclick="closeModal('modal-excel')">✕</button>
+        </div>
+
+        <form action="/export_excel">
+            <label>Дата от</label>
+            <input type="date" name="date_from">
+            <label>Дата до</label>
+            <input type="date" name="date_to">
+            <label>Секретарь / Профбюро</label>
+            <select name="secretary">
+                <option value="">Все</option>
+                {% for secretary in secretaries %}
+                <option value="{{ secretary.name }}">{{ secretary.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-green" style="margin-top:4px;">
+                Скачать Excel
+            </button>
+        </form>
+
+    </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <p id="confirm-text"></p>
+        <div class="confirm-buttons">
+            <button class="btn-danger" id="confirm-ok-btn">Подтвердить</button>
+            <button class="btn-gray" onclick="closeConfirm()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+
+
 </body>
 </html>
