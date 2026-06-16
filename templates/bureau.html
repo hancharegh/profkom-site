@@ -535,6 +535,61 @@
         .table-search { margin-bottom: 14px; }
         .table-search input { margin: 0; }
 
+        /* ====== МАССОВОЕ УДАЛЕНИЕ ====== */
+        .bulk-panel {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 10px 14px;
+            background: #fef2f2;
+            border: 1.5px solid #fca5a5;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .bulk-panel.visible { display: flex; }
+        .bulk-panel .selected-count { font-size:13px; font-weight:bold; color:#991b1b; flex:1; }
+
+        .bulk-tab-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .bulk-tab {
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+            background: white;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .bulk-tab:hover { border-color: var(--accent); color: var(--accent); transform: none; }
+        .bulk-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .bulk-section { display: none; }
+        .bulk-section.active { display: block; }
+
+        input[type="checkbox"] {
+            width: 16px; height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent);
+            margin: 0; padding: 0;
+        }
+
+        .cb-col { width: 36px; text-align: center; }
+        tr.selected td { background: var(--light) !important; }
+
+        .pass-ok  { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .pass-err { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+
         /* ====== КНОПКА «ПОКАЗАТЬ ЕЩЁ» ====== */
         .load-more-btn {
             display: block;
@@ -758,24 +813,97 @@
 
 <!-- MODAL: СТУДЕНТЫ СВОЕГО БЮРО -->
 <div class="modal-overlay" id="modal-students">
-    <div class="modal">
+    <div class="modal" style="max-width:760px;">
 
         <div class="modal-header">
             <h2>👨‍🎓 Студенты бюро {{ bureau_num }}</h2>
             <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
         </div>
 
+        <!-- Вкладки -->
+        <div class="bulk-tab-row">
+            <button class="bulk-tab active" onclick="switchTab('tab-add',this)">➕ Добавить</button>
+            <button class="bulk-tab" onclick="switchTab('tab-bulk-delete',this)">🗑️ Массовое удаление</button>
+        </div>
+
+        <!-- ВКЛАДКА: ДОБАВЛЕНИЕ -->
+        <div id="tab-add" class="bulk-section active">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;
+                        margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f3f4f6;">
+                <div style="flex:1;min-width:200px;">
+                    <label style="margin-top:0;">ФИО нового студента</label>
+                    <input type="text" id="new-name" placeholder="Фамилия Имя Отчество" style="margin:0;">
+                </div>
+                <button class="btn-green" onclick="addStudent()" style="height:44px;margin-bottom:0;">
+                    Добавить
+                </button>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <span style="font-weight:bold;font-size:13px;">📄 CSV:</span>
+                <form method="POST" action="/upload_students" enctype="multipart/form-data"
+                      style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="file" name="file" accept=".csv,.txt"
+                           style="width:auto;margin:0;padding:8px;font-size:13px;">
+                    <button type="submit" style="padding:9px 16px;">Загрузить</button>
+                </form>
+                <span style="color:#9ca3af;font-size:12px;">Одно ФИО на строку</span>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА: МАССОВОЕ УДАЛЕНИЕ -->
+        <div id="tab-bulk-delete" class="bulk-section">
+            <p style="font-size:13px;color:#6b7280;margin:0 0 14px;">
+                Удаление применяется только к студентам вашего бюро.
+            </p>
+
+            <div style="padding:14px;background:#fafafa;border-radius:12px;
+                        border:1px solid #e5e7eb;margin-bottom:12px;">
+                <div style="font-size:13px;font-weight:bold;color:#374151;margin-bottom:6px;">
+                    📄 Удалить по CSV
+                </div>
+                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px;">
+                    Формат: одно ФИО на строку
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="file" id="bulk-delete-file" accept=".csv,.txt"
+                           style="width:auto;margin:0;padding:8px;font-size:13px;flex:1;">
+                    <button class="btn-danger" style="padding:10px 16px;"
+                            onclick="bulkDeleteByCSV()">Удалить из файла</button>
+                </div>
+            </div>
+
+            <div id="bulk-status" style="display:none;padding:11px 14px;
+                 border-radius:10px;font-size:13px;margin-top:8px;"></div>
+        </div>
+
+        <!-- Панель выбранных -->
+        <div class="bulk-panel" id="bulk-panel">
+            <span class="selected-count" id="selected-count-text">Выбрано: 0</span>
+            <button class="btn-danger" style="font-size:13px;padding:8px 16px;"
+                    onclick="confirmAction('Удалить выбранных студентов?',()=>bulkDeleteSelected())">
+                🗑️ Удалить выбранных
+            </button>
+            <button class="btn-gray" style="font-size:13px;padding:8px 14px;"
+                    onclick="clearSelection()">Снять выделение</button>
+        </div>
+
+        <!-- Поиск -->
         <div class="table-search">
             <input type="text" id="table-search"
                    placeholder="🔍 Поиск по ФИО или ID..."
                    oninput="filterTable()">
         </div>
 
-        <div style="max-height:360px; overflow-y:auto; border-radius:12px;
-                    border:1px solid #f3f4f6;">
+        <div style="max-height:320px;overflow-y:auto;border-radius:12px;border:1px solid #f3f4f6;">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>ФИО</th><th></th></tr>
+                    <tr>
+                        <th class="cb-col">
+                            <input type="checkbox" id="select-all-cb"
+                                   onchange="toggleSelectAll(this.checked)">
+                        </th>
+                        <th>ID</th><th>ФИО</th><th></th>
+                    </tr>
                 </thead>
                 <tbody id="bureau-students-tbody">
                 {% for student in bureau_students %}
@@ -783,17 +911,19 @@
                     class="student-table-row"
                     data-name="{{ student.full_name | lower }}"
                     data-id="{{ student.student_id | lower }}">
+                    <td class="cb-col">
+                        <input type="checkbox" class="row-cb"
+                               value="{{ student.student_id }}"
+                               onchange="onRowCheckChange()">
+                    </td>
                     <td><span class="id-badge">{{ student.student_id }}</span></td>
                     <td>{{ student.full_name }}</td>
                     <td>
-                        <button class="btn-danger"
-                                style="font-size:12px; padding:6px 12px;"
+                        <button class="btn-danger" style="font-size:12px;padding:6px 12px;"
                                 onclick="confirmAction(
                                     'Удалить студента {{ student.full_name }}?',
                                     () => deleteStudent('{{ student.student_id }}')
-                                )">
-                            Удалить
-                        </button>
+                                )">Удалить</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -801,32 +931,9 @@
             </table>
         </div>
 
-        <p style="color:#9ca3af; font-size:12px; margin:10px 0 0;">
+        <p style="color:#9ca3af;font-size:12px;margin:10px 0 0;">
             Показано: <span id="table-count">{{ bureau_students|length }}</span>
         </p>
-
-        <div class="add-form">
-            <div style="flex:1; min-width:200px;">
-                <label style="margin-top:0;">ФИО нового студента</label>
-                <input type="text" id="new-name"
-                       placeholder="Фамилия Имя Отчество" style="margin:0;">
-            </div>
-            <button class="btn-green" onclick="addStudent()"
-                    style="height:44px; margin-bottom:0;">
-                Добавить
-            </button>
-        </div>
-
-        <div class="upload-section">
-            <span style="font-weight:bold; font-size:13px;">📄 CSV:</span>
-            <form method="POST" action="/upload_students" enctype="multipart/form-data"
-                  style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <input type="file" name="file" accept=".csv,.txt"
-                       style="width:auto; margin:0; padding:8px; font-size:13px;">
-                <button type="submit" style="padding:9px 16px;">Загрузить</button>
-            </form>
-            <span style="color:#9ca3af; font-size:12px;">Одно ФИО на строку</span>
-        </div>
 
     </div>
 </div>
@@ -1275,6 +1382,140 @@ async function deleteStudent(studentId) {
 }
 
 // ======================================================
+// ВКЛАДКИ
+// ======================================================
+
+function switchTab(tabId, btn) {
+    document.querySelectorAll(".bulk-section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".bulk-tab").forEach(b => b.classList.remove("active"));
+    document.getElementById(tabId).classList.add("active");
+    btn.classList.add("active");
+    if (tabId === "tab-add") clearSelection();
+}
+
+// ======================================================
+// ЧЕКБОКСЫ
+// ======================================================
+
+function onRowCheckChange() {
+    const checked = document.querySelectorAll(".row-cb:checked");
+    const panel   = document.getElementById("bulk-panel");
+    document.getElementById("selected-count-text").textContent = `Выбрано: ${checked.length}`;
+    document.querySelectorAll(".student-table-row").forEach(row => {
+        const cb = row.querySelector(".row-cb");
+        row.classList.toggle("selected", cb && cb.checked);
+    });
+    checked.length > 0 ? panel.classList.add("visible") : panel.classList.remove("visible");
+    const allVisible = Array.from(document.querySelectorAll(".row-cb"))
+        .filter(cb => cb.closest("tr").style.display !== "none");
+    const allChecked = allVisible.length > 0 && allVisible.every(cb => cb.checked);
+    const allCb = document.getElementById("select-all-cb");
+    allCb.indeterminate = checked.length > 0 && !allChecked;
+    allCb.checked = allChecked;
+}
+
+function toggleSelectAll(checked) {
+    document.querySelectorAll(".student-table-row").forEach(row => {
+        if (row.style.display === "none") return;
+        const cb = row.querySelector(".row-cb");
+        if (cb) cb.checked = checked;
+        row.classList.toggle("selected", checked);
+    });
+    onRowCheckChange();
+}
+
+function clearSelection() {
+    document.querySelectorAll(".row-cb").forEach(cb => cb.checked = false);
+    document.querySelectorAll(".student-table-row").forEach(r => r.classList.remove("selected"));
+    const allCb = document.getElementById("select-all-cb");
+    if (allCb) { allCb.checked = false; allCb.indeterminate = false; }
+    document.getElementById("bulk-panel").classList.remove("visible");
+}
+
+function updateStudentCountBy(delta) {
+    const c = document.getElementById("table-count");
+    if (c) c.textContent = Math.max(0, parseInt(c.textContent) + delta);
+}
+
+// ======================================================
+// МАССОВОЕ УДАЛЕНИЕ — ЧЕКБОКСЫ
+// ======================================================
+
+async function bulkDeleteSelected() {
+    const ids = Array.from(document.querySelectorAll(".row-cb:checked")).map(cb => cb.value);
+    if (!ids.length) { showToast("Ничего не выбрано","error"); return; }
+    const res  = await fetch("/bulk_delete_students", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        ids.forEach(id => {
+            const row = document.getElementById(`stu-row-${id}`);
+            if (row) {
+                row.style.opacity = "0";
+                row.style.transition = "opacity 0.3s";
+                setTimeout(() => row.remove(), 300);
+            }
+        });
+        updateStudentCountBy(-data.deleted);
+        clearSelection();
+        showToast(`Удалено: ${data.deleted} студентов`);
+    } else { showToast(data.error||"Ошибка","error"); }
+}
+
+// ======================================================
+// МАССОВОЕ УДАЛЕНИЕ — ПО CSV (только своё бюро)
+// ======================================================
+
+async function bulkDeleteByCSV() {
+    const fileInput = document.getElementById("bulk-delete-file");
+    const statusEl  = document.getElementById("bulk-status");
+    statusEl.style.display = "none";
+
+    if (!fileInput.files.length) { showToast("Выберите файл","error"); return; }
+
+    const raw  = await fileInput.files[0].arrayBuffer();
+    let   text = null;
+    for (const enc of ["utf-8","windows-1251"]) {
+        try { text = new TextDecoder(enc,{fatal:true}).decode(raw); break; } catch(e){}
+    }
+    if (!text) { showToast("Не удалось прочитать файл","error"); return; }
+
+    const names = text.split("
+").map(l => l.split(";")[0].trim()).filter(Boolean);
+    if (!names.length) { showToast("Файл пуст","error"); return; }
+
+    // Для бюро фильтруем только тех кто есть в нашем списке
+    const res  = await fetch("/bulk_delete_students", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ names })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+        names.forEach(name => {
+            document.querySelectorAll(".student-table-row").forEach(row => {
+                if (row.dataset.name === name.toLowerCase()) {
+                    row.style.opacity = "0";
+                    row.style.transition = "opacity 0.3s";
+                    setTimeout(() => row.remove(), 300);
+                }
+            });
+        });
+        updateStudentCountBy(-data.deleted);
+        statusEl.className   = "pass-ok";
+        statusEl.textContent = `✓ Удалено ${data.deleted} из ${names.length} студентов`;
+        statusEl.style.display = "block";
+        fileInput.value = "";
+    } else {
+        statusEl.className   = "pass-err";
+        statusEl.textContent = data.error||"Ошибка";
+        statusEl.style.display = "block";
+    }
+}
+
+// ======================================================
 // ПОИСК ПО ТАБЛИЦЕ СТУДЕНТОВ
 // ======================================================
 
@@ -1287,6 +1528,8 @@ function filterTable() {
         if (match) visible++;
     });
     document.getElementById("table-count").textContent = visible;
+    const allCb = document.getElementById("select-all-cb");
+    if (allCb) { allCb.checked = false; allCb.indeterminate = false; }
 }
 
 // ======================================================
