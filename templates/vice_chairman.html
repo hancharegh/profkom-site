@@ -545,7 +545,30 @@
     </style>
 </head>
 <body>
+<script>
+    function openModal(id) {
+    document.getElementById(id).classList.add("open");
+    document.body.style.overflow = "hidden";
+}
 
+function closeModal(id) {
+    document.getElementById(id).classList.remove("open");
+    document.body.style.overflow = "";
+}
+
+document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", function(e) {
+        if (e.target === this) closeModal(this.id);
+    });
+});
+
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".modal-overlay.open").forEach(m => closeModal(m.id));
+        closeConfirm();
+    }
+});
+</script>
 <div id="toast-container"></div>
 
 {% with messages = get_flashed_messages() %}
@@ -1115,28 +1138,7 @@ function showToast(text, type = "success") {
 // MODALS
 // ======================================================
 
-function openModal(id) {
-    document.getElementById(id).classList.add("open");
-    document.body.style.overflow = "hidden";
-}
 
-function closeModal(id) {
-    document.getElementById(id).classList.remove("open");
-    document.body.style.overflow = "";
-}
-
-document.querySelectorAll(".modal-overlay").forEach(overlay => {
-    overlay.addEventListener("click", function(e) {
-        if (e.target === this) closeModal(this.id);
-    });
-});
-
-document.addEventListener("keydown", e => {
-    if (e.key === "Escape") {
-        document.querySelectorAll(".modal-overlay.open").forEach(m => closeModal(m.id));
-        closeConfirm();
-    }
-});
 
 // ======================================================
 // CONFIRM
