@@ -675,29 +675,6 @@
     </div>
 {% endif %}
 {% endwith %}
-    
-function openModal(id) {
-    document.getElementById(id).classList.add("open");
-    document.body.style.overflow = "hidden";
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.remove("open");
-    document.body.style.overflow = "";
-}
-
-document.querySelectorAll(".modal-overlay").forEach(overlay => {
-    overlay.addEventListener("click", function(e) {
-        if (e.target === this) closeModal(this.id);
-    });
-});
-
-document.addEventListener("keydown", e => {
-    if (e.key === "Escape") {
-        document.querySelectorAll(".modal-overlay.open").forEach(m => closeModal(m.id));
-        closeConfirm();
-    }
-});
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -712,16 +689,16 @@ document.addEventListener("keydown", e => {
     </div>
 
     <div class="sidebar-nav">
-        <button class="nav-btn" onclick="openModal('modal-students')">
+        <button type="button" class="nav-btn" onclick="openModal('modal-students')">
             <span class="icon">👨‍🎓</span> Студенты
         </button>
-        <button class="nav-btn" onclick="openModal('modal-entries')">
+        <button type="button" class="nav-btn" onclick="openModal('modal-entries')">
             <span class="icon">📋</span> Последние действия
         </button>
-        <button class="nav-btn" onclick="openModal('modal-schedule')">
+        <button type="button" class="nav-btn" onclick="openModal('modal-schedule')">
             <span class="icon">📅</span> Расписание
         </button>
-        <button class="nav-btn" onclick="openModal('modal-excel')">
+        <button type="button" class="nav-btn" onclick="openModal('modal-excel')">
             <span class="icon">📊</span> Экспорт Excel
         </button>
     </div>
@@ -805,12 +782,12 @@ document.addEventListener("keydown", e => {
 
                 <td>
                     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                        <button class="btn-outline"
+                        <button type="button" class="btn-outline"
                                 style="font-size:12px; padding:7px 12px;"
                                 onclick="togglePassForm('pass-{{ secretary.id }}')">
                             🔑 Пароль
                         </button>
-                        <button class="btn-danger"
+                        <button type="button" class="btn-danger"
                                 style="font-size:12px; padding:7px 12px;"
                                 onclick="confirmAction(
                                     'Удалить пользователя {{ secretary.name }}?',
@@ -825,7 +802,7 @@ document.addEventListener("keydown", e => {
                             <input type="password"
                                    id="pass-input-{{ secretary.id }}"
                                    placeholder="Новый пароль">
-                            <button class="btn-green"
+                            <button type="button" class="btn-green"
                                     style="padding:9px 14px; white-space:nowrap;"
                                     onclick="changeSecretaryPassword({{ secretary.id }})">
                                 Сохранить
@@ -891,7 +868,7 @@ document.addEventListener("keydown", e => {
                 </select>
             </div>
 
-            <button onclick="addUser()" style="height:44px; margin-bottom:0;">
+            <button type="button" onclick="addUser()" style="height:44px; margin-bottom:0;">
                 Применить
             </button>
 
@@ -911,7 +888,7 @@ document.addEventListener("keydown", e => {
                 </label>
                 <input type="password" id="chair-new-password" placeholder="Введите новый пароль">
             </div>
-            <button onclick="changeChairPassword()" style="height:44px; margin-bottom:0;">
+            <button type="button" onclick="changeChairPassword()" style="height:44px; margin-bottom:0;">
                 Сохранить
             </button>
         </div>
@@ -929,15 +906,15 @@ document.addEventListener("keydown", e => {
 
         <div class="modal-header">
             <h2>👨‍🎓 Студенты</h2>
-            <button class="modal-close" onclick="closeModal('modal-students')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('modal-students')">✕</button>
         </div>
 
         <!-- Вкладки -->
         <div class="bulk-tab-row">
-            <button class="bulk-tab active" onclick="switchTab('tab-add',this)">
+            <button type="button" class="bulk-tab active" onclick="switchTab('tab-add',this)">
                 ➕ Добавить
             </button>
-            <button class="bulk-tab" onclick="switchTab('tab-bulk-delete',this)">
+            <button type="button" class="bulk-tab" onclick="switchTab('tab-bulk-delete',this)">
                 🗑️ Массовое удаление
             </button>
         </div>
@@ -964,7 +941,7 @@ document.addEventListener("keydown", e => {
                         <option value="5">Бюро 5</option>
                     </select>
                 </div>
-                <button class="btn-green" style="height:44px;" onclick="addStudent()">
+                <button type="button" class="btn-green" style="height:44px;" onclick="addStudent()">
                     Добавить
                 </button>
             </div>
@@ -1005,7 +982,7 @@ document.addEventListener("keydown", e => {
                         <option value="4">Бюро 4</option>
                         <option value="5">Бюро 5</option>
                     </select>
-                    <button class="btn-danger" style="padding:10px 16px;"
+                    <button type="button" class="btn-danger" style="padding:10px 16px;"
                             onclick="confirmAction(
                                 'Удалить ВСЕХ студентов выбранного бюро? Это нельзя отменить.',
                                 () => bulkDeleteByBureau()
@@ -1027,7 +1004,7 @@ document.addEventListener("keydown", e => {
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <input type="file" id="bulk-delete-file" accept=".csv,.txt"
                            style="width:auto;margin:0;padding:8px;font-size:13px;flex:1;">
-                    <button class="btn-danger" style="padding:10px 16px;"
+                    <button type="button" class="btn-danger" style="padding:10px 16px;"
                             onclick="bulkDeleteByCSV()">
                         Удалить из файла
                     </button>
@@ -1043,14 +1020,14 @@ document.addEventListener("keydown", e => {
         <!-- Панель выбранных (чекбоксы) -->
         <div class="bulk-panel" id="bulk-panel">
             <span class="selected-count" id="selected-count-text">Выбрано: 0</span>
-            <button class="btn-danger" style="font-size:13px;padding:8px 16px;"
+            <button type="button" class="btn-danger" style="font-size:13px;padding:8px 16px;"
                     onclick="confirmAction(
                         'Удалить всех выбранных студентов?',
                         () => bulkDeleteSelected()
                     )">
                 🗑️ Удалить выбранных
             </button>
-            <button class="btn-gray" style="font-size:13px;padding:8px 14px;"
+            <button type="button" class="btn-gray" style="font-size:13px;padding:8px 14px;"
                     onclick="clearSelection()">
                 Снять выделение
             </button>
@@ -1059,11 +1036,11 @@ document.addEventListener("keydown", e => {
         <!-- Фильтр по бюро -->
         <div class="filter-row" style="margin-top:4px;">
             <span style="font-size:12px;color:#6b7280;">Фильтр:</span>
-            <button class="filter-btn"
+            <button type="button" class="filter-btn"
                     style="background:#ede9fe;color:#6d28d9;"
                     onclick="filterByBureau('')">Все</button>
             {% for i in range(1, 6) %}
-            <button class="filter-btn"
+            <button type="button" class="filter-btn"
                     style="background:#fef9c3;color:#854d0e;"
                     onclick="filterByBureau('{{ i }}')">Бюро {{ i }}</button>
             {% endfor %}
@@ -1107,7 +1084,7 @@ document.addEventListener("keydown", e => {
                     <td>{{ student.full_name }}</td>
                     <td><span class="bureau-badge">№{{ student.bureau }}</span></td>
                     <td>
-                        <button class="btn-danger"
+                        <button type="button" class="btn-danger"
                                 style="font-size:12px;padding:6px 12px;"
                                 onclick="confirmAction(
                                     'Удалить студента {{ student.full_name }}?',
@@ -1135,7 +1112,7 @@ document.addEventListener("keydown", e => {
 
         <div class="modal-header">
             <h2>📋 Последние действия</h2>
-            <button class="modal-close" onclick="closeModal('modal-entries')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('modal-entries')">✕</button>
         </div>
 
         <div style="overflow-x:auto;">
@@ -1168,7 +1145,7 @@ document.addEventListener("keydown", e => {
         </div>
 
         {% if entries|length > 20 %}
-        <button class="load-more-btn" id="load-more-entries" onclick="loadMoreEntries()">
+        <button type="button" class="load-more-btn" id="load-more-entries" onclick="loadMoreEntries()">
             Показать ещё ({{ entries|length - 20 }} из {{ entries|length }})
         </button>
         {% endif %}
@@ -1182,7 +1159,7 @@ document.addEventListener("keydown", e => {
 
         <div class="modal-header">
             <h2>📅 Расписание секретарей</h2>
-            <button class="modal-close" onclick="closeModal('modal-schedule')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('modal-schedule')">✕</button>
         </div>
 
         <form method="POST" action="/save_schedule">
@@ -1213,7 +1190,7 @@ document.addEventListener("keydown", e => {
 
         <div class="modal-header">
             <h2>📊 Экспорт Excel</h2>
-            <button class="modal-close" onclick="closeModal('modal-excel')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('modal-excel')">✕</button>
         </div>
 
         <form action="/export_excel">
@@ -1241,8 +1218,8 @@ document.addEventListener("keydown", e => {
     <div class="confirm-box">
         <p id="confirm-text"></p>
         <div class="confirm-buttons">
-            <button class="btn-danger" id="confirm-ok-btn">Подтвердить</button>
-            <button class="btn-gray" onclick="closeConfirm()">Отмена</button>
+            <button type="button" class="btn-danger" id="confirm-ok-btn">Подтвердить</button>
+            <button type="button" class="btn-gray" onclick="closeConfirm()">Отмена</button>
         </div>
     </div>
 </div>
@@ -1314,6 +1291,28 @@ function showToast(text, type = "success") {
 // MODALS
 // ======================================================
 
+function openModal(id) {
+    document.getElementById(id).classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove("open");
+    document.body.style.overflow = "";
+}
+
+document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", function(e) {
+        if (e.target === this) closeModal(this.id);
+    });
+});
+
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".modal-overlay.open").forEach(m => closeModal(m.id));
+        closeConfirm();
+    }
+});
 
 // ======================================================
 // CONFIRM
@@ -1469,16 +1468,16 @@ function addUserRow(user) {
         <td>${rolesHtml}</td>
         <td>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <button class="btn-outline" style="font-size:12px;padding:7px 12px;"
+                <button type="button" class="btn-outline" style="font-size:12px;padding:7px 12px;"
                         onclick="togglePassForm('pass-${user.id}')">🔑 Пароль</button>
-                <button class="btn-danger" style="font-size:12px;padding:7px 12px;"
+                <button type="button" class="btn-danger" style="font-size:12px;padding:7px 12px;"
                         onclick="confirmAction('Удалить пользователя ${user.name}?',()=>deleteSecretary(${user.id}))">
                     Удалить</button>
             </div>
             <div id="pass-${user.id}" style="display:none;margin-top:10px;">
                 <div class="pass-inline">
                     <input type="password" id="pass-input-${user.id}" placeholder="Новый пароль">
-                    <button class="btn-green" style="padding:9px 14px;white-space:nowrap;"
+                    <button type="button" class="btn-green" style="padding:9px 14px;white-space:nowrap;"
                             onclick="changeSecretaryPassword(${user.id})">Сохранить</button>
                 </div>
             </div>
@@ -1572,7 +1571,7 @@ async function addStudent() {
             <td>${fullName}</td>
             <td><span class="bureau-badge">№${data.bureau}</span></td>
             <td>
-                <button class="btn-danger" style="font-size:12px;padding:6px 12px;"
+                <button type="button" class="btn-danger" style="font-size:12px;padding:6px 12px;"
                     onclick="confirmAction(
                         'Удалить студента ${fullName}?',
                         () => deleteStudent('${data.student_id}')
