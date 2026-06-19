@@ -1536,8 +1536,7 @@ async function bulkDeleteByCSV() {
         try { text = new TextDecoder(enc,{fatal:true}).decode(raw); break; } catch(e){}
     }
     if (!text) { showToast("Не удалось прочитать файл","error"); return; }
-    const names = text.split("
-").map(l=>l.split(";")[0].trim()).filter(Boolean);
+    const names = text.split("\n").map(l=>l.split(";")[0].trim()).filter(Boolean);
     if (!names.length) { showToast("Файл пуст","error"); return; }
     const res  = await fetch("/bulk_delete_students", {
         method: "POST", headers: { "Content-Type": "application/json" },
