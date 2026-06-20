@@ -364,6 +364,19 @@
             border-radius: 10px;
         }
 
+        /* ====== СНЕЖИНКИ ====== */
+        .snow-piece {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99998;
+            animation: snowfall linear infinite;
+        }
+
+        @keyframes snowfall {
+            from { transform: translateY(-30px) rotate(0deg);   opacity: 0.85; }
+            to   { transform: translateY(110vh)  rotate(360deg); opacity: 0;    }
+        }
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main { margin-left: 0; padding: 20px; }
@@ -549,46 +562,45 @@
     <button onclick="nextGif()">Погладить котика 🐾</button>
 </div>
 <script>
-const PET_GIFS = [
-    "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-    "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
-    "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif",
-    "https://media.giphy.com/media/13borq7Zo2kulO/giphy.gif",
-    "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
-    "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif",
-    "https://media.giphy.com/media/8vQSQ3cNXuDGo/giphy.gif",
-    "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif",
-    "https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif",
-    "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif",
-    "https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif",
-    "https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif",
-    "https://media.giphy.com/media/ule4vhcY1xEKQ/giphy.gif",
-    "https://media.giphy.com/media/5i7umUqAOYYEw/giphy.gif",
-    "https://media.giphy.com/media/o75ajIFH0QnXBQ/giphy.gif",
-    "https://media.giphy.com/media/pjFoQHzqHuBMHBVRBg/giphy.gif",
-    "https://media.giphy.com/media/gJ3mEToTDJn3LT6kCT/giphy.gif",
-    "https://media.giphy.com/media/nR4L10XlJcSeQ/giphy.gif",
-    "https://media.giphy.com/media/cVZe3dHOlBPe/giphy.gif",
-    "https://media.giphy.com/media/Zb63DFkD3cMkw/giphy.gif"
-];
+(function () {
+    const PET_GIFS = [
+        "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+        "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
+        "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif",
+        "https://media.giphy.com/media/13borq7Zo2kulO/giphy.gif",
+        "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
+        "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif",
+        "https://media.giphy.com/media/8vQSQ3cNXuDGo/giphy.gif",
+        "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif",
+        "https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif",
+        "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif",
+        "https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif",
+        "https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif",
+        "https://media.giphy.com/media/ule4vhcY1xEKQ/giphy.gif",
+        "https://media.giphy.com/media/5i7umUqAOYYEw/giphy.gif",
+        "https://media.giphy.com/media/o75ajIFH0QnXBQ/giphy.gif",
+        "https://media.giphy.com/media/pjFoQHzqHuBMHBVRBg/giphy.gif",
+        "https://media.giphy.com/media/gJ3mEToTDJn3LT6kCT/giphy.gif",
+        "https://media.giphy.com/media/nR4L10XlJcSeQ/giphy.gif",
+        "https://media.giphy.com/media/cVZe3dHOlBPe/giphy.gif",
+        "https://media.giphy.com/media/Zb63DFkD3cMkw/giphy.gif"
+    ];
 
-let petIdx = Math.floor(Math.random() * PET_GIFS.length);
+    let petIdx = Math.floor(Math.random() * PET_GIFS.length);
 
-function nextGif() {
-    const img = document.getElementById("petGif");
-    img.style.opacity = "0";
-    setTimeout(() => {
-        petIdx = (petIdx + 1) % PET_GIFS.length;
-        img.src = PET_GIFS[petIdx];
-        img.style.opacity = "1";
-    }, 300);
-}
+    window.nextGif = function () {
+        const img = document.getElementById("petGif");
+        img.style.opacity = "0";
+        setTimeout(() => {
+            petIdx = (petIdx + 1) % PET_GIFS.length;
+            img.src = PET_GIFS[petIdx];
+            img.style.opacity = "1";
+        }, 300);
+    };
 
-// Начальная гифка
-document.getElementById("petGif").src = PET_GIFS[petIdx];
-
-// Автосмена каждые 8 секунд
-setInterval(nextGif, 8000);
+    document.getElementById("petGif").src = PET_GIFS[petIdx];
+    setInterval(window.nextGif, 8000);
+})();
 </script>
 {% endif %}
 
@@ -600,43 +612,45 @@ setInterval(nextGif, 8000);
     <button onclick="nextGif()" style="background:#0d9488;">Погладить выдру 🦦</button>
 </div>
 <script>
-const PET_GIFS = [
-    "https://media.giphy.com/media/MhHXeM4SpKrpC/giphy.gif",
-    "https://media.giphy.com/media/3oriO6Oq5NXgrMkuSs/giphy.gif",
-    "https://media.giphy.com/media/l0IypeKl9NJhPFMrK/giphy.gif",
-    "https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif",
-    "https://media.giphy.com/media/3o7abB06u9bNzA8lu8/giphy.gif",
-    "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif",
-    "https://media.giphy.com/media/8UGGp7rQvfhe8/giphy.gif",
-    "https://media.giphy.com/media/zHd3eDxQZS5tW/giphy.gif",
-    "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
-    "https://media.giphy.com/media/l2JedJsO3OPMdVSne/giphy.gif",
-    "https://media.giphy.com/media/3o7TKxOhkp8gO0LXMI/giphy.gif",
-    "https://media.giphy.com/media/26BRzozg4TCBXv6QU/giphy.gif",
-    "https://media.giphy.com/media/l3vR5K4OkJnHJFAuY/giphy.gif",
-    "https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif",
-    "https://media.giphy.com/media/26BRrSvJEDf0IQWAM/giphy.gif",
-    "https://media.giphy.com/media/3oEjHWPTo7c0ajPwty/giphy.gif",
-    "https://media.giphy.com/media/26xBI73gWquCBLCDO/giphy.gif",
-    "https://media.giphy.com/media/l2JedEEHFbhFmx0Cs/giphy.gif",
-    "https://media.giphy.com/media/3oEjHV0z8S7WM4MwnK/giphy.gif",
-    "https://media.giphy.com/media/26BRBupa6nRXMGBP2/giphy.gif"
-];
+(function () {
+    const PET_GIFS = [
+        "https://media.giphy.com/media/MhHXeM4SpKrpC/giphy.gif",
+        "https://media.giphy.com/media/3oriO6Oq5NXgrMkuSs/giphy.gif",
+        "https://media.giphy.com/media/l0IypeKl9NJhPFMrK/giphy.gif",
+        "https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif",
+        "https://media.giphy.com/media/3o7abB06u9bNzA8lu8/giphy.gif",
+        "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif",
+        "https://media.giphy.com/media/8UGGp7rQvfhe8/giphy.gif",
+        "https://media.giphy.com/media/zHd3eDxQZS5tW/giphy.gif",
+        "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
+        "https://media.giphy.com/media/l2JedJsO3OPMdVSne/giphy.gif",
+        "https://media.giphy.com/media/3o7TKxOhkp8gO0LXMI/giphy.gif",
+        "https://media.giphy.com/media/26BRzozg4TCBXv6QU/giphy.gif",
+        "https://media.giphy.com/media/l3vR5K4OkJnHJFAuY/giphy.gif",
+        "https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif",
+        "https://media.giphy.com/media/26BRrSvJEDf0IQWAM/giphy.gif",
+        "https://media.giphy.com/media/3oEjHWPTo7c0ajPwty/giphy.gif",
+        "https://media.giphy.com/media/26xBI73gWquCBLCDO/giphy.gif",
+        "https://media.giphy.com/media/l2JedEEHFbhFmx0Cs/giphy.gif",
+        "https://media.giphy.com/media/3oEjHV0z8S7WM4MwnK/giphy.gif",
+        "https://media.giphy.com/media/26BRBupa6nRXMGBP2/giphy.gif"
+    ];
 
-let petIdx = Math.floor(Math.random() * PET_GIFS.length);
+    let petIdx = Math.floor(Math.random() * PET_GIFS.length);
 
-function nextGif() {
-    const img = document.getElementById("petGif");
-    img.style.opacity = "0";
-    setTimeout(() => {
-        petIdx = (petIdx + 1) % PET_GIFS.length;
-        img.src = PET_GIFS[petIdx];
-        img.style.opacity = "1";
-    }, 300);
-}
+    window.nextGif = function () {
+        const img = document.getElementById("petGif");
+        img.style.opacity = "0";
+        setTimeout(() => {
+            petIdx = (petIdx + 1) % PET_GIFS.length;
+            img.src = PET_GIFS[petIdx];
+            img.style.opacity = "1";
+        }, 300);
+    };
 
-document.getElementById("petGif").src = PET_GIFS[petIdx];
-setInterval(nextGif, 8000);
+    document.getElementById("petGif").src = PET_GIFS[petIdx];
+    setInterval(window.nextGif, 8000);
+})();
 </script>
 {% endif %}
 
@@ -655,7 +669,7 @@ const studentIdInput = document.getElementById("student_id_input");
 
 function formatTs(raw) {
     if (!raw) return raw;
-    const normalized = raw.replace(" ", "T").replace(/\\.\\d+$/, "") + "Z";
+    const normalized = raw.replace(" ", "T").replace(/\.\d+$/, "") + "Z";
     const d = new Date(normalized);
     if (isNaN(d)) return raw;
     const msk   = new Date(d.getTime() + 3 * 60 * 60 * 1000);
@@ -821,10 +835,12 @@ function checkSecretAchievements(payload) {
     const wday = now.getDay();
     const day  = now.getDate();
 
+    // Пятница 13-е
     if (wday === 5 && day === 13) {
         unlockAchievement("friday13", "😱 Тайная ачивка: Пятница 13-е!");
     }
 
+    // Все 8 видов сразу
     const allTypes = [
         payload.print_count, payload.copy_count, payload.notebook_count,
         payload.ruler_count, payload.corrector_count, payload.pencil_count,
@@ -835,9 +851,29 @@ function checkSecretAchievements(payload) {
         unlockAchievement("rainbow", "🌈 Тайная ачивка: Радуга! Все 8 видов за раз!");
     }
 
+    // Спидран — 20 выдач за сессию
     sessionIssues++;
     if (sessionIssues >= 20) {
         unlockAchievement("speedrun", "⚡ Тайная ачивка: Спидран! 20 выдач за сессию!");
+    }
+
+    // Полуночник — выдача с 00:00 до 06:00
+    const h = now.getHours();
+    if (h >= 0 && h < 6) {
+        unlockAchievement("nightowl", "🦉 Тайная ачивка: Полуночник! Серьёзно, иди спать.");
+    }
+
+    // Понедельник
+    if (wday === 1) {
+        unlockAchievement("monday", "😩 Тайная ачивка: Понедельник — день тяжёлый");
+    }
+
+    // Стахановец — 5 выдач за 2 минуты
+    const nowMs = Date.now();
+    issueTimes.push(nowMs);
+    while (issueTimes.length > 5) issueTimes.shift();
+    if (issueTimes.length === 5 && (nowMs - issueTimes[0]) <= 2 * 60 * 1000) {
+        unlockAchievement("stakhanov", "🏭 Тайная ачивка: Стахановец! 5 выдач за 2 минуты");
     }
 
     resetSonaTimer();
@@ -851,6 +887,12 @@ function resetSonaTimer() {
 }
 
 resetSonaTimer();
+
+// Счётчик времён выдач для Стахановца
+const issueTimes = [];
+
+// Счётчик отмен подряд для Перфекциониста
+let undoStreak = 0;
 
 // ======================================================
 // ВЫДАЧА (AJAX)
@@ -901,6 +943,8 @@ async function submitIssue() {
             updateLimits(data.limits);
             prependEntry(data.entry);
             checkSecretAchievements(payload);
+            // Сброс счётчика отмен при успешной выдаче
+            undoStreak = 0;
             resetForm();
         }
     } catch (err) {
@@ -942,6 +986,13 @@ async function doUndo(entryId, btn) {
         const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
         const data = await res.json();
         if (data.ok) {
+            // ── АЧИВКА: ПЕРФЕКЦИОНИСТ (3 отмены подряд) ──
+            undoStreak++;
+            if (undoStreak >= 3) {
+                unlockAchievement("perfectionist", "🧹 Тайная ачивка: Перфекционист! 3 отмены подряд");
+                undoStreak = 0;
+            }
+            // ─────────────────────────────────────────────
             const row = document.getElementById(`row-${entryId}`);
             if (row) {
                 row.classList.add("removing");
@@ -960,6 +1011,52 @@ async function doUndo(entryId, btn) {
 document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeUndoConfirm();
 });
+
+// ======================================================
+// СНЕГОПАД
+// ======================================================
+
+let snowInterval = null;
+let snowPieces   = [];
+
+function startSnow() {
+    if (snowInterval) return;
+    showNotification("❄️ Снегопад начался!", "message");
+    snowInterval = setInterval(() => {
+        const el = document.createElement("div");
+        el.className   = "snow-piece";
+        el.textContent = ["❄️","⛄","🌨️","✨"][Math.floor(Math.random() * 4)];
+        el.style.left              = Math.random() * 100 + "vw";
+        el.style.fontSize          = (12 + Math.random() * 14) + "px";
+        el.style.animationDuration = (4 + Math.random() * 5) + "s";
+        document.body.appendChild(el);
+        snowPieces.push(el);
+        if (snowPieces.length > 80) snowPieces.shift().remove();
+    }, 200);
+}
+
+function stopSnow() {
+    if (snowInterval) { clearInterval(snowInterval); snowInterval = null; }
+    snowPieces.forEach(el => el.remove());
+    snowPieces = [];
+    showNotification("☀️ Снег закончился", "message");
+}
+
+// ======================================================
+// MATRIX MODE
+// ======================================================
+
+function activateMatrix() {
+    body.style.background = "#000";
+    body.style.color      = "#00ff00";
+    document.querySelectorAll(".card").forEach(c => {
+        c.style.background = "#0a0a0a";
+        c.style.color      = "#00ff00";
+        c.style.border     = "1px solid #00ff00";
+    });
+    document.querySelector(".sidebar").style.background = "#001100";
+    showNotification("🟢 MATRIX MODE ACTIVATED", "message");
+}
 
 // ======================================================
 // ПОИСК СТУДЕНТОВ + ПАСХАЛКИ
@@ -983,6 +1080,11 @@ searchInput.addEventListener("input", async function() {
         "/party":   () => { launchConfetti(["🎉","✨","🐯","🎊","🦦","🐱"]); this.value = ""; },
         "reset":    () => { body.style.background = ""; showNotification("♻️ Тема сброшена", "message"); this.value = ""; },
         "/reset":   () => { body.style.background = ""; showNotification("♻️ Тема сброшена", "message"); this.value = ""; },
+        // ── НОВЫЕ КОМАНДЫ: СНЕГОПАД ──
+        "snow":     () => { startSnow(); this.value = ""; unlockAchievement("snow", "❄️ Тайная ачивка: Дед Мороз!"); },
+        "/snow":    () => { startSnow(); this.value = ""; unlockAchievement("snow", "❄️ Тайная ачивка: Дед Мороз!"); },
+        "snowoff":  () => { stopSnow(); this.value = ""; },
+        "/snowoff": () => { stopSnow(); this.value = ""; },
     };
 
     if (triggers[cmd]) {
@@ -1027,22 +1129,6 @@ searchInput.addEventListener("keydown", function(e) {
 });
 
 // ======================================================
-// MATRIX MODE
-// ======================================================
-
-function activateMatrix() {
-    body.style.background = "#000";
-    body.style.color      = "#00ff00";
-    document.querySelectorAll(".card").forEach(c => {
-        c.style.background = "#0a0a0a";
-        c.style.color      = "#00ff00";
-        c.style.border     = "1px solid #00ff00";
-    });
-    document.querySelector(".sidebar").style.background = "#001100";
-    showNotification("🟢 MATRIX MODE ACTIVATED", "message");
-}
-
-// ======================================================
 // СЕЗОННЫЕ ТЕМЫ
 // ======================================================
 
@@ -1052,6 +1138,9 @@ const dateDay = new Date().getDate();
 if (month === 12) body.style.background = "linear-gradient(160deg,#dbeafe 0%,#f0f2f8 60%)";
 if (month === 9)  body.style.background = "linear-gradient(160deg,#fff7ed 0%,#f0f2f8 60%)";
 if (month === 12 && dateDay >= 25) setTimeout(() => launchConfetti(["🎄","⭐","❄️","🎅","🎁"]), 1000);
+
+// Автоснегопад в декабре
+if (month === 12) setTimeout(startSnow, 1500);
 
 // ======================================================
 // ANTI SLEEP
