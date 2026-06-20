@@ -5,7 +5,40 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <title>Профком СПбГТИ(ТУ)</title>
     <style>
+        /* Курсор-тигр в тигровом режиме */
+body.tiger-mode {
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='26' font-size='26'>🐯</text></svg>") 16 16, auto;
+}
 
+/* Ночной режим */
+body.night-mode {
+    background: linear-gradient(135deg, #0a0a14 0%, #060810 60%, #0a1020 100%) !important;
+}
+
+body.night-mode .card {
+    background: #111827;
+    color: #e5e7eb;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+}
+
+body.night-mode .logo-title  { color: #e5e7eb; }
+body.night-mode .logo-subtitle { color: #6b7280; }
+body.night-mode .tagline     { color: #6b7280; }
+body.night-mode .field label { color: #9ca3af; }
+body.night-mode .field input {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+body.night-mode .field input:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    background: #1f2937;
+}
+body.night-mode .flash-msg {
+    background: #2d1b1b;
+    color: #fca5a5;
+}
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -600,7 +633,68 @@ const day     = new Date().getDate();
 if (month === 12 && day >= 25) {
     setTimeout(() => launchConfetti(["🎄","⭐","❄️","🎅","🎁"]), 800);
 }
+// ======================================================
+// ПАСХАЛКА 5 — "Имя тигра" в поле логина
+// ======================================================
 
+const loginInput = document.querySelector("input[name='name']");
+
+loginInput.addEventListener("input", () => {
+    const val = loginInput.value.trim().toLowerCase();
+    const btn = document.getElementById("submit-btn");
+
+    if (val === "тигр" || val === "tigr") {
+        btn.textContent = "Р-Р-Р-ЫЫЫ 🐯";
+        btn.style.background = "linear-gradient(135deg, #d97706, #b45309)";
+        btn.style.boxShadow  = "0 4px 16px rgba(217,119,6,0.5)";
+
+        if (!body.classList.contains("tiger-mode")) {
+            body.classList.add("tiger-mode");
+            logoIcon.textContent = "🐯";
+        }
+    } else {
+        const isTigerMode = body.classList.contains("tiger-mode")
+            && logoIcon.textContent === "🐯"
+            && logoClicks === 0; // не трогаем если тигр активирован кликами
+
+        btn.textContent = "Войти";
+        btn.style.background = "";
+        btn.style.boxShadow  = "";
+    }
+});
+
+// ======================================================
+// ПАСХАЛКА 6 — счётчик посещений
+// ======================================================
+
+(function () {
+    const key   = "profkom_visits";
+    const count = parseInt(localStorage.getItem(key) || "0") + 1;
+    localStorage.setItem(key, count);
+
+    const milestones = {
+        10:  "🎂 Юбилейный вход! Уже 10 раз!",
+        25:  "🏅 25 входов — ты уже свой!",
+        50:  "🏆 50 входов! Легенда профкома!",
+        100: "🐯 100 входов... Ты тигр.",
+    };
+
+    const msg = milestones[count];
+    if (msg) setTimeout(() => showToast(msg, 4000), 1200);
+})();
+
+// ======================================================
+// ПАСХАЛКА 7 — ночной режим (00:00–05:00)
+// ======================================================
+
+(function () {
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 5) {
+        body.classList.add("night-mode");
+        tagline.textContent = "🌙 поздно работаешь...";
+        setTimeout(() => showToast("🌙 Не спишь? Уважаю.", 3500), 1000);
+    }
+})();
 </script>
 </body>
 </html>
