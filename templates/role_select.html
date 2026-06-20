@@ -223,6 +223,188 @@
     <a href="/logout" class="logout-link">← Выйти из аккаунта</a>
 
 </div>
+<!-- ПАСХАЛКИ -->
+<script>
+// ─── 1. Клик по логотипу (5 раз) ───────────────────────────────────────────
+(function () {
+    const logo = document.querySelector('.logo');
+    let clicks = 0;
+    let timer;
 
+    logo.style.cursor = 'pointer';
+
+    logo.addEventListener('click', () => {
+        clicks++;
+        clearTimeout(timer);
+        timer = setTimeout(() => clicks = 0, 1500);
+
+        if (clicks >= 5) {
+            clicks = 0;
+            logo.textContent = '🌈';
+            logo.style.animation = 'rainbowSpin 0.6s linear infinite';
+            document.querySelector('.container').style.animation = 'rainbowBorder 2s linear infinite';
+
+            setTimeout(() => {
+                logo.textContent = '⚡';
+                logo.style.animation = '';
+                document.querySelector('.container').style.animation = '';
+            }, 4000);
+        }
+    });
+})();
+
+// ─── 2. Konami Code → конфетти + секретное сообщение ────────────────────────
+(function () {
+    const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown',
+                    'ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let pos = 0;
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === KONAMI[pos]) {
+            pos++;
+            if (pos === KONAMI.length) {
+                pos = 0;
+                triggerKonami();
+            }
+        } else {
+            pos = e.key === KONAMI[0] ? 1 : 0;
+        }
+    });
+
+    function triggerKonami() {
+        // Конфетти
+        for (let i = 0; i < 80; i++) spawnConfetti();
+
+        // Сообщение
+        const msg = document.createElement('div');
+        msg.textContent = '🎮 +30 очков к харизме';
+        Object.assign(msg.style, {
+            position: 'fixed', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
+            color: 'white', padding: '16px 32px',
+            borderRadius: '16px', fontSize: '20px',
+            fontWeight: 'bold', zIndex: 9999,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            animation: 'popIn 0.4s cubic-bezier(.175,.885,.32,1.275)',
+            fontFamily: 'Arial, sans-serif'
+        });
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 2500);
+    }
+
+    function spawnConfetti() {
+        const el = document.createElement('div');
+        const colors = ['#7c3aed','#2563eb','#dc2626','#16a34a','#ca8a04','#ea580c'];
+        Object.assign(el.style, {
+            position: 'fixed',
+            left: Math.random() * 100 + 'vw',
+            top: '-10px',
+            width: (Math.random() * 8 + 6) + 'px',
+            height: (Math.random() * 8 + 6) + 'px',
+            background: colors[Math.floor(Math.random() * colors.length)],
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            zIndex: 9998,
+            opacity: 1,
+            transition: `top ${Math.random() * 1.5 + 1}s linear, opacity 0.5s ease ${Math.random() * 1.5 + 0.8}s`
+        });
+        document.body.appendChild(el);
+        requestAnimationFrame(() => {
+            el.style.top = (Math.random() * 60 + 60) + 'vh';
+        });
+        setTimeout(() => {
+            el.style.opacity = 0;
+            setTimeout(() => el.remove(), 600);
+        }, (Math.random() * 1500 + 800));
+    }
+})();
+
+// ─── 3. Убегающая кнопка "Выйти" ────────────────────────────────────────────
+(function () {
+    const link = document.querySelector('.logout-link');
+    let holdTimer;
+    let escaped = false;
+
+    link.addEventListener('mouseenter', () => {
+        holdTimer = setTimeout(() => {
+            escaped = true;
+            link.textContent = '🏃 Не поймаешь!';
+        }, 3000);
+    });
+
+    link.addEventListener('mouseleave', () => {
+        clearTimeout(holdTimer);
+        if (!escaped) return;
+    });
+
+    link.addEventListener('mousemove', () => {
+        if (!escaped) return;
+        const maxX = window.innerWidth  - link.offsetWidth  - 20;
+        const maxY = window.innerHeight - link.offsetHeight - 20;
+        link.style.position = 'fixed';
+        link.style.transition = 'left 0.3s, top 0.3s';
+        link.style.left = Math.random() * maxX + 'px';
+        link.style.top  = Math.random() * maxY + 'px';
+    });
+
+    // Сдаться через 8 секунд
+    link.addEventListener('mouseenter', () => {
+        if (!escaped) return;
+        setTimeout(() => {
+            escaped = false;
+            link.textContent = '← Выйти из аккаунта';
+            link.style.position = '';
+            link.style.left = '';
+            link.style.top = '';
+        }, 8000);
+    });
+})();
+
+// ─── 4. Клик по имени → случайный титул ─────────────────────────────────────
+(function () {
+    const nameEl = document.querySelector('.user-name');
+    const titles = [
+        '🧙 Архимаг канцтоваров', '🦸 Хранитель ручек',
+        '🐉 Повелитель степлеров', '🕵️ Агент 007 профкома',
+        '🚀 Космонавт бюро', '🎩 Маэстро выдачи',
+        '🦄 Единорог учёта', '🤖 Робот-секретарь v2.0'
+    ];
+    let idx = 0;
+    nameEl.style.cursor = 'pointer';
+    nameEl.title = 'Нажми на меня 👀';
+
+    nameEl.addEventListener('click', () => {
+        const original = nameEl.dataset.original || nameEl.textContent;
+        nameEl.dataset.original = original;
+        nameEl.textContent = titles[idx % titles.length];
+        idx++;
+        nameEl.style.background = 'linear-gradient(135deg, #7c3aed22, #2563eb22)';
+        clearTimeout(nameEl._resetTimer);
+        nameEl._resetTimer = setTimeout(() => {
+            nameEl.textContent = original;
+            nameEl.style.background = '';
+        }, 2500);
+    });
+})();
+</script>
+
+<!-- Анимации для пасхалок -->
+<style>
+@keyframes rainbowSpin {
+    from { filter: hue-rotate(0deg); transform: rotate(0deg); }
+    to   { filter: hue-rotate(360deg); transform: rotate(360deg); }
+}
+@keyframes rainbowBorder {
+    from { box-shadow: 0 24px 80px rgba(124,58,237,0.5); }
+    25%  { box-shadow: 0 24px 80px rgba(37,99,235,0.5); }
+    50%  { box-shadow: 0 24px 80px rgba(220,38,38,0.5); }
+    75%  { box-shadow: 0 24px 80px rgba(22,163,74,0.5); }
+    to   { box-shadow: 0 24px 80px rgba(124,58,237,0.5); }
+}
+@keyframes popIn {
+    from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+</style>
 </body>
 </html>
