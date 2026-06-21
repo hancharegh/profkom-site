@@ -395,7 +395,8 @@
 
     <div class="sidebar-user">
         <div class="name">{{ session["user"] }}</div>
-        <span class="sidebar-role">Секретарь</span>
+        <span class="sidebar-role" id="secretary-role-badge"
+              style="cursor:pointer;" title="Нажми, если скучно 🐯">Секретарь</span>
     </div>
 
     <div class="sidebar-bottom">
@@ -542,6 +543,32 @@
 
 </div><!-- /main -->
 
+
+<!-- ====== ИГРА: ТИГРЁНОК ====== -->
+<div id="game-overlay" style="display:none; position:fixed; inset:0;
+     background:rgba(0,0,0,0.6); z-index:3000; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:24px; padding:28px 32px;
+                box-shadow:0 24px 80px rgba(0,0,0,0.3); max-width:600px; width:95%;
+                position:relative;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+                <div style="font-size:18px; font-weight:bold; color:#111827;">🐯 Тигрёнок-курьер</div>
+                <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Пробел / ↑ — прыжок &nbsp;|&nbsp; Esc — закрыть</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:13px; color:#6b7280;">Рекорд: <span id="game-best">0</span></div>
+                <div style="font-size:20px; font-weight:bold; color:#2563eb;">Счёт: <span id="game-score">0</span></div>
+            </div>
+        </div>
+        <canvas id="game-canvas" width="540" height="160"
+                style="width:100%; border-radius:14px; background:#f8faff;
+                       border:2px solid #e5e7eb; display:block; cursor:pointer;">
+        </canvas>
+        <div id="game-hint" style="text-align:center; margin-top:12px; font-size:13px; color:#9ca3af;">
+            Нажми пробел или тапни, чтобы начать
+        </div>
+    </div>
+</div>
 
 <!-- CONFIRM UNDO -->
 <div id="undo-overlay">
@@ -1147,6 +1174,254 @@ if (month === 12) setTimeout(startSnow, 1500);
 // ======================================================
 
 setInterval(() => fetch("/ping").catch(() => {}), 240000);
+
+
+// ======================================================
+// ИГРА — ТИГРЁНОК-КУРЬЕР
+// ======================================================
+
+(function () {
+
+    const overlay  = document.getElementById("game-overlay");
+    const canvas   = document.getElementById("game-canvas");
+    const scoreEl  = document.getElementById("game-score");
+    const bestEl   = document.getElementById("game-best");
+    const hintEl   = document.getElementById("game-hint");
+    const badge    = document.getElementById("secretary-role-badge");
+    const ctx      = canvas.getContext("2d");
+
+    const W = 540, H = 160;
+    const GROUND = H - 28;
+    const GRAVITY = 0.55;
+    const JUMP_V  = -11;
+
+    let state    = "idle";   // idle | running | dead
+    let score    = 0;
+    let best     = parseInt(localStorage.getItem("tiger_game_best") || "0");
+    let frame    = 0;
+    let speed    = 5;
+    let raf      = null;
+
+    bestEl.textContent = best;
+
+    // ── Тигрёнок ──
+    const tiger = { x: 60, y: GROUND, vy: 0, w: 36, h: 36, jumping: false };
+
+    // ── Препятствия ──
+    const OBSTACLES = ["📚","✏️","📐","📎","🖊️","📏"];
+    let obstacles = [];
+    let nextObstDist = 0;
+
+    // ── Облака (декор) ──
+    let clouds = [
+        { x: 200, y: 18, speed: 0.4 },
+        { x: 420, y: 30, speed: 0.3 },
+    ];
+
+    // ── Открытие/закрытие ──
+    function openGame() {
+        overlay.style.display = "flex";
+        hintEl.textContent = "Нажми пробел или тапни, чтобы начать";
+        if (state === "dead") resetGame();
+        if (state === "idle") { draw(); }
+    }
+
+    function closeGame() {
+        overlay.style.display = "none";
+        if (state === "running") {
+            state = "idle";
+            cancelAnimationFrame(raf);
+        }
+    }
+
+    badge.addEventListener("click", openGame);
+
+    overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeGame();
+    });
+
+    // ── Управление ──
+    function jump() {
+        if (state === "idle" || state === "dead") {
+            startGame();
+            return;
+        }
+        if (state === "running" && !tiger.jumping) {
+            tiger.vy = JUMP_V;
+            tiger.jumping = true;
+        }
+    }
+
+    document.addEventListener("keydown", function (e) {
+        if (overlay.style.display === "none") return;
+        if (e.code === "Space" || e.key === "ArrowUp") { e.preventDefault(); jump(); }
+        if (e.key === "Escape") closeGame();
+    });
+
+    canvas.addEventListener("click", jump);
+    canvas.addEventListener("touchstart", function (e) { e.preventDefault(); jump(); }, { passive: false });
+
+    // ── Старт / сброс ──
+    function startGame() {
+        resetGame();
+        state = "running";
+        hintEl.textContent = "";
+        loop();
+    }
+
+    function resetGame() {
+        score       = 0;
+        frame       = 0;
+        speed       = 5;
+        obstacles   = [];
+        nextObstDist = randObstDist();
+        tiger.y     = GROUND;
+        tiger.vy    = 0;
+        tiger.jumping = false;
+        scoreEl.textContent = 0;
+    }
+
+    function randObstDist() {
+        return 220 + Math.random() * 260;
+    }
+
+    // ── Главный цикл ──
+    function loop() {
+        update();
+        draw();
+        if (state === "running") raf = requestAnimationFrame(loop);
+    }
+
+    function update() {
+        frame++;
+        score++;
+        speed = 5 + Math.floor(score / 400) * 0.5;
+
+        scoreEl.textContent = score;
+        if (score > best) {
+            best = score;
+            bestEl.textContent = best;
+            localStorage.setItem("tiger_game_best", best);
+        }
+
+        // Тигрёнок — физика
+        tiger.vy += GRAVITY;
+        tiger.y  += tiger.vy;
+        if (tiger.y >= GROUND) {
+            tiger.y       = GROUND;
+            tiger.vy      = 0;
+            tiger.jumping = false;
+        }
+
+        // Облака
+        clouds.forEach(c => {
+            c.x -= c.speed;
+            if (c.x < -60) c.x = W + 60;
+        });
+
+        // Препятствия
+        nextObstDist -= speed;
+        if (nextObstDist <= 0) {
+            obstacles.push({ x: W + 20, emoji: OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)], w: 28, h: 28 });
+            nextObstDist = randObstDist();
+        }
+
+        obstacles.forEach(o => o.x -= speed);
+        obstacles = obstacles.filter(o => o.x > -60);
+
+        // Коллизия
+        const tx = tiger.x + 6, ty = tiger.y - tiger.h + 4;
+        const tw = tiger.w - 12, th = tiger.h - 8;
+
+        for (const o of obstacles) {
+            const ox = o.x + 4, oy = GROUND - o.h + 4;
+            const ow = o.w - 8, oh = o.h - 8;
+            if (tx < ox + ow && tx + tw > ox && ty < oy + oh && ty + th > oy) {
+                die();
+                return;
+            }
+        }
+    }
+
+    function die() {
+        state = "dead";
+        hintEl.textContent = `Счёт: ${score} — нажми пробел или тапни, чтобы снова`;
+        // Ачивка за 1000 очков
+        if (score >= 1000) {
+            unlockAchievement("tiger_game_1k", "🏆 Тайная ачивка: Тигр-чемпион! 1000 очков!");
+        }
+    }
+
+    // ── Отрисовка ──
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Небо (градиент)
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, "#e0f2fe");
+        sky.addColorStop(1, "#f8faff");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        // Облака
+        ctx.font = "22px serif";
+        clouds.forEach(c => ctx.fillText("☁️", c.x, c.y));
+
+        // Земля
+        ctx.fillStyle = "#e5e7eb";
+        ctx.fillRect(0, GROUND + tiger.h - 6, W, 4);
+
+        // Декоративные точки на земле
+        ctx.fillStyle = "#d1d5db";
+        for (let x = (frame * speed * 0.5) % 40; x < W; x += 40) {
+            ctx.fillRect(x, GROUND + tiger.h - 4, 20, 2);
+        }
+
+        // Тигрёнок
+        const tigerEmoji = state === "dead" ? "😵" : (tiger.jumping ? "🐯" : (frame % 20 < 10 ? "🐯" : "🐆"));
+        ctx.font = `${tiger.w}px serif`;
+        ctx.fillText(tigerEmoji, tiger.x, tiger.y);
+
+        // Препятствия
+        ctx.font = "28px serif";
+        obstacles.forEach(o => {
+            ctx.fillText(o.emoji, o.x, GROUND);
+        });
+
+        // Счёт на канвасе (мелко, в углу)
+        ctx.fillStyle = "rgba(107,114,128,0.5)";
+        ctx.font = "bold 13px Arial";
+        ctx.fillText(`${score}`, W - 50, 20);
+
+        // Экран смерти
+        if (state === "dead") {
+            ctx.fillStyle = "rgba(255,255,255,0.75)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = "#111827";
+            ctx.font = "bold 22px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Упс! 😵", W / 2, H / 2 - 10);
+            ctx.font = "14px Arial";
+            ctx.fillStyle = "#6b7280";
+            ctx.fillText(`Счёт: ${score}  |  Рекорд: ${best}`, W / 2, H / 2 + 16);
+            ctx.textAlign = "left";
+        }
+
+        // Экран ожидания
+        if (state === "idle") {
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.font = "32px serif";
+            ctx.textAlign = "center";
+            ctx.fillText("🐯", W / 2, H / 2 + 10);
+            ctx.textAlign = "left";
+        }
+    }
+
+    // Первичная отрисовка при загрузке
+    draw();
+
+})();
 
 </script>
 </body>
