@@ -47,6 +47,7 @@
             font-family: Arial, sans-serif;
             background: #f0f2f8;
             color: #111827;
+            transition: background 0.5s;
         }
 
         /* ====== SIDEBAR ====== */
@@ -87,6 +88,9 @@
             border-radius: 20px;
             font-size: 11px;
             margin-top: 5px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .sidebar-nav { padding: 0 12px; flex: 1; }
@@ -587,9 +591,6 @@
         .cb-col { width: 36px; text-align: center; }
         tr.selected td { background: var(--light) !important; }
 
-        .pass-ok  { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
-        .pass-err { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
-
         /* ====== КНОПКА «ПОКАЗАТЬ ЕЩЁ» ====== */
         .load-more-btn {
             display: block;
@@ -617,6 +618,19 @@
             pointer-events: none;
         }
 
+        /* ====== СНЕЖИНКИ ====== */
+        .snow-piece {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99998;
+            animation: snowfall linear infinite;
+        }
+
+        @keyframes snowfall {
+            from { transform: translateY(-30px) rotate(0deg);   opacity: 0.85; }
+            to   { transform: translateY(110vh)  rotate(360deg); opacity: 0;    }
+        }
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main { margin-left: 0; padding: 20px; }
@@ -641,7 +655,6 @@
         .pass-field-row > div { flex: 1; min-width: 160px; }
         .pass-field-row input { margin: 0; }
 
-        /* Ошибки/успех смены пароля */
         #pass-status {
             padding: 10px 14px;
             border-radius: 10px;
@@ -655,7 +668,7 @@
 
     </style>
 </head>
-<body>
+<body id="body">
 
 <div id="toast-container"></div>
 
@@ -668,7 +681,9 @@
 
     <div class="sidebar-user">
         <div class="name">{{ session["user"] }}</div>
-        <span class="sidebar-role">Профбюро № {{ bureau_num }}</span>
+        <span class="sidebar-role" id="bureau-role-badge" title="Нажми 5 раз...">
+            Профбюро № {{ bureau_num }}
+        </span>
     </div>
 
     <div class="sidebar-nav">
@@ -1006,7 +1021,8 @@
 </div>
 
 <!-- CONFIRM ОТМЕНЫ ВЫДАЧИ -->
-<div id="undo-overlay">
+<div id="undo-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+     z-index:2000; align-items:center; justify-content:center;">
     <div class="undo-box">
         <p>Отменить эту выдачу?</p>
         <div class="undo-buttons">
@@ -1019,6 +1035,7 @@
 
 <script>
 
+const body           = document.getElementById("body");
 const notifications  = document.getElementById("notifications");
 const searchInput    = document.getElementById("student_search");
 const resultsBox     = document.getElementById("search_results");
@@ -1030,7 +1047,7 @@ const studentIdInput = document.getElementById("student_id_input");
 
 function formatTs(raw) {
     if (!raw) return raw;
-    const normalized = raw.replace(" ", "T").replace(/\\.\\d+$/, "") + "Z";
+    const normalized = raw.replace(" ", "T").replace(/\.\d+$/, "") + "Z";
     const d = new Date(normalized);
     if (isNaN(d)) return raw;
     const msk   = new Date(d.getTime() + 3 * 60 * 60 * 1000);
@@ -1158,7 +1175,7 @@ function prependEntry(e) {
 
 function launchConfetti() {
     const emojis = ["🎉","✨","🎊","⭐","🏆"];
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 60; i++) {
         const el      = document.createElement("div");
         el.className  = "confetti-piece";
         el.innerText  = emojis[Math.floor(Math.random() * emojis.length)];
@@ -1170,6 +1187,90 @@ function launchConfetti() {
         setTimeout(() => { el.style.top = "110vh"; el.style.opacity = "0"; }, 100 + i * 40);
         setTimeout(() => el.remove(), 7000);
     }
+}
+
+// ======================================================
+// СНЕГОПАД
+// ======================================================
+
+let snowInterval = null;
+let snowPieces   = [];
+
+function startSnow() {
+    if (snowInterval) return;
+    showToast("❄️ Снегопад начался!");
+    snowInterval = setInterval(() => {
+        const el = document.createElement("div");
+        el.className   = "snow-piece";
+        el.textContent = ["❄️","⛄","🌨️","✨"][Math.floor(Math.random() * 4)];
+        el.style.left              = Math.random() * 100 + "vw";
+        el.style.fontSize          = (12 + Math.random() * 14) + "px";
+        el.style.animationDuration = (4 + Math.random() * 5) + "s";
+        document.body.appendChild(el);
+        snowPieces.push(el);
+        if (snowPieces.length > 80) snowPieces.shift().remove();
+    }, 200);
+}
+
+function stopSnow() {
+    if (snowInterval) { clearInterval(snowInterval); snowInterval = null; }
+    snowPieces.forEach(el => el.remove());
+    snowPieces = [];
+    showToast("☀️ Снег закончился");
+}
+
+// ======================================================
+// ТАЙНЫЕ АЧИВКИ
+// ======================================================
+
+const unlockedAchievements = new Set(
+    JSON.parse(localStorage.getItem("prof_bureau_achievements") || "[]")
+);
+
+function saveAchievements() {
+    localStorage.setItem("prof_bureau_achievements",
+        JSON.stringify([...unlockedAchievements]));
+}
+
+function unlockAchievement(key, text) {
+    if (unlockedAchievements.has(key)) return;
+    unlockedAchievements.add(key);
+    saveAchievements();
+    showNotification(text, "achievement");
+    launchConfetti();
+}
+
+// Счётчики для ачивок
+const issueTimes  = [];   // для Стахановца
+let   undoStreak  = 0;    // для Перфекциониста
+
+function checkIssueAchievements(payload) {
+    const now  = new Date();
+    const h    = now.getHours();
+    const wday = now.getDay();
+
+    // Полуночник
+    if (h >= 0 && h < 6)
+        unlockAchievement("nightowl", "🦉 Тайная ачивка: Полуночник! Серьёзно, иди спать.");
+
+    // Понедельник
+    if (wday === 1)
+        unlockAchievement("monday", "😩 Тайная ачивка: Понедельник — день тяжёлый");
+
+    // Пятница 13-е
+    if (wday === 5 && now.getDate() === 13)
+        unlockAchievement("friday13", "😱 Тайная ачивка: Пятница 13-е!");
+
+    // Радуга — все 8 видов за раз
+    if (Object.values(payload).every(v => (v || 0) > 0))
+        unlockAchievement("rainbow", "🌈 Тайная ачивка: Радуга! Все 8 видов за раз!");
+
+    // Стахановец — 5 выдач за 2 минуты
+    const ms = Date.now();
+    issueTimes.push(ms);
+    while (issueTimes.length > 5) issueTimes.shift();
+    if (issueTimes.length === 5 && (ms - issueTimes[0]) <= 2 * 60 * 1000)
+        unlockAchievement("stakhanov", "🏭 Тайная ачивка: Стахановец! 5 выдач за 2 минуты");
 }
 
 // ======================================================
@@ -1220,6 +1321,10 @@ async function submitIssue() {
             }
             updateLimits(data.limits);
             prependEntry(data.entry);
+            // Ачивки при выдаче
+            checkIssueAchievements(payload);
+            // Сброс счётчика отмен при успешной выдаче
+            undoStreak = 0;
             resetForm();
         }
     } catch (err) {
@@ -1261,6 +1366,13 @@ async function doUndo(entryId, btn) {
         const res  = await fetch(`/undo/${entryId}`, { method: "POST" });
         const data = await res.json();
         if (data.ok) {
+            // ── АЧИВКА: ПЕРФЕКЦИОНИСТ (3 отмены подряд) ──
+            undoStreak++;
+            if (undoStreak >= 3) {
+                unlockAchievement("perfectionist", "🧹 Тайная ачивка: Перфекционист! 3 отмены подряд");
+                undoStreak = 0;
+            }
+            // ──────────────────────────────────────────────
             const row = document.getElementById(`row-${entryId}`);
             if (row) {
                 row.classList.add("removing");
@@ -1277,11 +1389,38 @@ async function doUndo(entryId, btn) {
 }
 
 // ======================================================
-// ПОИСК СТУДЕНТОВ (все бюро)
+// ПОИСК СТУДЕНТОВ + КОМАНДЫ-ПАСХАЛКИ
 // ======================================================
 
 searchInput.addEventListener("input", async function() {
     const query = this.value.trim();
+    const cmd   = query.toLowerCase();
+
+    const triggers = {
+        "party":    () => { launchConfetti(); this.value = ""; },
+        "/party":   () => { launchConfetti(); this.value = ""; },
+        "tiger":    () => { showToast("🐯 Тигр найден!"); this.value = "";
+                            unlockAchievement("tiger", "🐯 Тайная ачивка: Тигролов!"); },
+        "/tiger":   () => { showToast("🐯 Тигр найден!"); this.value = "";
+                            unlockAchievement("tiger", "🐯 Тайная ачивка: Тигролов!"); },
+        "snow":     () => { startSnow(); this.value = "";
+                            unlockAchievement("snow", "❄️ Тайная ачивка: Дед Мороз!"); },
+        "/snow":    () => { startSnow(); this.value = "";
+                            unlockAchievement("snow", "❄️ Тайная ачивка: Дед Мороз!"); },
+        "snowoff":  () => { stopSnow(); this.value = ""; },
+        "/snowoff": () => { stopSnow(); this.value = ""; },
+        "reset":    () => { body.style.background = ""; stopSnow();
+                            showToast("♻️ Сброшено"); this.value = ""; },
+        "/reset":   () => { body.style.background = ""; stopSnow();
+                            showToast("♻️ Сброшено"); this.value = ""; },
+    };
+
+    if (triggers[cmd]) {
+        triggers[cmd]();
+        resultsBox.innerHTML = "";
+        return;
+    }
+
     if (query.length < 1) { resultsBox.innerHTML = ""; return; }
 
     try {
@@ -1318,6 +1457,60 @@ searchInput.addEventListener("keydown", function(e) {
 });
 
 // ======================================================
+// ПАСХАЛКА — 5 кликов по бейджу бюро
+// ======================================================
+
+(function () {
+    const badge  = document.getElementById("bureau-role-badge");
+    const light  = getComputedStyle(document.documentElement)
+                       .getPropertyValue("--light").trim();
+    let clicks   = 0;
+    let timer;
+    let active   = false;
+
+    badge.addEventListener("click", () => {
+        clicks++;
+        clearTimeout(timer);
+        timer = setTimeout(() => clicks = 0, 1500);
+
+        if (clicks >= 5) {
+            clicks = 0;
+            active = !active;
+            body.style.background = active
+                ? `linear-gradient(160deg, ${light} 0%, #f0f2f8 60%)`
+                : "";
+            showToast(active ? "🎨 Режим бюро активирован!" : "♻️ Сброшено");
+            if (active)
+                unlockAchievement("bureau_mode", "🎨 Тайная ачивка: Патриот бюро!");
+        }
+    });
+})();
+
+// ======================================================
+// ПАСХАЛКА — Konami Code → конфетти
+// ======================================================
+
+(function () {
+    const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown",
+                    "ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+    let pos = 0;
+
+    document.addEventListener("keydown", e => {
+        if (e.key === KONAMI[pos]) {
+            pos++;
+            if (pos === KONAMI.length) {
+                pos = 0;
+                launchConfetti();
+                showToast("🎮 +30 очков к харизме бюро");
+                unlockAchievement("konami", "🎮 Тайная ачивка: Геймер профкома!");
+            }
+        } else {
+            pos = e.key === KONAMI[0] ? 1 : 0;
+        }
+    });
+})();
+
+// ======================================================
 // ДОБАВИТЬ СТУДЕНТА (AJAX)
 // ======================================================
 
@@ -1340,6 +1533,11 @@ async function addStudent() {
         tr.dataset.name = fullName.toLowerCase();
         tr.dataset.id   = data.student_id.toLowerCase();
         tr.innerHTML = `
+            <td class="cb-col">
+                <input type="checkbox" class="row-cb"
+                       value="${data.student_id}"
+                       onchange="onRowCheckChange()">
+            </td>
             <td><span class="id-badge">${data.student_id}</span></td>
             <td>${fullName}</td>
             <td>
@@ -1485,7 +1683,6 @@ async function bulkDeleteByCSV() {
     const names = text.split("\n").map(l => l.split(";")[0].trim()).filter(Boolean);
     if (!names.length) { showToast("Файл пуст","error"); return; }
 
-    // Для бюро фильтруем только тех кто есть в нашем списке
     const res  = await fetch("/bulk_delete_students", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ names })
@@ -1591,8 +1788,8 @@ function togglePassCard() {
 }
 
 async function changeOwnPassword() {
-    const oldPass = document.getElementById("old-password").value.trim();
-    const newPass = document.getElementById("new-password").value.trim();
+    const oldPass  = document.getElementById("old-password").value.trim();
+    const newPass  = document.getElementById("new-password").value.trim();
     const statusEl = document.getElementById("pass-status");
 
     statusEl.style.display = "none";
@@ -1608,10 +1805,7 @@ async function changeOwnPassword() {
         const res  = await fetch("/change_own_password", {
             method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({
-                old_password: oldPass,
-                new_password: newPass
-            })
+            body:    JSON.stringify({ old_password: oldPass, new_password: newPass })
         });
         const data = await res.json();
 
@@ -1621,7 +1815,6 @@ async function changeOwnPassword() {
             statusEl.style.display = "block";
             document.getElementById("old-password").value = "";
             document.getElementById("new-password").value = "";
-            // Скрываем карточку через 2 секунды
             setTimeout(() => {
                 document.getElementById("pass-card").style.display = "none";
                 statusEl.style.display = "none";
@@ -1637,6 +1830,13 @@ async function changeOwnPassword() {
         statusEl.style.display = "block";
     }
 }
+
+// ======================================================
+// СЕЗОННЫЕ ТЕМЫ
+// ======================================================
+
+const _month = new Date().getMonth() + 1;
+if (_month === 12) setTimeout(startSnow, 1500);
 
 // ======================================================
 // ANTI SLEEP
