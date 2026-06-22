@@ -1190,17 +1190,22 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
     const badge    = document.getElementById("secretary-role-badge");
     const ctx      = canvas.getContext("2d");
 
-    const W = 540, H = 160;
-    const GROUND = H - 28;
-    const GRAVITY = 0.55;
-    const JUMP_V  = -11;
+    const W        = 540, H = 160;
+    const GROUND   = H - 28;       // y земли (нижняя граница тигрёнка)
+    const CEILING  = 14;           // y потолка (верхняя граница висячих препятствий)
+    const GRAVITY  = 0.6;
+    const JUMP_V   = -11.5;
 
-    let state    = "idle";   // idle | running | dead
-    let score    = 0;
-    let best     = parseInt(localStorage.getItem("tiger_game_best") || "0");
-    let frame    = 0;
-    let speed    = 5;
-    let raf      = null;
+    // Препятствия снизу и сверху
+    const OBS_FLOOR   = ["📚","✏️","📐","📎","🖊️","📏"];
+    const OBS_CEILING = ["📋","🗂️","📌","🔖","📦","🗃️"];
+
+    let state  = "idle";
+    let score  = 0;
+    let best   = parseInt(localStorage.getItem("tiger_game_best") || "0");
+    let frame  = 0;
+    let speed  = 5;
+    let raf    = null;
 
     bestEl.textContent = best;
 
@@ -1208,22 +1213,22 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
     const tiger = { x: 60, y: GROUND, vy: 0, w: 36, h: 36, jumping: false };
 
     // ── Препятствия ──
-    const OBSTACLES = ["📚","✏️","📐","📎","🖊️","📏"];
-    let obstacles = [];
+    // type: "floor" — снизу, "ceiling" — сверху (свисают с потолка)
+    let obstacles    = [];
     let nextObstDist = 0;
 
-    // ── Облака (декор) ──
+    // ── Облака ──
     let clouds = [
-        { x: 200, y: 18, speed: 0.4 },
-        { x: 420, y: 30, speed: 0.3 },
+        { x: 200, y: 20, spd: 0.4 },
+        { x: 420, y: 32, spd: 0.3 },
     ];
 
-    // ── Открытие/закрытие ──
+    // ── Открытие / закрытие ──
     function openGame() {
         overlay.style.display = "flex";
         hintEl.textContent = "Нажми пробел или тапни, чтобы начать";
         if (state === "dead") resetGame();
-        if (state === "idle") { draw(); }
+        if (state === "idle") draw();
     }
 
     function closeGame() {
@@ -1235,31 +1240,25 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
     }
 
     badge.addEventListener("click", openGame);
-
-    overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) closeGame();
-    });
+    overlay.addEventListener("click", e => { if (e.target === overlay) closeGame(); });
 
     // ── Управление ──
     function jump() {
-        if (state === "idle" || state === "dead") {
-            startGame();
-            return;
-        }
+        if (state === "idle" || state === "dead") { startGame(); return; }
         if (state === "running" && !tiger.jumping) {
-            tiger.vy = JUMP_V;
+            tiger.vy      = JUMP_V;
             tiger.jumping = true;
         }
     }
 
-    document.addEventListener("keydown", function (e) {
+    document.addEventListener("keydown", e => {
         if (overlay.style.display === "none") return;
         if (e.code === "Space" || e.key === "ArrowUp") { e.preventDefault(); jump(); }
         if (e.key === "Escape") closeGame();
     });
 
     canvas.addEventListener("click", jump);
-    canvas.addEventListener("touchstart", function (e) { e.preventDefault(); jump(); }, { passive: false });
+    canvas.addEventListener("touchstart", e => { e.preventDefault(); jump(); }, { passive: false });
 
     // ── Старт / сброс ──
     function startGame() {
@@ -1270,22 +1269,21 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
     }
 
     function resetGame() {
-        score       = 0;
-        frame       = 0;
-        speed       = 5;
-        obstacles   = [];
-        nextObstDist = randObstDist();
-        tiger.y     = GROUND;
-        tiger.vy    = 0;
+        score        = 0;
+        frame        = 0;
+        speed        = 5;
+        obstacles    = [];
+        nextObstDist = randDist();
+        tiger.y      = GROUND;
+        tiger.vy     = 0;
         tiger.jumping = false;
         scoreEl.textContent = 0;
     }
 
-    function randObstDist() {
-        return 220 + Math.random() * 260;
-    }
+    // Дистанция до следующего препятствия — сокращается со скоростью
+    function randDist() { return 200 + Math.random() * 240; }
 
-    // ── Главный цикл ──
+    // ── Цикл ──
     function loop() {
         update();
         draw();
@@ -1295,7 +1293,9 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
     function update() {
         frame++;
         score++;
-        speed = 5 + Math.floor(score / 400) * 0.5;
+
+        // Плавное ускорение: +0.012 за каждые 60 кадров (~1 сек), максимум 14
+        speed = Math.min(5 + (frame / 60) * 0.12, 14);
 
         scoreEl.textContent = score;
         if (score > best) {
@@ -1304,41 +1304,53 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
             localStorage.setItem("tiger_game_best", best);
         }
 
-        // Тигрёнок — физика
+        // Физика тигрёнка
         tiger.vy += GRAVITY;
         tiger.y  += tiger.vy;
         if (tiger.y >= GROUND) {
-            tiger.y       = GROUND;
-            tiger.vy      = 0;
-            tiger.jumping = false;
+            tiger.y = GROUND; tiger.vy = 0; tiger.jumping = false;
         }
 
         // Облака
-        clouds.forEach(c => {
-            c.x -= c.speed;
-            if (c.x < -60) c.x = W + 60;
-        });
+        clouds.forEach(c => { c.x -= c.spd; if (c.x < -60) c.x = W + 60; });
 
-        // Препятствия
+        // Спавн препятствий
         nextObstDist -= speed;
         if (nextObstDist <= 0) {
-            obstacles.push({ x: W + 20, emoji: OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)], w: 28, h: 28 });
-            nextObstDist = randObstDist();
+            // После 800 очков с вероятностью 40% — верхнее препятствие
+            const isCeiling = score > 800 && Math.random() < 0.4;
+            obstacles.push({
+                x:     W + 20,
+                emoji: isCeiling
+                    ? OBS_CEILING[Math.floor(Math.random() * OBS_CEILING.length)]
+                    : OBS_FLOOR  [Math.floor(Math.random() * OBS_FLOOR.length)],
+                type:  isCeiling ? "ceiling" : "floor",
+                size:  28,
+            });
+            // Дистанция сокращается с ростом скорости, но не меньше 140
+            nextObstDist = Math.max(140, randDist() - speed * 6);
         }
 
         obstacles.forEach(o => o.x -= speed);
         obstacles = obstacles.filter(o => o.x > -60);
 
         // Коллизия
-        const tx = tiger.x + 6, ty = tiger.y - tiger.h + 4;
-        const tw = tiger.w - 12, th = tiger.h - 8;
+        const tx = tiger.x + 7,  ty = tiger.y - tiger.h + 5;
+        const tw = tiger.w - 14, th = tiger.h - 10;
 
         for (const o of obstacles) {
-            const ox = o.x + 4, oy = GROUND - o.h + 4;
-            const ow = o.w - 8, oh = o.h - 8;
+            let ox, oy, ow, oh;
+            if (o.type === "floor") {
+                // Стоит на земле
+                ox = o.x + 4;  oy = GROUND - o.size + 4;
+                ow = o.size - 8; oh = o.size - 8;
+            } else {
+                // Свисает с потолка (y=0 — верх canvas)
+                ox = o.x + 4;  oy = CEILING;
+                ow = o.size - 8; oh = o.size - 4;
+            }
             if (tx < ox + ow && tx + tw > ox && ty < oy + oh && ty + th > oy) {
-                die();
-                return;
+                die(); return;
             }
         }
     }
@@ -1346,20 +1358,21 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
     function die() {
         state = "dead";
         hintEl.textContent = `Счёт: ${score} — нажми пробел или тапни, чтобы снова`;
-        // Ачивка за 1000 очков
-        if (score >= 1000) {
-            unlockAchievement("tiger_game_1k", "🏆 Тайная ачивка: Тигр-чемпион! 1000 очков!");
-        }
+        if (score >= 1000) unlockAchievement("tiger_game_1k",  "🏆 Тайная ачивка: Тигр-чемпион! 1000 очков!");
+        if (score >= 2000) unlockAchievement("tiger_game_2k",  "🔥 Тайная ачивка: Тигр-легенда! 2000 очков!");
     }
 
     // ── Отрисовка ──
     function draw() {
         ctx.clearRect(0, 0, W, H);
 
-        // Небо (градиент)
+        // Фон — цвет меняется с ростом скорости (от голубого к закатному)
+        const t   = Math.min((speed - 5) / 9, 1);
         const sky = ctx.createLinearGradient(0, 0, 0, H);
-        sky.addColorStop(0, "#e0f2fe");
-        sky.addColorStop(1, "#f8faff");
+        const topColor = lerpColor("#e0f2fe", "#fde68a", t);
+        const botColor = lerpColor("#f8faff", "#fef3c7", t);
+        sky.addColorStop(0, topColor);
+        sky.addColorStop(1, botColor);
         ctx.fillStyle = sky;
         ctx.fillRect(0, 0, W, H);
 
@@ -1368,34 +1381,49 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
         clouds.forEach(c => ctx.fillText("☁️", c.x, c.y));
 
         // Земля
-        ctx.fillStyle = "#e5e7eb";
-        ctx.fillRect(0, GROUND + tiger.h - 6, W, 4);
-
-        // Декоративные точки на земле
         ctx.fillStyle = "#d1d5db";
-        for (let x = (frame * speed * 0.5) % 40; x < W; x += 40) {
+        ctx.fillRect(0, GROUND + tiger.h - 6, W, 4);
+        ctx.fillStyle = "#e5e7eb";
+        for (let x = (frame * speed * 0.4) % 40; x < W; x += 40)
             ctx.fillRect(x, GROUND + tiger.h - 4, 20, 2);
-        }
 
         // Тигрёнок
-        const tigerEmoji = state === "dead" ? "😵" : (tiger.jumping ? "🐯" : (frame % 20 < 10 ? "🐯" : "🐆"));
+        const em = state === "dead" ? "😵"
+                 : tiger.jumping    ? "🐯"
+                 : frame % 18 < 9  ? "🐯" : "🐆";
         ctx.font = `${tiger.w}px serif`;
-        ctx.fillText(tigerEmoji, tiger.x, tiger.y);
+        ctx.fillText(em, tiger.x, tiger.y);
 
         // Препятствия
         ctx.font = "28px serif";
         obstacles.forEach(o => {
-            ctx.fillText(o.emoji, o.x, GROUND);
+            if (o.type === "floor") {
+                ctx.fillText(o.emoji, o.x, GROUND);
+            } else {
+                // Свисают с потолка — рисуем перевёрнуто
+                ctx.save();
+                ctx.translate(o.x + o.size / 2, CEILING + o.size / 2);
+                ctx.scale(1, -1);
+                ctx.fillText(o.emoji, -o.size / 2, o.size / 2);
+                ctx.restore();
+            }
         });
 
-        // Счёт на канвасе (мелко, в углу)
+        // Индикатор скорости
+        const bar = ((speed - 5) / 9) * (W - 20);
+        ctx.fillStyle = "rgba(0,0,0,0.06)";
+        ctx.fillRect(10, H - 10, W - 20, 4);
+        ctx.fillStyle = lerpColor("#2563eb", "#ef4444", (speed - 5) / 9);
+        ctx.fillRect(10, H - 10, bar, 4);
+
+        // Счёт в углу
         ctx.fillStyle = "rgba(107,114,128,0.5)";
-        ctx.font = "bold 13px Arial";
-        ctx.fillText(`${score}`, W - 50, 20);
+        ctx.font = "bold 12px Arial";
+        ctx.fillText(`${score}`, W - 46, 20);
 
         // Экран смерти
         if (state === "dead") {
-            ctx.fillStyle = "rgba(255,255,255,0.75)";
+            ctx.fillStyle = "rgba(255,255,255,0.8)";
             ctx.fillRect(0, 0, W, H);
             ctx.fillStyle = "#111827";
             ctx.font = "bold 22px Arial";
@@ -1409,16 +1437,27 @@ setInterval(() => fetch("/ping").catch(() => {}), 240000);
 
         // Экран ожидания
         if (state === "idle") {
-            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.fillStyle = "rgba(255,255,255,0.65)";
             ctx.fillRect(0, 0, W, H);
             ctx.font = "32px serif";
             ctx.textAlign = "center";
-            ctx.fillText("🐯", W / 2, H / 2 + 10);
+            ctx.fillText("🐯", W / 2, H / 2 + 12);
             ctx.textAlign = "left";
         }
     }
 
-    // Первичная отрисовка при загрузке
+    // Линейная интерполяция hex-цветов
+    function lerpColor(a, b, t) {
+        const ah = parseInt(a.slice(1), 16);
+        const bh = parseInt(b.slice(1), 16);
+        const ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+        const br = (bh >> 16) & 0xff, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+        const r  = Math.round(ar + (br - ar) * t);
+        const g  = Math.round(ag + (bg - ag) * t);
+        const bl2= Math.round(ab + (bb - ab) * t);
+        return `#${((r << 16) | (g << 8) | bl2).toString(16).padStart(6, "0")}`;
+    }
+
     draw();
 
 })();
