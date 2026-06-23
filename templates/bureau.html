@@ -962,6 +962,38 @@
             <button type="button" class="modal-close" onclick="closeModal('modal-entries')">✕</button>
         </div>
 
+        <!-- Фильтр по дате -->
+        <form method="GET" action="/bureau" id="entries-filter-form"
+              style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+                     margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid #f3f4f6;">
+            <label style="font-size:12px; color:#6b7280; font-weight:600;
+                          margin:0; text-transform:uppercase; letter-spacing:.04em;">С</label>
+            <input type="date" name="date_from" value="{{ date_from }}"
+                   style="padding:7px 10px; border-radius:8px; border:1.5px solid #e5e7eb;
+                          font-size:13px; background:#f9fafb; width:140px; margin:0;
+                          border-color: var(--mid);">
+            <label style="font-size:12px; color:#6b7280; font-weight:600;
+                          margin:0; text-transform:uppercase; letter-spacing:.04em;">По</label>
+            <input type="date" name="date_to" value="{{ date_to }}"
+                   style="padding:7px 10px; border-radius:8px; border:1.5px solid #e5e7eb;
+                          font-size:13px; background:#f9fafb; width:140px; margin:0;
+                          border-color: var(--mid);">
+            <button type="submit" style="padding:7px 14px; font-size:13px; border-radius:8px;">
+                Найти
+            </button>
+            {% if date_from or date_to %}
+            <a href="/bureau"
+               style="font-size:12px; color:#9ca3af; text-decoration:none; padding:7px 4px;">
+                ✕ Сбросить
+            </a>
+            {% endif %}
+            {% if date_from or date_to %}
+            <span style="font-size:12px; color:#6b7280; margin-left:4px;">
+                Найдено: {{ entries|length }}
+            </span>
+            {% endif %}
+        </form>
+
         <div style="overflow-x:auto;">
             <table>
                 <thead>
@@ -1837,6 +1869,17 @@ async function changeOwnPassword() {
 
 const _month = new Date().getMonth() + 1;
 if (_month === 12) setTimeout(startSnow, 1500);
+
+// ======================================================
+// АВТООТКРЫТИЕ МОДАЛКИ ДЕЙСТВИЙ (после фильтра по дате)
+// ======================================================
+
+(function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("date_from") || params.get("date_to")) {
+        openModal("modal-entries");
+    }
+})();
 
 // ======================================================
 // ANTI SLEEP
