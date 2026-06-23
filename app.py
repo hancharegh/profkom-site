@@ -11,8 +11,10 @@ from flask import (
     send_file,
     jsonify
 )
+import json
 import random
 import psycopg2
+from psycopg2 import pool as pg_pool
 from psycopg2.extras import RealDictCursor
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,13 +35,25 @@ app.secret_key = "secret123"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Пул соединений: минимум 1, максимум 10
+_pool = None
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        _pool = pg_pool.ThreadedConnectionPool(
+            1, 10,
+            DATABASE_URL,
+            sslmode="require",
+            cursor_factory=RealDictCursor
+        )
+    return _pool
 
 def get_db():
-    return psycopg2.connect(
-        DATABASE_URL,
-        sslmode="require",
-        cursor_factory=RealDictCursor
-    )
+    return _get_pool().getconn()
+
+def release_db(conn):
+    _get_pool().putconn(conn)
 
 
 # ======================================================
@@ -161,7 +175,6 @@ def get_user_bureau_for_role(user, role):
         if isinstance(bureaus_raw, dict):
             return bureaus_raw.get("bureau", [None])[0]
         if isinstance(bureaus_raw, str):
-            import json
             try:
                 d = json.loads(bureaus_raw)
                 return d.get("bureau", [None])[0]
@@ -339,7 +352,7 @@ def init_db():
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
 
 # ======================================================
@@ -365,7 +378,17 @@ def get_admin_data():
     cur.execute("SELECT COUNT(*) as count FROM entries")
     entries_count = cur.fetchone()["count"]
 
-    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
+    # Фильтр по дате для панелей chairman/vice_chairman
+    date_from = request.args.get("date_from", "") if request else ""
+    date_to   = request.args.get("date_to",   "") if request else ""
+    eq        = "SELECT * FROM entries WHERE 1=1"
+    ep        = []
+    if date_from:
+        eq += " AND DATE(created_at) >= %s"; ep.append(date_from)
+    if date_to:
+        eq += " AND DATE(created_at) <= %s"; ep.append(date_to)
+    eq += " ORDER BY created_at DESC LIMIT 200"
+    cur.execute(eq, tuple(ep))
     entries = cur.fetchall()
 
     cur.execute("SELECT * FROM students ORDER BY bureau, student_id")
@@ -386,7 +409,7 @@ def get_admin_data():
         schedule[row["day_name"]] = row["secretary_name"]
 
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return dict(
         secretaries    = secretaries,
@@ -394,7 +417,9 @@ def get_admin_data():
         students_count = students_count,
         entries_count  = entries_count,
         entries        = entries,
-        schedule       = schedule
+        schedule       = schedule,
+        date_from      = date_from,
+        date_to        = date_to
     )
 
 
@@ -404,14 +429,22 @@ def get_admin_data():
 
 def do_issue(student_id, counts, secretary_name):
 
-    print_count            = int(counts.get("print_count")            or 0)
-    copy_count             = int(counts.get("copy_count")             or 0)
-    notebook_count         = int(counts.get("notebook_count")         or 0)
-    ruler_count            = int(counts.get("ruler_count")            or 0)
-    corrector_count        = int(counts.get("corrector_count")        or 0)
-    pencil_count           = int(counts.get("pencil_count")           or 0)
-    eraser_sharpener_count = int(counts.get("eraser_sharpener_count") or 0)
-    millimeter_count       = int(counts.get("millimeter_count")       or 0)
+    def _safe(val):
+        """Принимает только неотрицательные целые числа."""
+        try:
+            v = int(val or 0)
+        except (ValueError, TypeError):
+            v = 0
+        return max(v, 0)
+
+    print_count            = _safe(counts.get("print_count"))
+    copy_count             = _safe(counts.get("copy_count"))
+    notebook_count         = _safe(counts.get("notebook_count"))
+    ruler_count            = _safe(counts.get("ruler_count"))
+    corrector_count        = _safe(counts.get("corrector_count"))
+    pencil_count           = _safe(counts.get("pencil_count"))
+    eraser_sharpener_count = _safe(counts.get("eraser_sharpener_count"))
+    millimeter_count       = _safe(counts.get("millimeter_count"))
 
     conn = get_db()
     cur  = conn.cursor()
@@ -421,7 +454,7 @@ def do_issue(student_id, counts, secretary_name):
 
     if not student:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Студент не найден")
 
     # Сброс лимитов при смене месяца
@@ -480,7 +513,7 @@ def do_issue(student_id, counts, secretary_name):
     for condition, msg in checks:
         if condition:
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error=msg)
 
     cur.execute("""
@@ -587,7 +620,7 @@ def do_issue(student_id, counts, secretary_name):
     }
 
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(
         ok          = True,
@@ -627,7 +660,7 @@ def login():
         cur.execute("SELECT * FROM users WHERE name = %s", (name,))
         user = cur.fetchone()
         cur.close()
-        conn.close()
+        release_db(conn)
 
         if not user:
             flash("Пользователь не найден")
@@ -669,7 +702,6 @@ def _apply_role(user, role):
 
     if role == "bureau":
         # Определяем номер бюро для этой роли
-        import json
         bureaus_raw = user.get("bureaus")
         bureau_num  = None
 
@@ -720,7 +752,7 @@ def select_role():
         cur.execute("SELECT * FROM users WHERE name = %s", (session["user"],))
         user = cur.fetchone()
         cur.close()
-        conn.close()
+        release_db(conn)
 
         return _apply_role(user, chosen_role)
 
@@ -735,9 +767,8 @@ def select_role():
     cur.execute("SELECT * FROM users WHERE name = %s", (session["user"],))
     user = cur.fetchone()
     cur.close()
-    conn.close()
+    release_db(conn)
 
-    import json
 
     for role in roles:
         label = ROLE_LABELS.get(role, role)
@@ -801,14 +832,32 @@ def switch_role():
 @role_required("secretary")
 def dashboard():
 
-    conn = get_db()
-    cur  = conn.cursor()
-    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
+    date_from = request.args.get("date_from", "")
+    date_to   = request.args.get("date_to",   "")
+
+    conn   = get_db()
+    cur    = conn.cursor()
+    query  = "SELECT * FROM entries WHERE 1=1"
+    params = []
+
+    if date_from:
+        query += " AND DATE(created_at) >= %s"
+        params.append(date_from)
+    if date_to:
+        query += " AND DATE(created_at) <= %s"
+        params.append(date_to)
+
+    query += " ORDER BY created_at DESC LIMIT 200"
+    cur.execute(query, tuple(params))
     entries = cur.fetchall()
     cur.close()
-    conn.close()
+    release_db(conn)
 
-    return render_template("dashboard.html", entries=entries)
+    return render_template("dashboard.html",
+        entries   = entries,
+        date_from = date_from,
+        date_to   = date_to
+    )
 
 
 # ======================================================
@@ -825,7 +874,16 @@ def bureau_page():
     conn = get_db()
     cur  = conn.cursor()
 
-    cur.execute("SELECT * FROM entries ORDER BY created_at DESC LIMIT 50")
+    date_from = request.args.get("date_from", "")
+    date_to   = request.args.get("date_to",   "")
+    eq        = "SELECT * FROM entries WHERE 1=1"
+    ep        = []
+    if date_from:
+        eq += " AND DATE(created_at) >= %s"; ep.append(date_from)
+    if date_to:
+        eq += " AND DATE(created_at) <= %s"; ep.append(date_to)
+    eq += " ORDER BY created_at DESC LIMIT 200"
+    cur.execute(eq, tuple(ep))
     entries = cur.fetchall()
 
     cur.execute(
@@ -844,7 +902,7 @@ def bureau_page():
     entries_count = cur.fetchone()["count"]
 
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return render_template(
         "bureau.html",
@@ -852,7 +910,9 @@ def bureau_page():
         bureau_students       = bureau_students,
         bureau_num            = bureau_num,
         bureau_students_count = bureau_students_count,
-        entries_count         = entries_count
+        entries_count         = entries_count,
+        date_from             = date_from,
+        date_to               = date_to
     )
 
 
@@ -931,7 +991,7 @@ def undo(entry_id):
 
     if not entry:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Запись не найдена")
 
     for label, field_name in FIELD_MAP.items():
@@ -953,7 +1013,7 @@ def undo(entry_id):
     cur.execute("DELETE FROM entries WHERE id = %s", (entry_id,))
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True)
 
@@ -1009,14 +1069,13 @@ def add_secretary():
 
         if role in current_roles:
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error=f"У {name} уже есть роль «{ROLE_LABELS.get(role, role)}»")
 
         new_roles = current_roles + [role]
 
         # Обновляем bureaus если добавляем роль bureau
         if role == "bureau":
-            import json
             bureaus_raw = existing.get("bureaus")
             if bureaus_raw:
                 if isinstance(bureaus_raw, str):
@@ -1047,7 +1106,7 @@ def add_secretary():
 
         conn.commit()
         cur.close()
-        conn.close()
+        release_db(conn)
 
         label = ROLE_LABELS.get(role, role)
         suffix = f" (бюро №{bureau})" if role == "bureau" else ""
@@ -1068,10 +1127,9 @@ def add_secretary():
         # Новый пользователь — создаём
         if not password:
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error="Задайте пароль для нового пользователя")
 
-        import json
 
         bureaus = None
         if role == "bureau" and bureau:
@@ -1093,11 +1151,11 @@ def add_secretary():
 
         except Exception as e:
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error=str(e))
 
         cur.close()
-        conn.close()
+        release_db(conn)
 
         label = ROLE_LABELS.get(role, role)
         suffix = f" (бюро №{bureau})" if role == "bureau" else ""
@@ -1136,29 +1194,28 @@ def remove_role(user_id):
 
     if not target:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Пользователь не найден")
 
     if "chairman" in get_user_roles(target):
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Нельзя удалить председателя")
 
     if session["role"] == "vice_chairman" and "vice_chairman" in get_user_roles(target):
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Недостаточно прав")
 
     current_roles = get_user_roles(target)
 
     if role not in current_roles:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="У пользователя нет этой роли")
 
     new_roles = [r for r in current_roles if r != role]
 
-    import json
 
     # Обновляем bureaus если удаляем роль bureau
     bureaus = target.get("bureaus")
@@ -1184,7 +1241,7 @@ def remove_role(user_id):
         cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=True, deleted=True)
 
     cur.execute("""
@@ -1195,7 +1252,7 @@ def remove_role(user_id):
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True, deleted=False, new_roles=new_roles)
 
@@ -1217,23 +1274,23 @@ def delete_secretary(user_id):
 
     if not target:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Пользователь не найден")
 
     if "chairman" in get_user_roles(target):
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Нельзя удалить председателя")
 
     if session["role"] == "vice_chairman" and "vice_chairman" in get_user_roles(target):
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Недостаточно прав")
 
     cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True)
 
@@ -1261,17 +1318,17 @@ def change_secretary_password(user_id):
 
     if not target:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Пользователь не найден")
 
     if "chairman" in get_user_roles(target):
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Нельзя менять пароль председателя")
 
     if session["role"] == "vice_chairman" and "vice_chairman" in get_user_roles(target):
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Недостаточно прав")
 
     cur.execute(
@@ -1280,7 +1337,7 @@ def change_secretary_password(user_id):
     )
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True)
 
@@ -1305,7 +1362,7 @@ def change_password():
     )
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     flash("Пароль изменён")
 
@@ -1332,7 +1389,7 @@ def save_schedule():
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     flash("Расписание сохранено")
 
@@ -1372,7 +1429,7 @@ def export_excel():
     cur.execute(query, tuple(params))
     entries = cur.fetchall()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     data = [{
         "ID студента":     row["student_id"],
@@ -1437,7 +1494,7 @@ def add_student():
     )
     if cur.fetchone():
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error=f"Студент «{full_name}» уже есть в бюро №{bureau}")
 
     student_id = generate_student_id(cur, bureau)
@@ -1450,11 +1507,11 @@ def add_student():
         conn.commit()
     except Exception as e:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error=str(e))
 
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True, student_id=student_id, full_name=full_name, bureau=bureau)
 
@@ -1479,13 +1536,13 @@ def delete_student(student_id):
         row = cur.fetchone()
         if not row or row["bureau"] != session.get("bureau"):
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error="Нет доступа")
 
     cur.execute("DELETE FROM students WHERE student_id = %s", (student_id,))
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True)
 
@@ -1500,10 +1557,12 @@ def delete_student(student_id):
 
 @app.route("/bulk_delete_students", methods=["POST"])
 @login_required
-@role_required("chairman", "vice_chairman")
+@role_required("chairman", "vice_chairman", "bureau")
 def bulk_delete_students():
 
-    data = request.get_json()
+    data        = request.get_json()
+    role        = session.get("role")
+    user_bureau = session.get("bureau")   # None для chairman/vice_chairman
 
     conn = get_db()
     cur  = conn.cursor()
@@ -1515,22 +1574,36 @@ def bulk_delete_students():
         ids = [str(i).strip() for i in data["ids"] if i]
         if not ids:
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error="Список ID пуст")
 
-        cur.execute(
-            "DELETE FROM students WHERE student_id = ANY(%s) RETURNING student_id",
-            (ids,)
-        )
+        if role == "bureau":
+            # Профбюро может удалять только студентов своего бюро
+            cur.execute(
+                """DELETE FROM students
+                   WHERE student_id = ANY(%s) AND bureau = %s
+                   RETURNING student_id""",
+                (ids, user_bureau)
+            )
+        else:
+            cur.execute(
+                "DELETE FROM students WHERE student_id = ANY(%s) RETURNING student_id",
+                (ids,)
+            )
         deleted = cur.rowcount
 
-    # Удаление по бюро
+    # Удаление по бюро (только chairman / vice_chairman)
     elif "bureau" in data:
+        if role == "bureau":
+            cur.close()
+            release_db(conn)
+            return jsonify(ok=False, error="Недостаточно прав")
+
         try:
             bureau = int(data["bureau"])
         except (ValueError, TypeError):
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error="Некорректный номер бюро")
 
         cur.execute(
@@ -1544,23 +1617,32 @@ def bulk_delete_students():
         names = [str(n).strip() for n in data["names"] if n]
         if not names:
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error="Список имён пуст")
 
-        cur.execute(
-            "DELETE FROM students WHERE full_name = ANY(%s) RETURNING student_id",
-            (names,)
-        )
+        if role == "bureau":
+            # Профбюро — только в пределах своего бюро
+            cur.execute(
+                """DELETE FROM students
+                   WHERE full_name = ANY(%s) AND bureau = %s
+                   RETURNING student_id""",
+                (names, user_bureau)
+            )
+        else:
+            cur.execute(
+                "DELETE FROM students WHERE full_name = ANY(%s) RETURNING student_id",
+                (names,)
+            )
         deleted = cur.rowcount
 
     else:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Не указан параметр удаления")
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True, deleted=deleted)
 
@@ -1654,7 +1736,7 @@ def upload_students():
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     flash(f"Добавлено: {added}, пропущено: {skipped}")
     return redirect(back)
@@ -1685,7 +1767,7 @@ def search_students():
 
     students = cur.fetchall()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(students)
 
@@ -1719,7 +1801,7 @@ def student_limits_api(student_id):
 
     used = cur.fetchone()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify({key: max(LIMITS[key] - used[key], 0) for key in LIMITS})
 
@@ -1743,7 +1825,7 @@ def ping():
             """, (session["user"], session.get("role", "unknown")))
             conn.commit()
             cur.close()
-            conn.close()
+            release_db(conn)
         except Exception:
             pass
     return "ok"
@@ -1768,7 +1850,7 @@ def online_users():
     """)
     rows = cur.fetchall()
     cur.close()
-    conn.close()
+    release_db(conn)
     return jsonify([{
         "name":      row["user_name"],
         "role":      row["role"],
@@ -1802,7 +1884,7 @@ def change_own_password_admin():
     )
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True)
 
@@ -1833,17 +1915,17 @@ def change_own_password():
 
     if not user:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Пользователь не найден")
 
     try:
         if not check_password_hash(user["password"], old_password):
             cur.close()
-            conn.close()
+            release_db(conn)
             return jsonify(ok=False, error="Неверный текущий пароль")
     except Exception:
         cur.close()
-        conn.close()
+        release_db(conn)
         return jsonify(ok=False, error="Ошибка проверки пароля")
 
     cur.execute(
@@ -1852,7 +1934,7 @@ def change_own_password():
     )
     conn.commit()
     cur.close()
-    conn.close()
+    release_db(conn)
 
     return jsonify(ok=True)
 
