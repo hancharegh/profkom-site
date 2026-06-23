@@ -585,48 +585,29 @@
 <!-- ====== ВИДЖЕТ ДЛЯ ДАРЬИ ====== -->
 {% if session["user"] == "Исаакян Дарья Эдуардовна" %}
 <div class="pet-widget">
-    <img id="petGif" src="" alt="котик">
+    <img id="petGif" src="" alt="котик" style="min-height:120px; background:#f3f4f6;">
     <button onclick="nextGif()">Погладить котика 🐾</button>
 </div>
 <script>
 (function () {
-    const PET_GIFS = [
-        "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-        "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
-        "https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif",
-        "https://media.giphy.com/media/13borq7Zo2kulO/giphy.gif",
-        "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
-        "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif",
-        "https://media.giphy.com/media/8vQSQ3cNXuDGo/giphy.gif",
-        "https://media.giphy.com/media/Nm8ZPAGOwZUQM/giphy.gif",
-        "https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif",
-        "https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif",
-        "https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif",
-        "https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif",
-        "https://media.giphy.com/media/ule4vhcY1xEKQ/giphy.gif",
-        "https://media.giphy.com/media/5i7umUqAOYYEw/giphy.gif",
-        "https://media.giphy.com/media/o75ajIFH0QnXBQ/giphy.gif",
-        "https://media.giphy.com/media/pjFoQHzqHuBMHBVRBg/giphy.gif",
-        "https://media.giphy.com/media/gJ3mEToTDJn3LT6kCT/giphy.gif",
-        "https://media.giphy.com/media/nR4L10XlJcSeQ/giphy.gif",
-        "https://media.giphy.com/media/cVZe3dHOlBPe/giphy.gif",
-        "https://media.giphy.com/media/Zb63DFkD3cMkw/giphy.gif"
-    ];
+    const GIPHY_KEY = "v61BrFNZ9UcE8qqXWXNmpIma6om6spDn";
+    const TAG       = "cute+cat";
+    const img       = document.getElementById("petGif");
 
-    let petIdx = Math.floor(Math.random() * PET_GIFS.length);
-
-    window.nextGif = function () {
-        const img = document.getElementById("petGif");
+    async function nextGif() {
         img.style.opacity = "0";
-        setTimeout(() => {
-            petIdx = (petIdx + 1) % PET_GIFS.length;
-            img.src = PET_GIFS[petIdx];
-            img.style.opacity = "1";
-        }, 300);
-    };
+        try {
+            const res  = await fetch(
+                `https://api.giphy.com/v1/gifs/random?api_key=${GIPHY_KEY}&tag=${TAG}&rating=g`
+            );
+            const data = await res.json();
+            img.src = data.data.images.fixed_height.url;
+        } catch (e) { console.log("Giphy error:", e); }
+        setTimeout(() => img.style.opacity = "1", 100);
+    }
 
-    document.getElementById("petGif").src = PET_GIFS[petIdx];
-    setInterval(window.nextGif, 8000);
+    window.nextGif = nextGif;
+    nextGif();
 })();
 </script>
 {% endif %}
@@ -635,48 +616,29 @@
 <!-- ====== ВИДЖЕТ ДЛЯ АНАСТАСИИ ====== -->
 {% if session["user"] == "Бахвалова Анастасия Владимировна" %}
 <div class="pet-widget">
-    <img id="petGif" src="" alt="выдра">
+    <img id="petGif" src="" alt="выдра" style="min-height:120px; background:#f0fdfa;">
     <button onclick="nextGif()" style="background:#0d9488;">Погладить выдру 🦦</button>
 </div>
 <script>
 (function () {
-    const PET_GIFS = [
-        "https://media.giphy.com/media/MhHXeM4SpKrpC/giphy.gif",
-        "https://media.giphy.com/media/3oriO6Oq5NXgrMkuSs/giphy.gif",
-        "https://media.giphy.com/media/l0IypeKl9NJhPFMrK/giphy.gif",
-        "https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif",
-        "https://media.giphy.com/media/3o7abB06u9bNzA8lu8/giphy.gif",
-        "https://media.giphy.com/media/l4FGpPki3PbCsPIQ0/giphy.gif",
-        "https://media.giphy.com/media/8UGGp7rQvfhe8/giphy.gif",
-        "https://media.giphy.com/media/zHd3eDxQZS5tW/giphy.gif",
-        "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
-        "https://media.giphy.com/media/l2JedJsO3OPMdVSne/giphy.gif",
-        "https://media.giphy.com/media/3o7TKxOhkp8gO0LXMI/giphy.gif",
-        "https://media.giphy.com/media/26BRzozg4TCBXv6QU/giphy.gif",
-        "https://media.giphy.com/media/l3vR5K4OkJnHJFAuY/giphy.gif",
-        "https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif",
-        "https://media.giphy.com/media/26BRrSvJEDf0IQWAM/giphy.gif",
-        "https://media.giphy.com/media/3oEjHWPTo7c0ajPwty/giphy.gif",
-        "https://media.giphy.com/media/26xBI73gWquCBLCDO/giphy.gif",
-        "https://media.giphy.com/media/l2JedEEHFbhFmx0Cs/giphy.gif",
-        "https://media.giphy.com/media/3oEjHV0z8S7WM4MwnK/giphy.gif",
-        "https://media.giphy.com/media/26BRBupa6nRXMGBP2/giphy.gif"
-    ];
+    const GIPHY_KEY = "v61BrFNZ9UcE8qqXWXNmpIma6om6spDn";
+    const TAG       = "otter";
+    const img       = document.getElementById("petGif");
 
-    let petIdx = Math.floor(Math.random() * PET_GIFS.length);
-
-    window.nextGif = function () {
-        const img = document.getElementById("petGif");
+    async function nextGif() {
         img.style.opacity = "0";
-        setTimeout(() => {
-            petIdx = (petIdx + 1) % PET_GIFS.length;
-            img.src = PET_GIFS[petIdx];
-            img.style.opacity = "1";
-        }, 300);
-    };
+        try {
+            const res  = await fetch(
+                `https://api.giphy.com/v1/gifs/random?api_key=${GIPHY_KEY}&tag=${TAG}&rating=g`
+            );
+            const data = await res.json();
+            img.src = data.data.images.fixed_height.url;
+        } catch (e) { console.log("Giphy error:", e); }
+        setTimeout(() => img.style.opacity = "1", 100);
+    }
 
-    document.getElementById("petGif").src = PET_GIFS[petIdx];
-    setInterval(window.nextGif, 8000);
+    window.nextGif = nextGif;
+    nextGif();
 })();
 </script>
 {% endif %}
