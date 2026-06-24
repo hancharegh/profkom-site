@@ -190,7 +190,11 @@ def get_user_bureau_for_role(user, role):
 # ======================================================
 
 def generate_student_id(cur, bureau: int) -> str:
-
+    """
+    Генерирует ID вида {bureau}{seq:03d}.
+    bureau=0 → "0001", "0002", ...  (студенты без бюро)
+    bureau=1 → "1001", "1002", ...  и т.д.
+    """
     cur.execute("""
         SELECT student_id FROM students
         WHERE bureau = %s
@@ -201,8 +205,9 @@ def generate_student_id(cur, bureau: int) -> str:
     existing = set()
 
     for row in rows:
-        sid = row["student_id"]
+        sid = str(row["student_id"])
         try:
+            # Для bureau=0 ID начинается с "0", поэтому берём все цифры кроме первой
             seq = int(sid[1:])
             existing.add(seq)
         except (ValueError, IndexError):
@@ -1478,11 +1483,12 @@ def add_student():
         bureau = session.get("bureau")
     else:
         try:
-            bureau = int(data.get("bureau") or 0)
+            bureau = int(data.get("bureau") if data.get("bureau") is not None else 0)
         except (ValueError, TypeError):
             bureau = 0
-        if bureau not in range(1, 6):
-            return jsonify(ok=False, error="Укажите номер бюро (1–5)")
+        # Допустимые бюро: 0 (без бюро) и 1–5
+        if bureau not in range(0, 6):
+            return jsonify(ok=False, error="Укажите номер бюро (0–5, где 0 — без бюро)")
 
     conn = get_db()
     cur  = conn.cursor()
@@ -1495,7 +1501,8 @@ def add_student():
     if cur.fetchone():
         cur.close()
         release_db(conn)
-        return jsonify(ok=False, error=f"Студент «{full_name}» уже есть в бюро №{bureau}")
+        bureau_label = f"бюро №{bureau}" if bureau > 0 else "списке без бюро"
+        return jsonify(ok=False, error=f"Студент «{full_name}» уже есть в {bureau_label}")
 
     student_id = generate_student_id(cur, bureau)
 
@@ -1701,18 +1708,20 @@ def upload_students():
 
         if role == "bureau":
             bureau = session.get("bureau")
-        elif len(parts) >= 2 and parts[1]:
-            try:
-                bureau = int(parts[1])
-            except ValueError:
-                skipped += 1
-                continue
-            if bureau not in range(1, 6):
-                skipped += 1
-                continue
         else:
-            skipped += 1
-            continue
+            raw_bureau = parts[1] if len(parts) >= 2 else ""
+            if raw_bureau.strip() == "" or raw_bureau.strip() == "0":
+                # Пустая колонка или "0" → без бюро
+                bureau = 0
+            else:
+                try:
+                    bureau = int(raw_bureau.strip())
+                except ValueError:
+                    skipped += 1
+                    continue
+                if bureau not in range(0, 6):
+                    skipped += 1
+                    continue
 
         cur.execute(
             "SELECT id FROM students WHERE full_name = %s AND bureau = %s",
