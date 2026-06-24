@@ -934,6 +934,7 @@
                     <label style="margin-top:0;">Бюро</label>
                     <select id="new-student-bureau" style="margin:0;">
                         <option value="">— выберите —</option>
+                        <option value="0">Без бюро</option>
                         <option value="1">Бюро 1</option>
                         <option value="2">Бюро 2</option>
                         <option value="3">Бюро 3</option>
@@ -976,6 +977,7 @@
                 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                     <select id="bulk-bureau-select" style="margin:0;flex:1;min-width:120px;">
                         <option value="">— выберите бюро —</option>
+                        <option value="0">Без бюро</option>
                         <option value="1">Бюро 1</option>
                         <option value="2">Бюро 2</option>
                         <option value="3">Бюро 3</option>
@@ -1039,6 +1041,9 @@
             <button type="button" class="filter-btn"
                     style="background:#ede9fe;color:#6d28d9;"
                     onclick="filterByBureau('')">Все</button>
+            <button type="button" class="filter-btn"
+                    style="background:#f3f4f6;color:#6b7280;"
+                    onclick="filterByBureau('0')">Без бюро</button>
             {% for i in range(1, 6) %}
             <button type="button" class="filter-btn"
                     style="background:#fef9c3;color:#854d0e;"
@@ -1082,7 +1087,7 @@
                     </td>
                     <td><span class="id-badge">{{ student.student_id }}</span></td>
                     <td>{{ student.full_name }}</td>
-                    <td><span class="bureau-badge">№{{ student.bureau }}</span></td>
+                    <td><span class="bureau-badge">{% if student.bureau == 0 %}—{% else %}№{{ student.bureau }}{% endif %}</span></td>
                     <td>
                         <button type="button" class="btn-danger"
                                 style="font-size:12px;padding:6px 12px;"
